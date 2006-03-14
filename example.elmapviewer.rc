@@ -1,0 +1,10 @@
+# anything starting with # ignored
+
+# anything word = .... treaded as program variable
+mapdir = /usr/local/games/EternalLands/maps/
+userdir = ~/.elc/
+scale = 1.0
+fullscreen = 0
+boxesOn = 1
+marksOn = 1
+editor = $EDITOR

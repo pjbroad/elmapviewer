@@ -1,0 +1,57 @@
+.TH ELMAPVIEWER 6 "February 2006" "elmapviewer-0.1" "Eternal Lands Map Viewer"
+
+.SH NAME
+elmapviewer - A map viewer for the Eternal Lands MMORPG
+
+.SH SYNOPSIS
+.B elmapviewer
+[
+.I resourcefile
+]
+
+.SH DESCRIPTION
+Eternal Lands is a FREE MMORPG (massively multiplayer online role playing 
+game). This program displays Eternal Lands maps and the users game data.  It
+allows the user to navigate the maps using map links.  It was written as an
+experiment in the use of both the Python language and the Pygame modules.  It
+suits my personal use and I release it in the hope it may  be useful to others. 
+I am not a Python or Pygame expert as I think you can tell from the code :)
+
+.SH Map link information
+The map links are defined in the mapdatafile included in the source archive. For
+each map, the size, type and parent map are specified using the form <filename>:
+<game x size> <game y size> <type ie - or PK> <parent map filename>.  The sizes
+correspond to the max coordinates viewable on the map inside the game.  Any lines
+following this initial line, until thenext map name line, define links to other
+maps.  The format of these link lines is <top left x> <top left y> <width>
+<height> <filename of map top link>.  The coordinates and sizes are related to
+the actual size of the map image file.  You can get this information by right
+clicking on a map, first the toip left corned, second the botton right corner. 
+A cyan box will be drawn and the coordinates and size printed to the standard
+output (so you need to run from within a terminal session).
+
+.SH OPTIONS
+.TP
+.I resourcefile
+Optionally specify the name of the resource file.  This file stores program
+configuration options.  The file defaults to .elmapviewer.rc in your HOME
+directory.  An example rc file is provided with the code.
+
+.TP
+Two values in the resource file should be checked/modified :-
+
+.TP 5
+.I mapdir
+Specifies the directory for the Eternal Lands maps.
+
+.TP 5
+.I userdir
+Specifies the directory for the users EL settings.
+
+.SH COPYRIGHT
+Copyright 2006 Paul Broadhead. This is free software; see the source for
+copying conditions.  There is NO  warranty;  not even for MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE.
+
+.SH AUTHOR
+Paul Broadhead elmapviewer@twinmoons.clara.co.uk
