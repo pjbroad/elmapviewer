@@ -29,7 +29,7 @@
 
 # Written using Python 2.3.5 and Pygame 2.3 but other versions should 
 # work.  The code was developed on the Debian GNU/Linux operating system
-# and tested on Ubuntu Linux.
+# and also tested on Ubuntu Linux.
 
 # Eternal Lands: http://www.eternal-lands.com/
 # Python: http://www.python.org
@@ -57,6 +57,8 @@ markcrosscolour = whitecolour
 boxcolour = 58, 95, 205
 testboxcolour = cyancolour
 helpcolour = 205, 190, 112
+# misc consts
+mainborder = (10, 10)
 
 # expand ~ and environ vars
 def expandfilename(filename):
@@ -181,6 +183,9 @@ def helptextline(helpsurface, scale, lineoffset, thestring, colour=helpcolour):
   lineoffset += linespace
   return lineoffset
 
+def showstatus(text):
+  print text
+
 # generate the help information surface
 def drawhelp(currmap, scale):
   helpsurface = pygame.Surface((int(128*scale),int(256*scale)))
@@ -223,7 +228,7 @@ def readmapmarkers(userdir, currmap):
 # display the users map marks
 def displaymarkers(markers, thismapscale, screen, mapxoffset, mapsize, scale):
   if thismapscale[0] == 0 or thismapscale[1] == 0:
-    print 'No scale for map'
+    showstatus('No scale for map')
     return
   for mark in markers:
     x = mapxoffset + (mark[0][0] * mapsize[0] / thismapscale[0])
@@ -238,6 +243,8 @@ def displaymarkers(markers, thismapscale, screen, mapxoffset, mapsize, scale):
 if not pygame.font: print 'Warning, fonts disabled'
 if not pygame.mixer: print 'Warning, sound disabled'
 pygame.init()
+# we don't need sound
+pygame.mixer.quit()
 
 # set default window title and cursor type
 pygame.display.set_caption("Eternal Lands Map Viewer", "elmapviewer")
@@ -295,7 +302,11 @@ while 1:
           sidemapname = bigmap[mainmapname]
           
       # get and scale the current size map surface
-      sidemap = pygame.image.load(mapdir + sidemapname)
+      if not os.access(mapdir + sidemapname, os.R_OK):
+        sidemap = pygame.Surface((512, 512))
+        showstatus('cant load sitemap file: '+sidemapname)
+      else:
+        sidemap = pygame.image.load(mapdir + sidemapname)
       sidemapsize = sidemap.get_size()
       sidemap = pygame.transform.scale(sidemap, (int(sidemapsize[0]*scale/2), int(sidemapsize[1]*scale/2)))
       sidemapsize = sidemap.get_size()
@@ -307,14 +318,22 @@ while 1:
       helprect = helpsurface.get_rect()
       
       # get and scale the legend surface
-      legend = pygame.image.load(mapdir + "legend.bmp")
+      if not os.access(mapdir + "legend.bmp", os.R_OK):
+        legend = pygame.Surface((128, 256))
+        showstatus('cannot load legend file')
+      else:
+        legend = pygame.image.load(mapdir + "legend.bmp")
       legendsize = legend.get_size()
       legend = pygame.transform.scale(legend, (int(legendsize[0]*scale), int(legendsize[1]*scale)))
       legendsize = legend.get_size()
       legendrect = legend.get_rect()
       
       # get and scale the main map surface
-      mainmap = pygame.image.load(mapdir + mainmapname)
+      if not os.access(mapdir + mainmapname, os.R_OK):
+        mainmap = pygame.Surface((512, 512))
+        showstatus('cannot load main map file '+mainmapname)
+      else:
+        mainmap = pygame.image.load(mapdir + mainmapname)
       mainmapsize = mainmap.get_size()
       mainmap = pygame.transform.scale(mainmap, (int(mainmapsize[0]*scale), int(mainmapsize[1]*scale)))
       mainmapsize = mainmap.get_size()
@@ -322,7 +341,7 @@ while 1:
       
       # get the screen size, and modify the display mode if it has changed
       lastscreensize = screensize
-      screensize = width, height = sidemapsize[0]+mainmapsize[0], mainmapsize[1]
+      screensize = width, height = int(sidemapsize[0]+mainmapsize[0]+mainborder[0]*scale), int(mainmapsize[1]+mainborder[1]*scale)
       if screensize != lastscreensize:
         screen =  pygame.display.set_mode(screensize)
         if fullscreen:
@@ -331,15 +350,15 @@ while 1:
       # now we have the screen size, move surfaces into place
       
       # position the legend
-      xymove = [screensize[0]-mainmapsize[0]-legendsize[0], screensize[1]-sidemapsize[1]]
+      xymove = [int(sidemapsize[0]/2), sidemapsize[1]]
       legendrect = legendrect.move(xymove)
       
       # position the help
-      xymove = [0, screensize[1]-sidemapsize[1]]
+      xymove = [0, sidemapsize[1]]
       helprect = helprect.move(xymove)
       
       # get the main map x offset (used later for curser detection) and move it
-      mapxoffset = screensize[0]-mainmapsize[0]
+      mapxoffset = sidemapsize[0]
       mainmapmove = [mapxoffset, 0]
       mainmaprect = mainmaprect.move(mainmapmove)  
     
