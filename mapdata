@@ -4,29 +4,11 @@
 # mapfilename: coord-x coord-y [type]
 # <top left x> <top left y> <bottom right x> <bottom right y> <destination map>
 
-map14f.bmp: 192 192 - seridia.bmp
-359 220 118 26 map5nf.bmp
-228 408 122 58 map13.bmp
-33 379 99 28 map3.bmp
+# test, rermove before release;)
+#xyx: 0 0 - seridia.bmp
 
-map6nf.bmp: 384 384 - seridia.bmp
-342 444 82 48 map7.bmp
-387 268 95 36 map2.bmp
-226 6 120 51 map3.bmp
-4 88 96 40 map15f.bmp
-180 400 20 20 map3.bmp
-180 423 20 20 map9f.bmp
-
-map3.bmp: 384 384 - seridia.bmp
-9 211 60 38 map15f.bmp
-224 470 78 37 map6nf.bmp
-431 430 68 43 map13.bmp
-433 149 68 41 map14f.bmp
-450 10 20 15 map2.bmp
-450 30 20 15 map5nf.bmp
-450 50 20 15 map6nf.bmp
-175 191 29 23 cave1.bmp
-71 114 24 25 cave1.bmp
+startmap.bmp: 192 192 - seridia.bmp
+35 395 60 30 map2.bmp
 
 seridia.bmp:
 15 80 65 110 map15f.bmp
@@ -44,35 +26,6 @@ seridia.bmp:
 340 345 55 50 map4f.bmp
 400 360 55 60 startmap.bmp
 
-map13.bmp: 192 192 - seridia.bmp
-16 338 87 39 map3.bmp
-248 462 112 42 map2.bmp
-408 337 84 31 map12.bmp
-221 27 102 43 map14f.bmp
-
-map5nf.bmp: 192 192 - seridia.bmp
-15 164 82 40 map14f.bmp
-417 103 75 42 map11.bmp
-116 461 81 40 map12.bmp
-162 55 32 28 map3.bmp
-
-map15f.bmp: 384 384 PK seridia.bmp
-393 110 109 35 map3.bmp
-429 431 71 30 map6nf.bmp
-
-cave1.bmp: 192 192 - seridia.bmp
-38 23 52 33 map3.bmp
-437 61 36 39 map3.bmp
-
-map9f.bmp: 384 384 - seridia.bmp
-153 7 128 48 map2.bmp
-15 15 80 26 map8.bmp
-405 322 44 32 map6nf.bmp
-
-map11.bmp: 384 384 - seridia.bmp
-25 133 77 33 map5nf.bmp
-387 458 62 45 map2.bmp
-
 map2.bmp: 768 768 - seridia.bmp
 460 380 50 25 startmap.bmp
 460 410 50 25 map3.bmp
@@ -85,25 +38,94 @@ map2.bmp: 768 768 - seridia.bmp
 10 325 95 45 map7.bmp
 340 466 32 32 anitora.bmp
 
+map3.bmp: 384 384 - seridia.bmp
+9 211 60 38 map15f.bmp
+224 470 78 37 map6nf.bmp
+431 430 68 43 map13.bmp
+433 149 68 41 map14f.bmp
+450 10 20 15 map2.bmp
+450 30 20 15 map5nf.bmp
+450 50 20 15 map6nf.bmp
+175 191 29 23 cave1.bmp
+71 114 24 25 cave1.bmp
+
+map4f.bmp: 192 192 PK seridia.bmp
+130 5 50 40 map2.bmp
+
+map5nf.bmp: 192 192 - seridia.bmp
+15 164 82 40 map14f.bmp
+417 103 75 42 map11.bmp
+116 461 81 40 map12.bmp
+162 55 32 28 map3.bmp
+
+map6nf.bmp: 384 384 - seridia.bmp
+342 444 82 48 map7.bmp
+387 268 95 36 map2.bmp
+226 6 120 51 map3.bmp
+4 88 96 40 map15f.bmp
+180 400 20 20 map3.bmp
+180 423 20 20 map9f.bmp
+101 308 24 20 map6nf_cave.bmp
+
 map7.bmp: 384 384 - seridia.bmp
 224 430 79 40 map8.bmp
 363 146 109 38 map2.bmp
 327 39 80 42 map6nf.bmp
 
-startmap.bmp: 192 192 - seridia.bmp
-35 395 60 30 map2.bmp
+map8.bmp: 192 192 - seridia.bmp
+350 326 107 37 map9f.bmp
+113 45 99 48 map7.bmp
+
+map9f.bmp: 384 384 - seridia.bmp
+153 7 128 48 map2.bmp
+15 15 80 26 map8.bmp
+405 322 44 32 map6nf.bmp
+
+map11.bmp: 384 384 - seridia.bmp
+25 133 77 33 map5nf.bmp
+387 458 62 45 map2.bmp
 
 map12.bmp: 192 192 - seridia.bmp
 172 465 113 43 map2.bmp
 9 417 79 47 map13.bmp
 55 12 97 38 map5nf.bmp
 
-map4f.bmp: 192 192 PK seridia.bmp
-130 5 50 40 map2.bmp
+map13.bmp: 192 192 - seridia.bmp
+16 338 87 39 map3.bmp
+248 462 112 42 map2.bmp
+408 337 84 31 map12.bmp
+221 27 102 43 map14f.bmp
 
-map8.bmp: 192 192 - seridia.bmp
-350 326 107 37 map9f.bmp
-113 45 99 48 map7.bmp
+map14f.bmp: 192 192 - seridia.bmp
+359 220 118 26 map5nf.bmp
+228 408 122 58 map13.bmp
+33 379 99 28 map3.bmp
+
+map15f.bmp: 384 384 PK seridia.bmp
+393 110 109 35 map3.bmp
+429 431 71 30 map6nf.bmp
+
+cave1.bmp: 192 192 - seridia.bmp
+38 23 52 33 map3.bmp
+437 61 36 39 map3.bmp
+
+# extra maps from http://www.el-cel.com/info/maps.php?Set=Seridia
+# you need to download them to use them
+map2_insides.bmp: 384 384 - map2.bmp
+map2_insidescastle.bmp: 768 768 - map2.bmp
+map5nf_insides.bmp: 192 192 - map5nf.bmp
+map6nf_cave.bmp: 192 192 - map6nf.bmp
+map7_cave.bmp: 384 384 - map7.bmp
+map7_insides.bmp: 384 384 - map7.bmp
+map8_catacombs.bmp: 192 192 - map8.bmp
+map11_crypt.bmp: 384 384 - map11.bmp
+map11_insides.bmp: 384 384 - map11.bmp
+map11_insmsch.bmp: 384 384 - map11.bmp
+map11_mschcave.bmp: 384 384 - map11.bmp
+map11_mschgar.bmp: 384 384 - map11.bmp
+map12_cave.bmp: 192 192 - map12.bmp
+
+
 
 anitora.bmp: 0 0 - irilion.bmp
 375 229 40 51 irilion.bmp
