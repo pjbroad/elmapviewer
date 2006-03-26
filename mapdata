@@ -4,7 +4,7 @@
 # mapfilename: coord-x coord-y [type]
 # <top left x> <top left y> <bottom right x> <bottom right y> <destination map>
 
-# test, rermove before release;)
+# test, comment out before release;)
 #xyx: 0 0 - seridia.bmp
 
 startmap.bmp: 192 192 - seridia.bmp
@@ -29,14 +29,15 @@ seridia.bmp:
 map2.bmp: 768 768 - seridia.bmp
 460 380 50 25 startmap.bmp
 460 410 50 25 map3.bmp
-10 115 75 45 map6nf.bmp
+30 115 45 45 map6nf.bmp
 5 460 80 45 map9f.bmp
 375 465 80 45 map4f.bmp
 70 5 90 35 map13.bmp
 195 5 80 45 map12.bmp
 365 15 90 45 map11.bmp
 10 325 95 45 map7.bmp
-340 466 32 32 anitora.bmp
+256 479 51 28 anitora.bmp
+5 125 20 20 map6nf_cave.bmp
 
 map3.bmp: 384 384 - seridia.bmp
 9 211 60 38 map15f.bmp
@@ -66,6 +67,11 @@ map6nf.bmp: 384 384 - seridia.bmp
 180 400 20 20 map3.bmp
 180 423 20 20 map9f.bmp
 101 308 24 20 map6nf_cave.bmp
+485 275 20 20 map6nf_cave.bmp
+
+map6nf_cave.bmp: 192 192 - map6nf.bmp
+39 78 25 25 map6nf.bmp
+182 94 25 25 map2.bmp
 
 map7.bmp: 384 384 - seridia.bmp
 224 430 79 40 map8.bmp
@@ -114,29 +120,30 @@ cave1.bmp: 192 192 - seridia.bmp
 map2_insides.bmp: 384 384 - map2.bmp
 map2_insidescastle.bmp: 768 768 - map2.bmp
 map5nf_insides.bmp: 192 192 - map5nf.bmp
-map6nf_cave.bmp: 192 192 - map6nf.bmp
-map7_cave.bmp: 384 384 - map7.bmp
-map7_insides.bmp: 384 384 - map7.bmp
+
+map7_cave.bmp: 192 192 - map7.bmp
+map7_insides.bmp: 1000 1000 - map7.bmp
 map8_catacombs.bmp: 192 192 - map8.bmp
-map11_crypt.bmp: 384 384 - map11.bmp
-map11_insides.bmp: 384 384 - map11.bmp
-map11_insmsch.bmp: 384 384 - map11.bmp
-map11_mschcave.bmp: 384 384 - map11.bmp
-map11_mschgar.bmp: 384 384 - map11.bmp
+map11_crypt.bmp: 1000 1000 - map11.bmp
+map11_insides.bmp: 1000 1000 - map11.bmp
+map11_insmsch.bmp: 1000 1000 - map11.bmp
+map11_mschcave.bmp: 1000 1000 - map11.bmp
+map11_mschgar.bmp: 1000 1000 - map11.bmp
 map12_cave.bmp: 192 192 - map12.bmp
 
 
 
-anitora.bmp: 0 0 - irilion.bmp
-375 229 40 51 irilion.bmp
+anitora.bmp: 384 384 - irilion.bmp
+94 271 47 31 map2.bmp
+375 229 40 51 cont2map1.bmp
 
 irilion.bmp:
 60 45 165 140 cont2map1.bmp
-230 45 50 45 cont2map2.bmp
-275 45 50 45 cont2map3.bmp
+230 45 45 45 cont2map2.bmp
+275 45 45 45 cont2map3.bmp
 230 95 90 90 cont2map5.bmp
 92 190 90 90 cont2map8.bmp
-180 190 90 90 cont2map9.bmp
+185 190 90 90 cont2map9.bmp
 302 272 50 45 cont2map13.bmp
 390 125 90 90 cont2map16.bmp
 378 213 50 45 cont2map17.bmp
@@ -148,60 +155,76 @@ irilion.bmp:
 395 300 90 90 cont2map21.bmp
 300 330 90 90 cont2map24.bmp
 
-cont2map1.bmp: 0 0 - irilion.bmp
+cont2map1.bmp: 768 768 - irilion.bmp
+92 311 42 39 anitora.bmp
 429 139 65 43 cont2map2.bmp
 345 467 88 40 cont2map9.bmp
 197 465 117 42 cont2map8.bmp
 
-cont2map2.bmp: 0 0 - irilion.bmp
+cont2map2.bmp: 192 192 - irilion.bmp
 38 440 85 43 cont2map1.bmp
 414 130 83 44 cont2map3.bmp
 
-cont2map3.bmp: 0 0 - irilion.bmp
+cont2map3.bmp: 192 192 - irilion.bmp
 39 192 58 35 cont2map2.bmp
 299 441 92 56 cont2map5.bmp
 
-cont2map5.bmp: 0 0 - irilion.bmp
+cont2map5.bmp: 384 384 - irilion.bmp
+340 16 86 45 cont2map3.bmp
 41 430 79 52 cont2map9.bmp
 340 16 86 45 cont2map3.bmp
 
-cont2map8.bmp: 0 0 - irilion.bmp
+cont2map8.bmp: 384 384 - irilion.bmp
 394 20 95 48 cont2map1.bmp
 433 217 75 32 cont2map9.bmp
 
-cont2map9.bmp: 0 0 - irilion.bmp
+cont2map9.bmp: 384 384 PK irilion.bmp
 8 280 75 50 cont2map8.bmp
 239 8 81 41 cont2map1.bmp
 411 7 89 50 cont2map5.bmp
 
-cont2map13.bmp: 0 0 - irilion.bmp
+cont2map13.bmp: 192 192 - irilion.bmp
 
-cont2map16.bmp: 0 0 - irilion.bmp
+cont2map16.bmp: 384 384 - irilion.bmp
 
-cont2map17.bmp: 0 0 - irilion.bmp
+cont2map17.bmp: 192 192 - irilion.bmp
 
-cont2map18.bmp: 0 0 - irilion.bmp
+cont2map18.bmp: 192 192 - irilion.bmp
 436 142 60 30 cont2map19.bmp
 5 24 73 33 cont2map23.bmp
 116 14 79 38 cont2map24.bmp
 
-cont2map19.bmp: 0 0 - irilion.bmp
+cont2map19.bmp: 192 192 - irilion.bmp
 127 12 87 41 cont2map24.bmp
 9 258 65 36 cont2map18.bmp
 
-cont2map20.bmp: 0 0 - irilion.bmp
+cont2map20.bmp: 192 192 - irilion.bmp
 
-cont2map21.bmp: 0 0 - irilion.bmp
+cont2map21.bmp: 384 384 - irilion.bmp
 
-cont2map22.bmp: 0 0 - irilion.bmp
+cont2map22.bmp: 768 768 - irilion.bmp
 411 47 78 39 cont2map23.bmp
 
-cont2map23.bmp: 0 0 - irilion.bmp
+cont2map23.bmp: 384 384 - irilion.bmp
 12 83 73 37 cont2map22.bmp
 406 180 76 38 cont2map24.bmp
 419 370 69 38 cont2map18.bmp
 
-cont2map24.bmp: 0 0 - irilion.bmp
+cont2map24.bmp: 384 384 - irilion.bmp
 41 275 65 30 cont2map23.bmp
 372 460 68 42 cont2map19.bmp
 
+# extra maps from http://www.el-cel.com/info/maps.php?Set=Irilion
+cont2map1_caves.bmp: 1000 1000 cont2map1.bmp
+cont2map1_mine.bmp: 1000 1000 cont2map1.bmp
+cont2map2_cave.bmp: 1000 1000 cont2map5.bmp
+cont2map5_underground.bmp: 1000 1000 cont2map5.bmp
+cont2map18_caves.bmp: 1000 1000 cont2map18.bmp
+cont2map18_insides.bmp: 1000 1000 cont2map18.bmp
+cont2map19.bmp: 1000 1000 cont2map19.bmp
+cont2map21_maze1.bmp: 1000 1000 cont2map21.bmp
+cont2map21_maze2.bmp: 1000 1000 cont2map21.bmp
+cont2map21_maze3.bmp: 1000 1000 cont2map21.bmp
+cont2map22.bmp: 1000 1000 cont2map22.bmp
+cont2map24_cave.bmp: 1000 1000 cont2map24.bmp
+cont2map24_insides.bmp: 1000 1000 cont2map24.bmp
