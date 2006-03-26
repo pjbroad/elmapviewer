@@ -39,7 +39,7 @@
 
 import sys, pygame, string, os, shutil
 
-version = 'V0.1 Feb/Mar 2006'
+version = 'V0.2 Mar 2006'
 
 # define some basic colours
 blackcolour = 0, 0, 0
@@ -58,6 +58,7 @@ boxcolour = 58, 95, 205
 testboxcolour = cyancolour
 helpcolour = 205, 190, 112
 # misc consts
+fontsize = 21
 mainborder = (10, 10)
 
 # expand ~ and environ vars
@@ -163,11 +164,10 @@ def nextmap(mapinfo, currmap, inc):
  
 # general text surface maker
 def textmake(thetext, colour, scale ):
-  if pygame.font:
-    font = pygame.font.Font(None, int(21*scale))
-    text = font.render(thetext, 1, colour)
-    textrec = text.get_rect()
-    return text, textrec, font.get_linesize()
+  font = pygame.font.Font(None, int(fontsize*scale))
+  text = font.render(thetext, 1, colour)
+  textrec = text.get_rect()
+  return text, textrec, font.get_linesize()
 
 # general text surface mover
 def textmove(x, y, text, textrec ):
@@ -183,11 +183,43 @@ def helptextline(helpsurface, scale, lineoffset, thestring, colour=helpcolour):
   lineoffset += linespace
   return lineoffset
 
-def showstatus(text):
-  print text
+# draw the status line including the current map name
+def updatestatusline(screen, scale, coordwidth, mapname, statustext):
+  # colour code PK maps
+  if maptype.has_key(mapname) and maptype[mapname] == 'PK':
+    colour = pkmapcolour
+  else:
+    colour = othermapcolour
+  # get the text surface
+  fulltext = mapname + ':  ' + statustext
+  statusline, rec, linesize = textmake(fulltext, colour, scale)
+  # and move to its in screen location
+  xymove = [coordwidth, screen.get_size()[1] - statusline.get_size()[1]]
+  statusrect = rec.move(xymove)
+  # as we're not doing a full screen update, we need to clear old text
+  rectcoord = (0, 0, screen.get_size()[0]-coordwidth, statusline.get_size()[1])
+  blankrec = pygame.Rect(rectcoord).move(xymove)
+  # draw the blank, then the text, then update display
+  screen.fill(blackcolour, blankrec)
+  screen.blit(statusline, statusrect)
+  pygame.display.update(blankrec)
+  return
+  
+def updatecoord(screen, scale, coordwidth, coordtext):
+  # get the text and move to its in screen location
+  coords, rec, linesize = textmake(coordtext, whitecolour, scale)
+  xymove = [0, screen.get_size()[1] - coords.get_size()[1]]
+  rect = rec.move(xymove)
+  # as we're not doing a full screen update, we need to clear old text
+  rectcoord = (0, 0, coordwidth, coords.get_size()[1])
+  blankrec = pygame.Rect(rectcoord).move(xymove)
+  # draw the blank, then the text, then update display
+  screen.fill(blackcolour, blankrec)
+  screen.blit(coords, rect)
+  pygame.display.update(blankrec)
 
 # generate the help information surface
-def drawhelp(currmap, scale):
+def drawhelp(scale):
   helpsurface = pygame.Surface((int(128*scale),int(256*scale)))
   lineoffset = helptextline(helpsurface, scale, 0, 'EL Map Viewer')
   lineoffset = helptextline(helpsurface, scale, lineoffset, " i/o - zoom in/out")
@@ -203,11 +235,6 @@ def drawhelp(currmap, scale):
   lineoffset = helptextline(helpsurface, scale, lineoffset, " l-click select")
   lineoffset = helptextline(helpsurface, scale, lineoffset, " r-click draw box")
   lineoffset = helptextline(helpsurface, scale, lineoffset, " ESC - exit")
-  if maptype.has_key(currmap) and maptype[currmap] == 'PK':
-    colour = pkmapcolour
-  else:
-    colour = othermapcolour
-  lineoffset = helptextline(helpsurface, scale, lineoffset, currmap, colour)
   lineoffset = helptextline(helpsurface, scale, lineoffset, version)
   return helpsurface
 
@@ -226,10 +253,12 @@ def readmapmarkers(userdir, currmap):
   return markers
 
 # display the users map marks
-def displaymarkers(markers, thismapscale, screen, mapxoffset, mapsize, scale):
-  if thismapscale[0] == 0 or thismapscale[1] == 0:
-    showstatus('No scale for map')
-    return
+def displaymarkers(markers, thismapscale, screen, mapxoffset, mapsize, scale, statustext):
+  if thismapscale[0] == 1000 or thismapscale[1] == 1000:
+    statustext += 'Unknown scale, markers offset. '
+  elif thismapscale[0] == 0 or thismapscale[1] == 0:
+    statustext += 'Invalid scale, marker not displayed. '
+    return statustext
   for mark in markers:
     x = mapxoffset + (mark[0][0] * mapsize[0] / thismapscale[0])
     y = (thismapscale[1] - mark[0][1]) * mapsize[1] / thismapscale[1]
@@ -238,10 +267,14 @@ def displaymarkers(markers, thismapscale, screen, mapxoffset, mapsize, scale):
     pygame.draw.line(screen, markcrosscolour, (x-5, y), (x+5, y), 1)
     pygame.draw.line(screen, markcrosscolour, (x, y-5), (x, y+5), 1)
     screen.blit(text,textrec)
+  return statustext
 
 # check sound and font usage and initialise pygame
-if not pygame.font: print 'Warning, fonts disabled'
-if not pygame.mixer: print 'Warning, sound disabled'
+if not pygame.mixer:
+  print 'Warning, sound disabled'
+if not pygame.font:
+  print 'Error, fonts not available'
+  sys.exit()
 pygame.init()
 # we don't need sound
 pygame.mixer.quit()
@@ -249,7 +282,6 @@ pygame.mixer.quit()
 # set default window title and cursor type
 pygame.display.set_caption("Eternal Lands Map Viewer", "elmapviewer")
 pygame.mouse.set_cursor(*pygame.cursors.arrow)
-#print pygame.display.Info()
 
 # get the resource file name and read the data
 if len(sys.argv) > 1:
@@ -277,12 +309,21 @@ markbox = []                  # right click twice to form a box and see coords f
 mapxoffset = 0                # X offset of main map in pixels, calculated later
 screensize = (0,0)            # current screen size, calculates from map sizes and scale
 
+coordwidth = 0;
+coordtext = '000,000'         # in game map coords, show at bottm left of window
+lastcoordtext = '-'
+
+statustext = ''               # status text shown at bottom of window with map name
+laststatustext = '-'
 
 # loop forever....
 while 1:
 
     # if the map has changed, update the display
     if mainmapname != lastmap:
+    
+      statustext = ''
+      laststatustext = '-'
     
       # handle the back key useage, poping the new map name
       if mainmapname == 'pop':
@@ -304,7 +345,7 @@ while 1:
       # get and scale the current size map surface
       if not os.access(mapdir + sidemapname, os.R_OK):
         sidemap = pygame.Surface((512, 512))
-        showstatus('cant load sitemap file: '+sidemapname)
+        statustext += 'Cant load sidemap file. '
       else:
         sidemap = pygame.image.load(mapdir + sidemapname)
       sidemapsize = sidemap.get_size()
@@ -313,25 +354,23 @@ while 1:
       sidemaprect = sidemap.get_rect()
       
       # get the scaled help text surface
-      helpsurface = drawhelp(mainmapname, scale)
-      helpsize = helpsurface.get_size()
+      helpsurface = drawhelp(scale)
       helprect = helpsurface.get_rect()
       
       # get and scale the legend surface
       if not os.access(mapdir + "legend.bmp", os.R_OK):
         legend = pygame.Surface((128, 256))
-        showstatus('cannot load legend file')
+        statustext += 'Cannot load legend file. '
       else:
         legend = pygame.image.load(mapdir + "legend.bmp")
       legendsize = legend.get_size()
       legend = pygame.transform.scale(legend, (int(legendsize[0]*scale), int(legendsize[1]*scale)))
-      legendsize = legend.get_size()
       legendrect = legend.get_rect()
       
       # get and scale the main map surface
       if not os.access(mapdir + mainmapname, os.R_OK):
         mainmap = pygame.Surface((512, 512))
-        showstatus('cannot load main map file '+mainmapname)
+        statustext += 'Cannot load main map file. '
       else:
         mainmap = pygame.image.load(mapdir + mainmapname)
       mainmapsize = mainmap.get_size()
@@ -339,9 +378,17 @@ while 1:
       mainmapsize = mainmap.get_size()
       mainmaprect = mainmap.get_rect()
       
-      # get the screen size, and modify the display mode if it has changed
+      # update font related sizes
+      coordwidth = pygame.font.Font(None, int(fontsize*scale)).size('000,000  ')[0]
+      statusheight = pygame.font.Font(None, int(fontsize*scale)).get_height()
+      
+      # get the screen size
       lastscreensize = screensize
-      screensize = width, height = int(sidemapsize[0]+mainmapsize[0]+mainborder[0]*scale), int(mainmapsize[1]+mainborder[1]*scale)
+      width = int(sidemapsize[0]+mainmapsize[0]+mainborder[0]*scale)
+      height = int(statusheight+mainmapsize[1]+mainborder[1]*scale)
+      screensize = width, height
+      
+      # modify the display mode if it has changed
       if screensize != lastscreensize:
         screen =  pygame.display.set_mode(screensize)
         if fullscreen:
@@ -360,8 +407,8 @@ while 1:
       # get the main map x offset (used later for curser detection) and move it
       mapxoffset = sidemapsize[0]
       mainmapmove = [mapxoffset, 0]
-      mainmaprect = mainmaprect.move(mainmapmove)  
-    
+      mainmaprect = mainmaprect.move(mainmapmove)
+      
       # clear the display and redraw the components
       screen.fill(blackcolour)
       screen.blit(sidemap, sidemaprect)
@@ -383,9 +430,7 @@ while 1:
       if marksOn:
         markers = readmapmarkers(userdir, mainmapname)
         if mapscale.has_key(mainmapname):
-          displaymarkers(markers, mapscale[mainmapname], screen, mapxoffset, mainmapsize, scale)
-        elif bigmap.has_key(mainmapname):
-          print 'No scale for this maps markers'
+          statustext = displaymarkers(markers, mapscale[mainmapname], screen, mapxoffset, mainmapsize, scale, statustext)
       
       # draw the new display
       pygame.display.flip()
@@ -395,6 +440,16 @@ while 1:
 
     # end if map changed
       
+    # update the status line if it changes
+    if laststatustext != statustext:
+      updatestatusline(screen, scale, coordwidth, mainmapname, statustext)
+      laststatustext = statustext
+
+    # update the coordinate line if its changes
+    if lastcoordtext != coordtext:
+      updatecoord(screen, scale, coordwidth, coordtext)
+      lastcoordtext = coordtext
+
     # get an event from the window
     event = pygame.event.wait()
     
@@ -402,8 +457,9 @@ while 1:
     if event.type == pygame.QUIT:
       sys.exit()
       
-    # if the mouse moves, check for cursor changes in link boxes
+    # if the mouse moves
     elif event.type == pygame.MOUSEMOTION:
+      # check for cursor changes in link boxes
       inhotspot = False
       for hp in hotspot:
         if hp[0].collidepoint(pygame.mouse.get_pos()):
@@ -416,6 +472,15 @@ while 1:
         if not normalcursor:
           pygame.mouse.set_cursor(*pygame.cursors.arrow)
           normalcursor = True
+      # update the coordinate display
+      if mapscale.has_key(mainmapname) and pygame.mouse.get_pos()[0] > mapxoffset and \
+       pygame.mouse.get_pos()[1] < mainmapsize[1] and pygame.mouse.get_pos()[0] < mainmapsize[0] + mapxoffset:
+        mousexy = pygame.mouse.get_pos()
+        x = int((float(mousexy[0]-mapxoffset) / mainmapsize[0] * mapscale[mainmapname][0]))
+        y = int(mapscale[mainmapname][1] - (float(mousexy[1]) / mainmapsize[1] * mapscale[mainmapname][1]))
+        coordtext = str(x) + ',' + str(y)
+      else:
+        coordtext = ''
   
     # if a mouse button is pressed....
     elif event.type == pygame.MOUSEBUTTONDOWN:
@@ -436,7 +501,7 @@ while 1:
       if pygame.mouse.get_pressed()[1] and pygame.mouse.get_pos()[0] > mapxoffset:
         for hp in hotspot:
           if hp[0].collidepoint(pygame.mouse.get_pos()):
-            print "link info:", hp
+            statustext = 'link info: ' + str(hp)
             
       # help create new map link areas by drawning a box on the map
       # if right-click form box with next click, then clear on third
@@ -456,8 +521,11 @@ while 1:
           cursorbox = pygame.Rect(markbox[0][0],markbox[0][1],markbox[1][0]-markbox[0][0], markbox[1][1]-markbox[0][1])
           pygame.draw.rect(screen, testboxcolour, cursorbox, 2)
           pygame.display.update()
-          print mainmapname, int((markbox[0][0]-mapxoffset)/scale), int(markbox[0][1]/scale), \
-            int((markbox[1][0]-markbox[0][0])/scale), int((markbox[1][1]-markbox[0][1])/scale)
+          statustext = \
+            str(int((markbox[0][0]-mapxoffset)/scale)) + ', ' + \
+            str(int(markbox[0][1]/scale)) + ', ' +  \
+            str(int((markbox[1][0]-markbox[0][0])/scale))  + ', ' +  \
+            str(int((markbox[1][1]-markbox[0][1])/scale))
 
     # process keyboard events
     if event.type == pygame.KEYDOWN:
@@ -473,7 +541,6 @@ while 1:
         if screensize[0]-0.1 > 600:
           scale -= 0.1
           lastmap = ''
-          print scale
 
       # f - toggle window/full screen
       elif event.key == pygame.K_f:
