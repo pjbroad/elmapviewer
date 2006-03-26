@@ -1,0 +1,13 @@
+Eternal Lands Map Viewer http://www.eternal-lands.com/
+======================================================
+
+Written by Paul Broadhead, download from source forge
+http://elmapviewer.sourceforge.net/
+
+Requires python http://www.python.org/ and pygame http://www.pygame.org/
+
+Read the man page using man -l elmapviewer.6
+
+Run using ./elmapviewer.py
+
+Read the code and make it better...
