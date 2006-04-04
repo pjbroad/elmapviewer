@@ -184,9 +184,11 @@ cont2map13.bmp: 192 192 - irilion.bmp
 155 380 40 25 cont2map24.bmp
 
 cont2map16.bmp: 384 384 - irilion.bmp
-235 455 49 30 cont2map1.bmp
+240 450 20 25 cont2map1.bmp
+220 475 20 25 cont2map17.bmp
 
 cont2map17.bmp: 192 192 - irilion.bmp
+360 250 20 25 cont2map16.bmp
 
 cont2map18.bmp: 192 192 - irilion.bmp
 436 142 60 30 cont2map19.bmp
@@ -276,10 +278,10 @@ cont2map8_insides.bmp: 1000 1000 - cont2map8.bmp
 cont2map9_insides.bmp: 1000 1000 - cont2map9.bmp
 cont2map9_temple.bmp: 1000 1000 - cont2map9.bmp
 cont2map13_temple.bmp: 1000 1000 - cont2map13.bmp
-cont2map16_insides.bmp: 1000 1000 - cont2map16.bmp
+cont2map16_insides.bmp: 384 384 - cont2map16.bmp
 cont2map16_mountains.bmp: 1000 1000 - cont2map16.bmp
 cont2map17_crypt.bmp: 1000 1000 - cont2map17.bmp
-cont2map17_insides.bmp: 1000 1000 - cont2map17.bmp
+cont2map17_insides.bmp: 192 192 - cont2map17.bmp
 cont2map20_insides.bmp: 1000 1000 - cont2map20.bmp
 cont2map21_caves.bmp: 1000 1000 - cont2map21.bmp
 cont2map21_maze4.bmp: 1000 1000 - cont2map21.bmp
