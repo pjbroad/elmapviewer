@@ -1,4 +1,4 @@
-.TH ELMAPVIEWER 6 "March 2006" "elmapviewer-0.2" "Eternal Lands Map Viewer"
+.TH ELMAPVIEWER 6 "April 2006" "elmapviewer-0.2" "Eternal Lands Map Viewer"
 
 .SH NAME
 elmapviewer - A map viewer for the Eternal Lands MMORPG
@@ -18,16 +18,27 @@ suits my personal use and I release it in the hope it may  be useful to others.
 I am not a Python or Pygame expert as I think you can tell from the code :)
 
 .SH Map link information
-The map links are defined in the mapdatafile included in the source archive. For
-each map, the size, type and parent map are specified using the form <filename>:
-<game x size> <game y size> <type ie - or PK> <parent map filename>.  The sizes
-correspond to the max coordinates viewable on the map inside the game.  Any lines
-following this initial line, until the next map name line, define links to other
-maps.  The format of these link lines is <top left x> <top left y> <width>
-<height> <filename of map top link>.  The coordinates and sizes are related to
-the actual size of the map image file.  You can get this information by right
-clicking on a map, first the top left corned, second the botton right corner. 
-A cyan box will be drawn and the coordinates and size printed on the status line.
+The map links are defined in the mapdata file included in the source archive.
+For each map, the size, type and parent map are specified using the form
+<filename>: <game x size> <game y size> <type ie - or PK> <parent map
+filename>.  The sizes correspond to the maximum coordinates viewable on the
+map inside the game.  Any lines following this initial line, until the next
+map name line, define links to other maps.  The format of these link lines is
+<top left x> <top left y> <width> <height> <filename of map to link to>.  The
+coordinates and sizes are related to the actual size of the map image file. 
+You can get this information by right clicking on a map, first the top left
+corner, second the bottom right corner.  A cyan box will be drawn and the
+coordinates and size printed on the status line.
+
+.SH User Map link information
+Using the same syntax as the main map file, the user map link information file
+~/.elmapviewer.usermapdata can optionally provide addition links.  This file
+is included to allow private links to be stored.  For example if you find a
+secret location and don't want to spoil the joy of discovery for other
+people.  You can add new maps and add more links to existing maps.  For
+existing maps defined in the main map file, you do not need to repeat the
+existing links or map information.  Just add a line with <map name>: and lines
+with link box coordinates and the map to link to.
 
 .SH OPTIONS
 .TP
@@ -38,7 +49,7 @@ directory.  An example rc file is provided with the code and will be copied to
 your home directory when you first run the viewer.
 
 .TP
-Two values in the resource file should be checked/modified :-
+At least three values in the resource file should be checked/modified :-
 
 .TP 5
 .I mapdir
@@ -47,6 +58,10 @@ Specifies the directory for the Eternal Lands maps.
 .TP 5
 .I userdir
 Specifies the directory for the users EL settings.
+
+.TP 5
+.I editor
+Specified the full path to your favourite text editor.
 
 .SH COPYRIGHT
 Copyright 2006 Paul Broadhead. This is free software; see the source for
