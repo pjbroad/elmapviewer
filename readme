@@ -1,8 +1,11 @@
 Eternal Lands Map Viewer http://www.eternal-lands.com/
 ======================================================
 
-Written by Paul Broadhead, download from source forge
-http://elmapviewer.sourceforge.net/
+Written by Paul Broadhead (elmapviewer@twinmoons.clara.co.uk) and published
+using the GPL licience (see the gpl.txt file provided). Download the latest
+version from source forge http://elmapviewer.sourceforge.net/ or use CVS to
+get the cutting edge version.  The code is written and tested on GNU/Linux
+but may work on other systems that can run python and pygame.
 
 Requires python http://www.python.org/ and pygame http://www.pygame.org/
 
@@ -10,4 +13,7 @@ Read the man page using man -l elmapviewer.6
 
 Run using ./elmapviewer.py
 
-Read the code and make it better...
+In your configuration file, make sure you check the "mapdir", "userdir" and
+"editor" options as these are bound to be different on you system.
+
+Read the code and make it better... Let me know what you think...
