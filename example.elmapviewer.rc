@@ -8,3 +8,7 @@ fullscreen = 0
 boxesOn = 1
 marksOn = 1
 editor = $EDITOR
+markfontsize = 20
+statusfontsize = 25
+mainborderx = 21
+mainbordery = 5
