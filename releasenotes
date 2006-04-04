@@ -1,0 +1,11 @@
+2006-04-04 version 0.2
+  More maps and map links.
+  New Status line with coordinate display.
+  More options in resource file.
+  Don't hold onto audio device.
+  New user (additional) mapdata file ~/.elmapviewer.usermapdata
+  If named map not available, a blank window is used.
+  User marks display even if no map scale provided.
+
+2006-03-07 version 0.1
+  First release.
