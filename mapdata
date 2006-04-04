@@ -4,9 +4,6 @@
 # mapfilename: coord-x coord-y [type]
 # <top left x> <top left y> <bottom right x> <bottom right y> <destination map>
 
-# test, comment out before release;)
-#xyx: 0 0 - seridia.bmp
-
 startmap.bmp: 192 192 - seridia.bmp
 35 395 60 30 map2.bmp
 
@@ -66,7 +63,6 @@ map6nf.bmp: 384 384 - seridia.bmp
 4 88 96 40 map15f.bmp
 180 400 20 20 map3.bmp
 180 423 20 20 map9f.bmp
-101 308 24 20 map6nf_cave.bmp
 485 275 20 20 map6nf_cave.bmp
 
 map6nf_cave.bmp: 192 192 - map6nf.bmp
@@ -102,7 +98,7 @@ map13.bmp: 192 192 - seridia.bmp
 408 337 84 31 map12.bmp
 221 27 102 43 map14f.bmp
 
-map14f.bmp: 192 192 - seridia.bmp
+map14f.bmp: 192 192 PK seridia.bmp
 359 220 118 26 map5nf.bmp
 228 408 122 58 map13.bmp
 33 379 99 28 map3.bmp
@@ -111,7 +107,7 @@ map15f.bmp: 384 384 PK seridia.bmp
 393 110 109 35 map3.bmp
 429 431 71 30 map6nf.bmp
 
-cave1.bmp: 192 192 - seridia.bmp
+cave1.bmp: 192 192 - map3.bmp
 38 23 52 33 map3.bmp
 437 61 36 39 map3.bmp
 
@@ -120,15 +116,14 @@ cave1.bmp: 192 192 - seridia.bmp
 map2_insides.bmp: 384 384 - map2.bmp
 map2_insidescastle.bmp: 768 768 - map2.bmp
 map5nf_insides.bmp: 192 192 - map5nf.bmp
-
 map7_cave.bmp: 192 192 - map7.bmp
-map7_insides.bmp: 1000 1000 - map7.bmp
+map7_insides.bmp: 384 384 - map7.bmp
 map8_catacombs.bmp: 192 192 - map8.bmp
 map11_crypt.bmp: 1000 1000 - map11.bmp
-map11_insides.bmp: 1000 1000 - map11.bmp
-map11_insmsch.bmp: 1000 1000 - map11.bmp
+map11_insides.bmp: 384 384 - map11.bmp
+map11_insmsch.bmp: 384 384 - map11.bmp
 map11_mschcave.bmp: 1000 1000 - map11.bmp
-map11_mschgar.bmp: 1000 1000 - map11.bmp
+map11_mschgar.bmp: 192 192 - map11.bmp
 map12_cave.bmp: 192 192 - map12.bmp
 
 
@@ -156,7 +151,9 @@ irilion.bmp:
 300 330 90 90 cont2map24.bmp
 
 cont2map1.bmp: 768 768 - irilion.bmp
-92 311 42 39 anitora.bmp
+100 315 20 15 anitora.bmp
+100 330 20 15 cont2map22.bmp
+100 345 20 15 cont2map16.bmp
 429 139 65 43 cont2map2.bmp
 345 467 88 40 cont2map9.bmp
 197 465 117 42 cont2map8.bmp
@@ -184,8 +181,10 @@ cont2map9.bmp: 384 384 PK irilion.bmp
 411 7 89 50 cont2map5.bmp
 
 cont2map13.bmp: 192 192 - irilion.bmp
+155 380 40 25 cont2map24.bmp
 
 cont2map16.bmp: 384 384 - irilion.bmp
+235 455 49 30 cont2map1.bmp
 
 cont2map17.bmp: 192 192 - irilion.bmp
 
@@ -194,15 +193,18 @@ cont2map18.bmp: 192 192 - irilion.bmp
 5 24 73 33 cont2map23.bmp
 116 14 79 38 cont2map24.bmp
 
-cont2map19.bmp: 192 192 - irilion.bmp
+cont2map19.bmp: 192 192 PK irilion.bmp
 127 12 87 41 cont2map24.bmp
 9 258 65 36 cont2map18.bmp
 
 cont2map20.bmp: 192 192 - irilion.bmp
 
-cont2map21.bmp: 384 384 - irilion.bmp
+cont2map21.bmp: 384 384 PK irilion.bmp
+90 200 30 25 cont2map24.bmp
 
 cont2map22.bmp: 768 768 - irilion.bmp
+90 50 20 20 cont2map24.bmp
+115 65 20 20 cont2map1.bmp
 411 47 78 39 cont2map23.bmp
 
 cont2map23.bmp: 384 384 - irilion.bmp
@@ -211,20 +213,79 @@ cont2map23.bmp: 384 384 - irilion.bmp
 419 370 69 38 cont2map18.bmp
 
 cont2map24.bmp: 384 384 - irilion.bmp
+310 40 20 25 cont2map13.bmp
+330 40 20 25 cont2map21.bmp
+350 40 20 25 cont2map22.bmp
 41 275 65 30 cont2map23.bmp
 372 460 68 42 cont2map19.bmp
 
 # extra maps from http://www.el-cel.com/info/maps.php?Set=Irilion
-cont2map1_caves.bmp: 1000 1000 cont2map1.bmp
-cont2map1_mine.bmp: 1000 1000 cont2map1.bmp
-cont2map2_cave.bmp: 1000 1000 cont2map5.bmp
-cont2map5_underground.bmp: 1000 1000 cont2map5.bmp
-cont2map18_caves.bmp: 1000 1000 cont2map18.bmp
-cont2map18_insides.bmp: 1000 1000 cont2map18.bmp
-cont2map19.bmp: 1000 1000 cont2map19.bmp
-cont2map21_maze1.bmp: 1000 1000 cont2map21.bmp
-cont2map21_maze2.bmp: 1000 1000 cont2map21.bmp
-cont2map21_maze3.bmp: 1000 1000 cont2map21.bmp
-cont2map22.bmp: 1000 1000 cont2map22.bmp
-cont2map24_cave.bmp: 1000 1000 cont2map24.bmp
-cont2map24_insides.bmp: 1000 1000 cont2map24.bmp
+cont2map1_caves.bmp: 1000 1000 - cont2map1.bmp
+cont2map1_mine.bmp: 1000 1000 - cont2map1.bmp
+cont2map2_cave.bmp: 1000 1000 - cont2map5.bmp
+cont2map5_underground.bmp: 1000 1000 - cont2map5.bmp
+cont2map18_caves.bmp: 768 768 - cont2map18.bmp
+cont2map18_insides.bmp: 192 192 - cont2map18.bmp
+cont2map21_maze1.bmp: 1000 1000 - cont2map21.bmp
+cont2map21_maze2.bmp: 1000 1000 - cont2map21.bmp
+cont2map21_maze3.bmp: 1000 1000 - cont2map21.bmp
+cont2map24_cave.bmp: 384 384 - cont2map24.bmp
+cont2map24_insides.bmp: 768 768 - cont2map24.bmp
+
+# no map available but can still set markers
+dream_temple.bmp: 1000 1000 - seridia.bmp
+guildmap_co.bmp: 1000 1000 - seridia.bmp
+guildmap_lnx.bmp: 1000 1000 - seridia.bmp
+guildmap_segv.bmp: 1000 1000 - seridia.bmp
+cave2.bmp: 96 96 - map3.bmp
+cave3.bmp: 96 96 - map12.bmp
+map2_cave.bmp: 1000 1000 - map2.bmp
+map2_insides_backup.bmp: 1000 1000 - map2.bmp
+map3_insides.bmp: 192 192 - map3.bmp
+map6nf_insides.bmp: 384 384 - map6nf.bmp
+map8_insides.bmp: 96 96 - map8.bmp
+map9f_insides.bmp: 1000 1000 - map9f.bmp
+map13_castle.bmp: 1000 1000 - map13.bmp
+map13_insides.bmp: 1000 1000 - map13.bmp
+maparena1.bmp: 1000 1000 - seridia.bmp
+mapnewbie.bmp: 1000 1000 - seridia.bmp
+mapnewbie_insides.bmp: 1000 1000 - seridia.bmp
+mapportalroom.bmp: 1000 1000 - seridia.bmp
+mapunderworld1.bmp: 1000 1000 - startmap.bmp
+mine1.bmp: 1000 1000 - seridia.bmp
+misc1.bmp: 192 192 - seridia.bmp
+neo.bmp: 1000 1000 - seridia.bmp
+newcharactermap.bmp: 1000 1000 - seridia.bmp
+nomap.bmp: 1000 1000 - seridia.bmp
+startmap_insides.bmp: 96 96 - startmap.bmp
+testermap.bmp: 1000 1000 - seridia.bmp
+Vincet.bmp: 1000 1000 - seridia.bmp
+Vincet_side.bmp: 1000 1000 - seridia.bmp
+c2_docks_seridia.bmp: 96 96 - map2.bmp
+c2_docks_irillion.bmp: 96 96 - anitora.bmp
+c2_portalsroom.bmp: 1000 1000 - irilion.bmp
+c2_underworld.bmp: 1000 1000 - cont2map1.bmp
+cont2map1_insides.bmp: 1000 1000 - cont2map1.bmp
+cont2map2_insides.bmp: 1000 1000 - cont2map2.bmp
+cont2map2_misc.bmp: 1000 1000 - cont2map2.bmp
+cont2map3_insides.bmp: 1000 1000 - cont2map3.bmp
+cont2map5_caves.bmp: 1000 1000 - cont2map5.bmp
+cont2map5_insides.bmp: 1000 1000 - cont2map5.bmp
+cont2map8_cave.bmp: 1000 1000 - cont2map8.bmp
+cont2map8_insides.bmp: 1000 1000 - cont2map8.bmp
+cont2map9_insides.bmp: 1000 1000 - cont2map9.bmp
+cont2map9_temple.bmp: 1000 1000 - cont2map9.bmp
+cont2map13_temple.bmp: 1000 1000 - cont2map13.bmp
+cont2map16_insides.bmp: 1000 1000 - cont2map16.bmp
+cont2map16_mountains.bmp: 1000 1000 - cont2map16.bmp
+cont2map17_crypt.bmp: 1000 1000 - cont2map17.bmp
+cont2map17_insides.bmp: 1000 1000 - cont2map17.bmp
+cont2map20_insides.bmp: 1000 1000 - cont2map20.bmp
+cont2map21_caves.bmp: 1000 1000 - cont2map21.bmp
+cont2map21_maze4.bmp: 1000 1000 - cont2map21.bmp
+cont2map21_maze5.bmp: 1000 1000 - cont2map21.bmp
+cont2map21_maze6.bmp: 1000 1000 - cont2map21.bmp
+cont2map22_caves.bmp: 1000 1000 - cont2map22.bmp
+cont2map22_insides.bmp: 384 384 - cont2map22.bmp
+cont2map23_insides.bmp: 384 384 - cont2map23.bmp
+
