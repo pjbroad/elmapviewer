@@ -39,7 +39,7 @@
 
 import sys, pygame, string, os, shutil
 
-version = 'V0.2 Mar 2006'
+version = 'v0.2 April 2006'
 
 # define some basic colours
 blackcolour = 0, 0, 0
@@ -55,11 +55,9 @@ othermapcolour = greencolour
 markcolour = 179, 238,  58
 markcrosscolour = whitecolour
 boxcolour = 58, 95, 205
+pkboxcolour = redcolour
 testboxcolour = cyancolour
 helpcolour = 205, 190, 112
-# misc consts
-fontsize = 21
-mainborder = (10, 10)
 
 # expand ~ and environ vars
 def expandfilename(filename):
@@ -67,44 +65,46 @@ def expandfilename(filename):
   filename = os.path.expandvars(filename)
   return filename
 
-# read map information from the resource file
+# read map information from the map data files
 # links, names, sizes, types
-def readinfo(fname):
+def readinfo(fname, userfname):
   mapinfo = {}
   mapscale = {}
   maptype = {}
   bigmap = {}
   allmaps = []
-  fid = open(fname, 'r')
-  mapinfolines = fid.readlines()
-  currmapname = ''
-  for line in mapinfolines:
-    if line != '\n' and line[0] != "#":
-      w = line.split()
-      # new map uses line format "filename: sizeX sizeY [type]"
-      if len(w) > 1 and w[1] == '=':
-        continue;
-      if w[0][len(w[0])-1] == ":":
-        currmapname = w[0][:len(w[0])-1]
-        allmaps.append(currmapname)
-        if len(w) > 2:
-          mapscale[currmapname] = (int(w[1]), int(w[2]))
-        if len(w) > 3:
-          maptype[currmapname] = w[3]
-        if len(w) > 4:
-          bigmap[currmapname] = w[4]
-      # link line format "tlX tlR width height <link map name>"
-      else:
-        newlink = (((int(w[0]), int(w[1]), int(w[2]), int(w[3])),w[4]),)
-        if mapinfo.has_key(currmapname):
-          mapinfo[currmapname] += newlink
-        else:
-          mapinfo[currmapname] = newlink
-  for mapname in allmaps:
-    if not mapinfo.has_key(mapname):
-      newlink = (((0, 0, 0, 0),''),)
-      mapinfo[mapname] = newlink
-  fid.close()
+  for maplinkfile in (fname, userfname):
+    if os.access(maplinkfile, os.R_OK):
+      fid = open(maplinkfile, 'r')
+      mapinfolines = fid.readlines()
+      currmapname = ''
+      for line in mapinfolines:
+        if line != '\n' and line[0] != "#":
+          w = line.split()
+          # new map uses line format "filename: sizeX sizeY [type]"
+          if len(w) > 1 and w[1] == '=':
+            continue;
+          if w[0][len(w[0])-1] == ":":
+            currmapname = w[0][:len(w[0])-1]
+            allmaps.append(currmapname)
+            if len(w) > 2:
+              mapscale[currmapname] = (int(w[1]), int(w[2]))
+            if len(w) > 3:
+              maptype[currmapname] = w[3]
+            if len(w) > 4:
+              bigmap[currmapname] = w[4]
+          # link line format "tlX tlR width height <link map name>"
+          else:
+            newlink = (((int(w[0]), int(w[1]), int(w[2]), int(w[3])),w[4]),)
+            if mapinfo.has_key(currmapname):
+              mapinfo[currmapname] += newlink
+            else:
+              mapinfo[currmapname] = newlink
+      for mapname in allmaps:
+        if not mapinfo.has_key(mapname):
+          newlink = (((0, 0, 0, 0),''),)
+          mapinfo[mapname] = newlink
+      fid.close()
   return mapinfo, mapscale, maptype, bigmap
 
 # read program variables from the resource file
@@ -116,6 +116,9 @@ def readvars(fname):
   boxesOn = True
   marksOn = True
   editor = '$EDITOR'
+  markfontsize = 21
+  statusfontsize = 21
+  mainborder = [10, 10]
   # create a defaul rc file if none exists
   if not os.access(fname, os.R_OK):
     srcfile = os.path.dirname(sys.argv[0]) + '/example.elmapviewer.rc'
@@ -148,8 +151,16 @@ def readvars(fname):
           marksOn = bool(int(w[2]))
         if w[0] == 'editor':
           editor = expandfilename(w[2])
+        if w[0] == 'markfontsize':
+          markfontsize = int(w[2])
+        if w[0] == 'statusfontsize':
+          statusfontsize = int(w[2])
+        if w[0] == 'mainborderx':
+          mainborder[0] = int(w[2])
+        if w[0] == 'mainbordery':
+          mainborder[1] = int(w[2])
   fid.close()
-  return mapdir, userdir, scale, fullscreen, boxesOn, marksOn, editor
+  return mapdir, userdir, scale, fullscreen, boxesOn, marksOn, editor, markfontsize, statusfontsize, mainborder
 
 # get the name of the next map in the list
 def nextmap(mapinfo, currmap, inc):
@@ -163,7 +174,7 @@ def nextmap(mapinfo, currmap, inc):
   return mapnames[next]
  
 # general text surface maker
-def textmake(thetext, colour, scale ):
+def textmake(thetext, colour, scale, fontsize ):
   font = pygame.font.Font(None, int(fontsize*scale))
   text = font.render(thetext, 1, colour)
   textrec = text.get_rect()
@@ -175,24 +186,18 @@ def textmove(x, y, text, textrec ):
     textrec = textrec.move(xymove)
     return textrec
 
-# general text line function
-def helptextline(helpsurface, scale, lineoffset, thestring, colour=helpcolour):
-  text, textrec, linespace = textmake(thestring, colour, scale)
-  textrec = textmove(0,lineoffset, text, textrec ) 
-  helpsurface.blit(text,textrec)
-  lineoffset += linespace
-  return lineoffset
-
 # draw the status line including the current map name
-def updatestatusline(screen, scale, coordwidth, mapname, statustext):
+def updatestatusline(screen, scale, coordwidth, mapname, statustext, statusfontsize):
   # colour code PK maps
+  extrastat = ''
   if maptype.has_key(mapname) and maptype[mapname] == 'PK':
     colour = pkmapcolour
+    extrastat = ' (PK)'
   else:
     colour = othermapcolour
   # get the text surface
-  fulltext = mapname + ':  ' + statustext
-  statusline, rec, linesize = textmake(fulltext, colour, scale)
+  fulltext = mapname + extrastat + ':  ' + statustext
+  statusline, rec, linesize = textmake(fulltext, colour, scale, statusfontsize)
   # and move to its in screen location
   xymove = [coordwidth, screen.get_size()[1] - statusline.get_size()[1]]
   statusrect = rec.move(xymove)
@@ -205,9 +210,10 @@ def updatestatusline(screen, scale, coordwidth, mapname, statustext):
   pygame.display.update(blankrec)
   return
   
-def updatecoord(screen, scale, coordwidth, coordtext):
+# clear and redraw the map coords
+def updatecoord(screen, scale, coordwidth, coordtext, statusfontsize):
   # get the text and move to its in screen location
-  coords, rec, linesize = textmake(coordtext, whitecolour, scale)
+  coords, rec, linesize = textmake(coordtext, whitecolour, scale, statusfontsize)
   xymove = [0, screen.get_size()[1] - coords.get_size()[1]]
   rect = rec.move(xymove)
   # as we're not doing a full screen update, we need to clear old text
@@ -218,16 +224,26 @@ def updatecoord(screen, scale, coordwidth, coordtext):
   screen.blit(coords, rect)
   pygame.display.update(blankrec)
 
+# general text line function
+def helptextline(helpsurface, scale, lineoffset, thestring, colour=helpcolour):
+  helpfontsize = 21
+  text, textrec, linespace = textmake(thestring, colour, scale, helpfontsize)
+  textrec = textmove(0,lineoffset, text, textrec ) 
+  helpsurface.blit(text,textrec)
+  lineoffset += linespace
+  return lineoffset
+
 # generate the help information surface
 def drawhelp(scale):
   helpsurface = pygame.Surface((int(128*scale),int(256*scale)))
-  lineoffset = helptextline(helpsurface, scale, 0, 'EL Map Viewer')
+  lineoffset = 0
   lineoffset = helptextline(helpsurface, scale, lineoffset, " i/o - zoom in/out")
   lineoffset = helptextline(helpsurface, scale, lineoffset, " f - full screen")
   lineoffset = helptextline(helpsurface, scale, lineoffset, " b - toggle boxes")
   lineoffset = helptextline(helpsurface, scale, lineoffset, ' l - edit links')
   lineoffset = helptextline(helpsurface, scale, lineoffset, " m - toggle marks")
   lineoffset = helptextline(helpsurface, scale, lineoffset, " e - edit marks")
+  lineoffset = helptextline(helpsurface, scale, lineoffset, " c - edit config")
   lineoffset = helptextline(helpsurface, scale, lineoffset, " r - reload data")
   lineoffset = helptextline(helpsurface, scale, lineoffset, " home - Isla Prima")
   lineoffset = helptextline(helpsurface, scale, lineoffset, " bs - back a map")
@@ -235,7 +251,6 @@ def drawhelp(scale):
   lineoffset = helptextline(helpsurface, scale, lineoffset, " l-click select")
   lineoffset = helptextline(helpsurface, scale, lineoffset, " r-click draw box")
   lineoffset = helptextline(helpsurface, scale, lineoffset, " ESC - exit")
-  lineoffset = helptextline(helpsurface, scale, lineoffset, version)
   return helpsurface
 
 # read the users map marks, coords and text
@@ -253,7 +268,7 @@ def readmapmarkers(userdir, currmap):
   return markers
 
 # display the users map marks
-def displaymarkers(markers, thismapscale, screen, mapxoffset, mapsize, scale, statustext):
+def displaymarkers(markers, thismapscale, screen, mapxoffset, mapsize, scale, statustext, markfontsize):
   if thismapscale[0] == 1000 or thismapscale[1] == 1000:
     statustext += 'Unknown scale, markers offset. '
   elif thismapscale[0] == 0 or thismapscale[1] == 0:
@@ -262,7 +277,7 @@ def displaymarkers(markers, thismapscale, screen, mapxoffset, mapsize, scale, st
   for mark in markers:
     x = mapxoffset + (mark[0][0] * mapsize[0] / thismapscale[0])
     y = (thismapscale[1] - mark[0][1]) * mapsize[1] / thismapscale[1]
-    text, textrec, linespace = textmake(mark[1], markcolour, scale)
+    text, textrec, linespace = textmake(mark[1], markcolour, scale, markfontsize)
     textrec = textmove(x, y, text, textrec )
     pygame.draw.line(screen, markcrosscolour, (x-5, y), (x+5, y), 1)
     pygame.draw.line(screen, markcrosscolour, (x, y-5), (x, y+5), 1)
@@ -280,7 +295,7 @@ pygame.init()
 pygame.mixer.quit()
 
 # set default window title and cursor type
-pygame.display.set_caption("Eternal Lands Map Viewer", "elmapviewer")
+pygame.display.set_caption("Eternal Lands Map Viewer  - "+version, "elmapviewer")
 pygame.mouse.set_cursor(*pygame.cursors.arrow)
 
 # get the resource file name and read the data
@@ -291,9 +306,10 @@ else:
 rcfile = expandfilename(rcfile)
 
 mapdatafile = os.path.dirname(sys.argv[0]) + '/mapdata'
+usermapdatafile = expandfilename('~/.elmapviewer.usermapdata')
 
-mapdir, userdir, scale, fullscreen, boxesOn, marksOn, editor = readvars(rcfile)
-mapinfo, mapscale, maptype, bigmap = readinfo(mapdatafile)
+mapdir, userdir, scale, fullscreen, boxesOn, marksOn, editor, markfontsize, statusfontsize, mainborder = readvars(rcfile)
+mapinfo, mapscale, maptype, bigmap = readinfo(mapdatafile, usermapdatafile)
   
 normalcursor = True           # holds current cursor state, set to alternative when over links
 mainmapname = 'startmap.bmp'  # the map about to be displayed
@@ -310,7 +326,7 @@ mapxoffset = 0                # X offset of main map in pixels, calculated later
 screensize = (0,0)            # current screen size, calculates from map sizes and scale
 
 coordwidth = 0;
-coordtext = '000,000'         # in game map coords, show at bottm left of window
+coordtext = ''                # in game map coords, show at bottm left of window
 lastcoordtext = '-'
 
 statustext = ''               # status text shown at bottom of window with map name
@@ -379,8 +395,8 @@ while 1:
       mainmaprect = mainmap.get_rect()
       
       # update font related sizes
-      coordwidth = pygame.font.Font(None, int(fontsize*scale)).size('000,000  ')[0]
-      statusheight = pygame.font.Font(None, int(fontsize*scale)).get_height()
+      coordwidth = pygame.font.Font(None, int(statusfontsize*scale)).size('000,000  ')[0]
+      statusheight = pygame.font.Font(None, int(statusfontsize*scale)).get_height()
       
       # get the screen size
       lastscreensize = screensize
@@ -423,14 +439,19 @@ while 1:
         cursorbox = pygame.Rect(rectcoord)
         cursorbox = cursorbox.move(mainmapmove)
         if boxesOn:
-          pygame.draw.rect(screen, boxcolour, cursorbox, 2)
+          if maptype.has_key(hp[1]) and maptype[hp[1]] == 'PK':
+            colour = pkboxcolour
+          else:
+            colour = boxcolour
+          pygame.draw.rect(screen, colour, cursorbox, 2)
         hotspot.append((cursorbox, hp[1]))
        
       # if user marks are enables, draw them on the main main
       if marksOn:
         markers = readmapmarkers(userdir, mainmapname)
         if mapscale.has_key(mainmapname):
-          statustext = displaymarkers(markers, mapscale[mainmapname], screen, mapxoffset, mainmapsize, scale, statustext)
+          statustext = displaymarkers(markers, mapscale[mainmapname], screen, \
+            mapxoffset, mainmapsize, scale, statustext, markfontsize)
       
       # draw the new display
       pygame.display.flip()
@@ -442,12 +463,12 @@ while 1:
       
     # update the status line if it changes
     if laststatustext != statustext:
-      updatestatusline(screen, scale, coordwidth, mainmapname, statustext)
+      updatestatusline(screen, scale, coordwidth, mainmapname, statustext, statusfontsize)
       laststatustext = statustext
 
-    # update the coordinate line if its changes
+    # update the coordinate line if it changes
     if lastcoordtext != coordtext:
-      updatecoord(screen, scale, coordwidth, coordtext)
+      updatecoord(screen, scale, coordwidth, coordtext, statusfontsize)
       lastcoordtext = coordtext
 
     # get an event from the window
@@ -473,8 +494,8 @@ while 1:
           pygame.mouse.set_cursor(*pygame.cursors.arrow)
           normalcursor = True
       # update the coordinate display
-      if mapscale.has_key(mainmapname) and pygame.mouse.get_pos()[0] > mapxoffset and \
-       pygame.mouse.get_pos()[1] < mainmapsize[1] and pygame.mouse.get_pos()[0] < mainmapsize[0] + mapxoffset:
+      if mapscale.has_key(mainmapname) and mainmaprect.collidepoint(pygame.mouse.get_pos()) \
+       and mapscale[mainmapname][0] != 1000 and mapscale[mainmapname][1]:
         mousexy = pygame.mouse.get_pos()
         x = int((float(mousexy[0]-mapxoffset) / mainmapsize[0] * mapscale[mainmapname][0]))
         y = int(mapscale[mainmapname][1] - (float(mousexy[1]) / mainmapsize[1] * mapscale[mainmapname][1]))
@@ -485,11 +506,10 @@ while 1:
     # if a mouse button is pressed....
     elif event.type == pygame.MOUSEBUTTONDOWN:
       # if sidemap left-clicked, switch side and main maps
-      if pygame.mouse.get_pressed()[0] and pygame.mouse.get_pos()[0] < mapxoffset:
-        if sidemaprect.collidepoint(pygame.mouse.get_pos()):
-          temp = sidemapname
-          sidemapname = mainmapname
-          mainmapname = temp
+      if pygame.mouse.get_pressed()[0] and sidemaprect.collidepoint(pygame.mouse.get_pos()):
+        temp = sidemapname
+        sidemapname = mainmapname
+        mainmapname = temp
             
       # if main map left-click, check for map link
       if pygame.mouse.get_pressed()[0] and pygame.mouse.get_pos()[0] > mapxoffset:
@@ -555,7 +575,7 @@ while 1:
         
       # l - edit map links
       elif event.key == pygame.K_l:
-        os.spawnv(os.P_NOWAIT, editor, (editor, mapdatafile))
+        os.spawnv(os.P_NOWAIT, editor, (editor, mapdatafile, usermapdatafile))
 
       # m - toggle display of user marks
       elif event.key == pygame.K_m:
@@ -567,9 +587,13 @@ while 1:
         makersfile = userdir + string.replace(mainmapname,'.bmp','.elm.txt',1)
         os.spawnv(os.P_NOWAIT, editor, (editor, makersfile))
 
+      # c - edit user config
+      elif event.key == pygame.K_c:
+        os.spawnv(os.P_NOWAIT, editor, (editor, rcfile))
+
       # r - redisplay map, rereading all user data
       elif event.key == pygame.K_r:
-        mapinfo, mapscale, maptype, bigmap = readinfo(mapdatafile)
+        mapinfo, mapscale, maptype, bigmap = readinfo(mapdatafile, usermapdatafile)
         lastmap = ''
         
       # home key, go to games start map
