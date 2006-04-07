@@ -1,0 +1,15 @@
+# anything starting with # ignored
+
+# anything word = .... treaded as program variable
+mapdir = C:\Program Files\Eternal Lands\maps\
+userdir = C:\Program Files\Eternal Lands\
+scale = 1.0
+fullscreen = 0
+boxesOn = 1
+marksOn = 1
+editor = c:\progra~1\access~1\wordpad.exe
+markfontsize = 20
+statusfontsize = 25
+mainborderx = 21
+mainbordery = 5
+
