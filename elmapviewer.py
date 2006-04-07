@@ -39,7 +39,7 @@
 
 import sys, pygame, string, os, shutil
 
-version = 'v0.2 April 2006'
+version = 'v0.2-1 April 2006'
 
 # define some basic colours
 blackcolour = 0, 0, 0
@@ -129,14 +129,16 @@ def readvars(fname):
   mapinfolines = fid.readlines()
   for line in mapinfolines:
     if line != '\n' and line[0] != '#':
-      w = line.split()
+      w = line.split(None,2)
       # variable line format name = value
-      if len(w) > 1 and w[1] == '=':
+      if len(w) > 2 and w[1] == '=':
+        w[2] = w[2].rstrip()
         # location of EL maps
         if w[0] == 'mapdir':
           mapdir = expandfilename(w[2])
           if not os.access(mapdir, os.R_OK):
             print 'Please set the mapdir option in your rc file: ' + rcfile
+            print 'Current value [' + mapdir + ']'
             sys.exit(-1)
         # location of user map information
         if w[0] == 'userdir':
@@ -256,9 +258,9 @@ def drawhelp(scale):
 # read the users map marks, coords and text
 def readmapmarkers(userdir, currmap):
   markers = []
-  makersfile = userdir + string.replace(currmap,'.bmp','.elm.txt',1)
-  if os.access(makersfile, os.R_OK):
-    fid = open(makersfile, 'r')
+  markersfile = userdir + string.replace(currmap,'.bmp','.elm.txt',1)
+  if os.access(markersfile, os.R_OK):
+    fid = open(markersfile, 'r')
     markerlines = fid.readlines()
     for line in markerlines:
       w = line.split()
@@ -305,7 +307,7 @@ else:
   rcfile = '~/.elmapviewer.rc'
 rcfile = expandfilename(rcfile)
 
-mapdatafile = os.path.dirname(sys.argv[0]) + '/mapdata'
+mapdatafile = os.path.dirname(sys.argv[0]) + os.sep + 'mapdata'
 usermapdatafile = expandfilename('~/.elmapviewer.usermapdata')
 
 mapdir, userdir, scale, fullscreen, boxesOn, marksOn, editor, markfontsize, statusfontsize, mainborder = readvars(rcfile)
@@ -584,8 +586,8 @@ while 1:
 
       # e - edit user marks in external editor
       elif event.key == pygame.K_e:
-        makersfile = userdir + string.replace(mainmapname,'.bmp','.elm.txt',1)
-        os.spawnv(os.P_NOWAIT, editor, (editor, makersfile))
+        markersfile = '"' + userdir + string.replace(mainmapname,'.bmp','.elm.txt',1) + '"'
+        os.spawnv(os.P_NOWAIT, editor, (editor, markersfile))
 
       # c - edit user config
       elif event.key == pygame.K_c:
