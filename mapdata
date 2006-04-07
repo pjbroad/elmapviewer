@@ -246,7 +246,7 @@ map2_insides_backup.bmp: 1000 1000 - map2.bmp
 map3_insides.bmp: 192 192 - map3.bmp
 map6nf_insides.bmp: 384 384 - map6nf.bmp
 map8_insides.bmp: 96 96 - map8.bmp
-map9f_insides.bmp: 1000 1000 - map9f.bmp
+map9f_insides.bmp: 192 192 - map9f.bmp
 map13_castle.bmp: 1000 1000 - map13.bmp
 map13_insides.bmp: 1000 1000 - map13.bmp
 maparena1.bmp: 1000 1000 - seridia.bmp
