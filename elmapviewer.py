@@ -37,7 +37,7 @@
 # Debian GNU/Linux: http://www.debian.org/
 # Ubuntu: http://www.ubuntu.com/
 
-import sys, pygame, string, os, shutil
+import sys, pygame, string, os, shutil, platform
 
 version = 'v0.2-1 April 2006'
 
@@ -586,7 +586,10 @@ while 1:
 
       # e - edit user marks in external editor
       elif event.key == pygame.K_e:
-        markersfile = '"' + userdir + string.replace(mainmapname,'.bmp','.elm.txt',1) + '"'
+        if platform.system() == 'Windows':
+          markersfile = '"' + userdir + string.replace(mainmapname,'.bmp','.elm.txt',1) + '"'
+        else:
+          markersfile = userdir + string.replace(mainmapname,'.bmp','.elm.txt',1)
         os.spawnv(os.P_NOWAIT, editor, (editor, markersfile))
 
       # c - edit user config
