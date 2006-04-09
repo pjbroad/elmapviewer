@@ -1,3 +1,7 @@
+2006-04-09 version 0.2.1
+  Modified file loading to work on windows too.
+  Added windows .bat file and readme
+
 2006-04-04 version 0.2
   More maps and map links.
   New Status line with coordinate display.
