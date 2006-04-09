@@ -39,7 +39,7 @@
 
 import sys, pygame, string, os, shutil, platform
 
-version = 'v0.2-1 April 2006'
+version = 'v0.2.1 April 2006'
 
 # define some basic colours
 blackcolour = 0, 0, 0
