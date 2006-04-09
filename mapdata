@@ -125,7 +125,7 @@ map11_insmsch.bmp: 384 384 - map11.bmp
 map11_mschcave.bmp: 1000 1000 - map11.bmp
 map11_mschgar.bmp: 192 192 - map11.bmp
 map12_cave.bmp: 192 192 - map12.bmp
-
+map15_cave.bmp: 192 192 PK map15f.bmp
 
 
 anitora.bmp: 384 384 - irilion.bmp
