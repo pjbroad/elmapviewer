@@ -39,7 +39,7 @@
 
 import sys, pygame, string, os, shutil, platform
 
-version = 'v0.2.1 April 2006'
+version = 'v0.2.2 April 2006'
 
 # define some basic colours
 blackcolour = 0, 0, 0
@@ -119,6 +119,7 @@ def readvars(fname):
   markfontsize = 21
   statusfontsize = 21
   mainborder = [10, 10]
+  noesc = False
   # create a defaul rc file if none exists
   if not os.access(fname, os.R_OK):
     srcfile = os.path.dirname(sys.argv[0]) + '/example.elmapviewer.rc'
@@ -161,8 +162,10 @@ def readvars(fname):
           mainborder[0] = int(w[2])
         if w[0] == 'mainbordery':
           mainborder[1] = int(w[2])
+        if w[0] == 'noesc':
+          noesc = bool(int(w[2]))
   fid.close()
-  return mapdir, userdir, scale, fullscreen, boxesOn, marksOn, editor, markfontsize, statusfontsize, mainborder
+  return mapdir, userdir, scale, fullscreen, boxesOn, marksOn, editor, markfontsize, statusfontsize, mainborder, noesc
 
 # get the name of the next map in the list
 def nextmap(mapinfo, currmap, inc):
@@ -252,7 +255,8 @@ def drawhelp(scale):
   lineoffset = helptextline(helpsurface, scale, lineoffset, " up/down - cycle")
   lineoffset = helptextline(helpsurface, scale, lineoffset, " l-click select")
   lineoffset = helptextline(helpsurface, scale, lineoffset, " r-click draw box")
-  lineoffset = helptextline(helpsurface, scale, lineoffset, " ESC - exit")
+  if not noesc:
+    lineoffset = helptextline(helpsurface, scale, lineoffset, " ESC - exit")
   return helpsurface
 
 # read the users map marks, coords and text
@@ -310,7 +314,7 @@ rcfile = expandfilename(rcfile)
 mapdatafile = os.path.dirname(sys.argv[0]) + os.sep + 'mapdata'
 usermapdatafile = expandfilename('~/.elmapviewer.usermapdata')
 
-mapdir, userdir, scale, fullscreen, boxesOn, marksOn, editor, markfontsize, statusfontsize, mainborder = readvars(rcfile)
+mapdir, userdir, scale, fullscreen, boxesOn, marksOn, editor, markfontsize, statusfontsize, mainborder, noesc = readvars(rcfile)
 mapinfo, mapscale, maptype, bigmap = readinfo(mapdatafile, usermapdatafile)
   
 normalcursor = True           # holds current cursor state, set to alternative when over links
@@ -618,6 +622,6 @@ while 1:
         mainmapname = nextmap(mapinfo, mainmapname, -1)
           
       # exit if ESC pressed
-      elif event.key == pygame.K_ESCAPE:
+      elif event.key == pygame.K_ESCAPE and not noesc:
         pygame.QUIT
         sys.exit()
