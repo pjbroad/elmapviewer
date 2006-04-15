@@ -12,3 +12,5 @@ markfontsize = 20
 statusfontsize = 25
 mainborderx = 21
 mainbordery = 5
+# option to disable esc key exit
+noesc = 0
