@@ -114,7 +114,7 @@ cave1.bmp: 192 192 - map3.bmp
 # extra maps from http://www.el-cel.com/info/maps.php?Set=Seridia
 # you need to download them to use them
 map2_insides.bmp: 384 384 - map2.bmp
-map2_insidescastle.bmp: 768 768 - map2.bmp
+map2_insidescastle.bmp: 192 192 - map2.bmp
 map5nf_insides.bmp: 192 192 - map5nf.bmp
 map7_cave.bmp: 192 192 - map7.bmp
 map7_insides.bmp: 384 384 - map7.bmp
@@ -241,13 +241,13 @@ guildmap_lnx.bmp: 1000 1000 - seridia.bmp
 guildmap_segv.bmp: 1000 1000 - seridia.bmp
 cave2.bmp: 96 96 - map3.bmp
 cave3.bmp: 96 96 - map12.bmp
-map2_cave.bmp: 1000 1000 - map2.bmp
+map2_cave.bmp: 96 96 - map2.bmp
 map2_insides_backup.bmp: 1000 1000 - map2.bmp
 map3_insides.bmp: 192 192 - map3.bmp
 map6nf_insides.bmp: 384 384 - map6nf.bmp
 map8_insides.bmp: 96 96 - map8.bmp
 map9f_insides.bmp: 192 192 - map9f.bmp
-map13_castle.bmp: 1000 1000 - map13.bmp
+map13_castle.bmp: 192 192 - map13.bmp
 map13_insides.bmp: 1000 1000 - map13.bmp
 maparena1.bmp: 1000 1000 - seridia.bmp
 mapnewbie.bmp: 1000 1000 - seridia.bmp
