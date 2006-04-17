@@ -71,14 +71,12 @@ def readinfo(fname, userfname):
   mapinfo = {}
   mapscale = {}
   maptype = {}
-  bigmap = {}
+  parentmap = {}
   allmaps = []
   for maplinkfile in (fname, userfname):
     if os.access(maplinkfile, os.R_OK):
-      fid = open(maplinkfile, 'r')
-      mapinfolines = fid.readlines()
       currmapname = ''
-      for line in mapinfolines:
+      for line in open(maplinkfile, 'r'):
         if line != '\n' and line[0] != "#":
           w = line.split()
           # new map uses line format "filename: sizeX sizeY [type]"
@@ -92,7 +90,7 @@ def readinfo(fname, userfname):
             if len(w) > 3:
               maptype[currmapname] = w[3]
             if len(w) > 4:
-              bigmap[currmapname] = w[4]
+              parentmap[currmapname] = w[4]
           # link line format "tlX tlR width height <link map name>"
           else:
             newlink = (((int(w[0]), int(w[1]), int(w[2]), int(w[3])),w[4]),)
@@ -104,8 +102,7 @@ def readinfo(fname, userfname):
         if not mapinfo.has_key(mapname):
           newlink = (((0, 0, 0, 0),''),)
           mapinfo[mapname] = newlink
-      fid.close()
-  return mapinfo, mapscale, maptype, bigmap
+  return mapinfo, mapscale, maptype, parentmap
 
 # read program variables from the resource file
 def readvars(fname):
@@ -126,9 +123,7 @@ def readvars(fname):
     dstfile = expandfilename('~/.elmapviewer.rc')
     shutil.copyfile(srcfile,dstfile)
     print 'Default ~/.elmapviewer.rc file created, you may need to change some options.'
-  fid = open(fname, 'r')
-  mapinfolines = fid.readlines()
-  for line in mapinfolines:
+  for line in open(fname, 'r'):
     if line != '\n' and line[0] != '#':
       w = line.split(None,2)
       # variable line format name = value
@@ -164,7 +159,6 @@ def readvars(fname):
           mainborder[1] = int(w[2])
         if w[0] == 'noesc':
           noesc = bool(int(w[2]))
-  fid.close()
   return mapdir, userdir, scale, fullscreen, boxesOn, marksOn, editor, markfontsize, statusfontsize, mainborder, noesc
 
 # get the name of the next map in the list
@@ -264,13 +258,10 @@ def readmapmarkers(userdir, currmap):
   markers = []
   markersfile = userdir + string.replace(currmap,'.bmp','.elm.txt',1)
   if os.access(markersfile, os.R_OK):
-    fid = open(markersfile, 'r')
-    markerlines = fid.readlines()
-    for line in markerlines:
+    for line in open(markersfile, 'r'):
       w = line.split()
       if len(w) > 2:
         markers.append(((int(w[0]),int(w[1])),string.join(w[2:])))
-    fid.close()
   return markers
 
 # display the users map marks
@@ -315,14 +306,14 @@ mapdatafile = os.path.dirname(sys.argv[0]) + os.sep + 'mapdata'
 usermapdatafile = expandfilename('~/.elmapviewer.usermapdata')
 
 mapdir, userdir, scale, fullscreen, boxesOn, marksOn, editor, markfontsize, statusfontsize, mainborder, noesc = readvars(rcfile)
-mapinfo, mapscale, maptype, bigmap = readinfo(mapdatafile, usermapdatafile)
+mapinfo, mapscale, maptype, parentmap = readinfo(mapdatafile, usermapdatafile)
   
 normalcursor = True           # holds current cursor state, set to alternative when over links
 mainmapname = 'startmap.bmp'  # the map about to be displayed
 homemap = mainmapname         # the start map
 lastmap = ''                  # the last map displayed, cleared to force redraw
 
-sidemapname = bigmap['startmap.bmp']  # the current side map
+sidemapname = parentmap[mainmapname]  # the current side map
 
 hotspot = []                  # list of links for current map
 backmap = []                  # list of previous maps visited
@@ -360,9 +351,9 @@ while 1:
       markbox = []
         
       # always restore the big map to the side map if nolonger the main map
-      if bigmap.has_key(mainmapname):
-        if sidemapname != bigmap[mainmapname]:
-          sidemapname = bigmap[mainmapname]
+      if parentmap.has_key(mainmapname):
+        if sidemapname != parentmap[mainmapname]:
+          sidemapname = parentmap[mainmapname]
           
       # get and scale the current size map surface
       if not os.access(mapdir + sidemapname, os.R_OK):
@@ -602,7 +593,7 @@ while 1:
 
       # r - redisplay map, rereading all user data
       elif event.key == pygame.K_r:
-        mapinfo, mapscale, maptype, bigmap = readinfo(mapdatafile, usermapdatafile)
+        mapinfo, mapscale, maptype, parentmap = readinfo(mapdatafile, usermapdatafile)
         lastmap = ''
         
       # home key, go to games start map
