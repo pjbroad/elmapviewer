@@ -267,7 +267,7 @@ c2_docks_seridia.bmp: 96 96 - map2.bmp
 c2_docks_irillion.bmp: 96 96 - anitora.bmp
 c2_portalsroom.bmp: 1000 1000 - irilion.bmp
 c2_underworld.bmp: 1000 1000 - cont2map1.bmp
-cont2map1_insides.bmp: 1000 1000 - cont2map1.bmp
+cont2map1_insides.bmp: 384 384 - cont2map1.bmp
 cont2map2_insides.bmp: 1000 1000 - cont2map2.bmp
 cont2map2_misc.bmp: 1000 1000 - cont2map2.bmp
 cont2map3_insides.bmp: 1000 1000 - cont2map3.bmp
