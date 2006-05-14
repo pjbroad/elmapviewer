@@ -230,28 +230,40 @@ def helptextline(helpsurface, scale, lineoffset, thestring, colour=helpcolour):
   textrec = textmove(0,lineoffset, text, textrec ) 
   helpsurface.blit(text,textrec)
   lineoffset += linespace
-  return lineoffset
+  return textrec, lineoffset
 
 # generate the help information surface
 def drawhelp(scale):
   helpsurface = pygame.Surface((int(128*scale),int(256*scale)))
   lineoffset = 0
-  lineoffset = helptextline(helpsurface, scale, lineoffset, " i/o - zoom in/out")
-  lineoffset = helptextline(helpsurface, scale, lineoffset, " f - full screen")
-  lineoffset = helptextline(helpsurface, scale, lineoffset, " b - toggle boxes")
-  lineoffset = helptextline(helpsurface, scale, lineoffset, ' l - edit links')
-  lineoffset = helptextline(helpsurface, scale, lineoffset, " m - toggle marks")
-  lineoffset = helptextline(helpsurface, scale, lineoffset, " e - edit marks")
-  lineoffset = helptextline(helpsurface, scale, lineoffset, " c - edit config")
-  lineoffset = helptextline(helpsurface, scale, lineoffset, " r - reload data")
-  lineoffset = helptextline(helpsurface, scale, lineoffset, " home - Isla Prima")
-  lineoffset = helptextline(helpsurface, scale, lineoffset, " bs - back a map")
-  lineoffset = helptextline(helpsurface, scale, lineoffset, " up/down - cycle")
-  lineoffset = helptextline(helpsurface, scale, lineoffset, " l-click select")
-  lineoffset = helptextline(helpsurface, scale, lineoffset, " r-click draw box")
+  textrec, lineoffset = helptextline(helpsurface, scale, lineoffset, " i - zoom in")
+  textrec, lineoffset = helptextline(helpsurface, scale, lineoffset, " o - zoom out")
+  textrec, lineoffset = helptextline(helpsurface, scale, lineoffset, " f - full screen")
+  textrec, lineoffset = helptextline(helpsurface, scale, lineoffset, " b - toggle boxes")
+  textrec, lineoffset = helptextline(helpsurface, scale, lineoffset, ' l - edit links')
+  textrec, lineoffset = helptextline(helpsurface, scale, lineoffset, " m - toggle marks")
+  textrec, lineoffset = helptextline(helpsurface, scale, lineoffset, " e - edit marks")
+  textrec, lineoffset = helptextline(helpsurface, scale, lineoffset, " c - edit config")
+  textrec, lineoffset = helptextline(helpsurface, scale, lineoffset, " r - reload data")
+  textrec, lineoffset = helptextline(helpsurface, scale, lineoffset, " home - Isla Prima")
+  textrec, lineoffset = helptextline(helpsurface, scale, lineoffset, " bs - back a map")
+  textrec, lineoffset = helptextline(helpsurface, scale, lineoffset, " up/down - cycle")
+  textrec, lineoffset = helptextline(helpsurface, scale, lineoffset, " l-click select")
+  textrec, lineoffset = helptextline(helpsurface, scale, lineoffset, " r-click draw box")
   if not noesc:
-    lineoffset = helptextline(helpsurface, scale, lineoffset, " ESC - exit")
-  return helpsurface
+    textrec, lineoffset = helptextline(helpsurface, scale, lineoffset, " ESC - exit")
+  menuoptions = ( textrec, pygame.K_ESCAPE )
+  return menuoptions, helpsurface
+
+# drawhelp stored array of text rec and key options
+# scan though for collide and return key option
+def getmenukey(menuoptions):
+	xymove = [0, sidemapsize[1]]
+	realrec = menuoptions[0].move(xymove)
+	if realrec.collidepoint(pygame.mouse.get_pos()):
+		return menuoptions[1]
+	else:
+		return 0
 
 # read the users map marks, coords and text
 def readmapmarkers(userdir, currmap):
@@ -282,14 +294,11 @@ def displaymarkers(markers, thismapscale, screen, mapxoffset, mapsize, scale, st
   return statustext
 
 # check sound and font usage and initialise pygame
-if not pygame.mixer:
-  print 'Warning, sound disabled'
 if not pygame.font:
   print 'Error, fonts not available'
   sys.exit()
-pygame.init()
-# we don't need sound
-pygame.mixer.quit()
+pygame.display.init()
+pygame.font.init()
 
 # set default window title and cursor type
 pygame.display.set_caption("Eternal Lands Map Viewer  - "+version, "elmapviewer")
@@ -367,7 +376,7 @@ while 1:
       sidemaprect = sidemap.get_rect()
       
       # get the scaled help text surface
-      helpsurface = drawhelp(scale)
+      menuoptions, helpsurface = drawhelp(scale)
       helprect = helpsurface.get_rect()
       
       # get and scale the legend surface
@@ -544,9 +553,14 @@ while 1:
             str(int((markbox[1][0]-markbox[0][0])/scale))  + ', ' +  \
             str(int((markbox[1][1]-markbox[0][1])/scale))
 
+			# call help mapping routine to get keypress from mouse position
+			# highlight option box until MOUSEUP
+      if pygame.mouse.get_pressed()[0] and helprect.collidepoint(pygame.mouse.get_pos()):
+				event = pygame.event.Event(pygame.KEYDOWN, key=getmenukey(menuoptions))
+            
     # process keyboard events
     if event.type == pygame.KEYDOWN:
-      
+    
       # i - enlarge window, zoom in
       if event.key == pygame.K_i:
         if screensize[0]+0.1 < 1152:
@@ -613,6 +627,7 @@ while 1:
         mainmapname = nextmap(mapinfo, mainmapname, -1)
           
       # exit if ESC pressed
-      elif event.key == pygame.K_ESCAPE and not noesc:
-        pygame.QUIT
-        sys.exit()
+      elif not noesc:
+      	if event.key == pygame.K_ESCAPE:
+          pygame.QUIT
+          sys.exit()
