@@ -253,7 +253,7 @@ maparena1.bmp: 1000 1000 - seridia.bmp
 mapnewbie.bmp: 1000 1000 - seridia.bmp
 mapnewbie_insides.bmp: 1000 1000 - seridia.bmp
 mapportalroom.bmp: 1000 1000 - seridia.bmp
-mapunderworld1.bmp: 1000 1000 - startmap.bmp
+mapunderworld1.bmp: 192 192 - startmap.bmp
 mine1.bmp: 1000 1000 - seridia.bmp
 misc1.bmp: 192 192 - seridia.bmp
 neo.bmp: 1000 1000 - seridia.bmp
