@@ -39,7 +39,7 @@
 
 import sys, pygame, string, os, shutil, platform
 
-version = 'v0.2.2 April 2006'
+version = 'v0.3.0 beta May 2006'
 
 # define some basic colours
 blackcolour = 0, 0, 0
@@ -224,46 +224,49 @@ def updatecoord(screen, scale, coordwidth, coordtext, statusfontsize):
   pygame.display.update(blankrec)
 
 # general text line function
-def helptextline(helpsurface, scale, lineoffset, thestring, colour=helpcolour):
+def helptextline(helpsurface, menuoptions, scale, lineoffset, thestring, key=0):
   helpfontsize = 21
-  text, textrec, linespace = textmake(thestring, colour, scale, helpfontsize)
+  text, textrec, linespace = textmake(thestring, helpcolour, scale, helpfontsize)
   textrec = textmove(0,lineoffset, text, textrec ) 
   helpsurface.blit(text,textrec)
   lineoffset += linespace
-  return textrec, lineoffset
+  if key != 0:
+    menuoptions.append(( textrec, key ))
+  return menuoptions, lineoffset
 
 # generate the help information surface
 def drawhelp(scale):
   helpsurface = pygame.Surface((int(128*scale),int(256*scale)))
   lineoffset = 0
-  textrec, lineoffset = helptextline(helpsurface, scale, lineoffset, " i - zoom in")
-  textrec, lineoffset = helptextline(helpsurface, scale, lineoffset, " o - zoom out")
-  textrec, lineoffset = helptextline(helpsurface, scale, lineoffset, " f - full screen")
-  textrec, lineoffset = helptextline(helpsurface, scale, lineoffset, " b - toggle boxes")
-  textrec, lineoffset = helptextline(helpsurface, scale, lineoffset, ' l - edit links')
-  textrec, lineoffset = helptextline(helpsurface, scale, lineoffset, " m - toggle marks")
-  textrec, lineoffset = helptextline(helpsurface, scale, lineoffset, " e - edit marks")
-  textrec, lineoffset = helptextline(helpsurface, scale, lineoffset, " c - edit config")
-  textrec, lineoffset = helptextline(helpsurface, scale, lineoffset, " r - reload data")
-  textrec, lineoffset = helptextline(helpsurface, scale, lineoffset, " home - Isla Prima")
-  textrec, lineoffset = helptextline(helpsurface, scale, lineoffset, " bs - back a map")
-  textrec, lineoffset = helptextline(helpsurface, scale, lineoffset, " up/down - cycle")
-  textrec, lineoffset = helptextline(helpsurface, scale, lineoffset, " l-click select")
-  textrec, lineoffset = helptextline(helpsurface, scale, lineoffset, " r-click draw box")
+  menuoptions = []
+  menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " i - zoom in", pygame.K_i)
+  menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " o - zoom out", pygame.K_o)
+  menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " f - full screen", pygame.K_f)
+  menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " b - toggle boxes", pygame.K_b)
+  menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " l - edit links", pygame.K_l)
+  menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " m - toggle marks", pygame.K_m)
+  menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " e - edit marks", pygame.K_e)
+  menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " c - edit config", pygame.K_c)
+  menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " r - reload data", pygame.K_r)
+  menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " home - Isla Prima", pygame.K_HOME)
+  menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " bs - back a map", pygame.K_BACKSPACE)
+  menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " up/down - cycle")
+  menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " l-click select")
+  menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " r-click draw box")
+  menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " / - search marks", pygame.K_SLASH)
   if not noesc:
-    textrec, lineoffset = helptextline(helpsurface, scale, lineoffset, " ESC - exit")
-  menuoptions = ( textrec, pygame.K_ESCAPE )
+    menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " ESC - exit", pygame.K_ESCAPE)
   return menuoptions, helpsurface
 
 # drawhelp stored array of text rec and key options
 # scan though for collide and return key option
 def getmenukey(menuoptions):
-	xymove = [0, sidemapsize[1]]
-	realrec = menuoptions[0].move(xymove)
-	if realrec.collidepoint(pygame.mouse.get_pos()):
-		return menuoptions[1]
-	else:
-		return 0
+  xymove = [0, sidemapsize[1]]
+  for option in menuoptions:
+    realrec = option[0].move(xymove)
+    if realrec.collidepoint(pygame.mouse.get_pos()):
+      return option[1]
+  return 0
 
 # read the users map marks, coords and text
 def readmapmarkers(userdir, currmap):
@@ -441,6 +444,8 @@ while 1:
       # get the list of main map links, and optionally draw rectangles for them
       hotspot = []
       for hp in mapinfo[mainmapname]:
+        if hp[0] == (0,0,0,0): # dummy entry
+          continue
         rectcoord =  (hp[0][0]*scale, hp[0][1]*scale, hp[0][2]*scale, hp[0][3]*scale)
         cursorbox = pygame.Rect(rectcoord)
         cursorbox = cursorbox.move(mainmapmove)
@@ -495,6 +500,15 @@ while 1:
             normalcursor = False
           inhotspot = True
           break
+      # if not in a map hot spot, check for menu option
+      if not inhotspot:
+        if helprect.collidepoint(pygame.mouse.get_pos()):
+          if getmenukey(menuoptions) != 0:
+            if normalcursor:
+              pygame.mouse.set_cursor(*pygame.cursors.diamond)
+              normalcursor = False
+            inhotspot = True
+      # if still no in hotspot, make sure the cursor is normal
       if not inhotspot:
         if not normalcursor:
           pygame.mouse.set_cursor(*pygame.cursors.arrow)
@@ -625,6 +639,10 @@ while 1:
       # down cursor is previous map in sequence
       elif event.key == pygame.K_DOWN:
         mainmapname = nextmap(mapinfo, mainmapname, -1)
+          
+      # down cursor is previous map in sequence
+      elif event.key == pygame.K_SLASH:
+        statustext = "search under development"
           
       # exit if ESC pressed
       elif not noesc:
