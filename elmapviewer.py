@@ -39,7 +39,7 @@
 
 import sys, pygame, string, os, shutil, platform
 
-version = 'v0.3.0 beta May 2006'
+version = 'v0.3.0 beta 2 May 2006'
 
 # define some basic colours
 blackcolour = 0, 0, 0
@@ -171,6 +171,13 @@ def nextmap(mapinfo, currmap, inc):
   if next < 0:
     next += len(mapnames)
   return mapnames[next]
+  
+# common search find routine - allows ^
+def searchfind(tosearch, searchtext):
+  if len(searchtext) > 0 and searchtext[0] == '^':
+    return tosearch.lower().find(searchtext[1:], 0) == 0
+  else:
+    return tosearch.lower().find(searchtext, 0) != -1
  
 # general text surface maker
 def textmake(thetext, colour, scale, fontsize ):
@@ -185,17 +192,7 @@ def textmove(x, y, text, textrec ):
     textrec = textrec.move(xymove)
     return textrec
 
-# draw the status line including the current map name
-def updatestatusline(screen, scale, coordwidth, mapname, statustext, statusfontsize):
-  # colour code PK maps
-  extrastat = ''
-  if maptype.has_key(mapname) and maptype[mapname] == 'PK':
-    colour = pkmapcolour
-    extrastat = ' (PK)'
-  else:
-    colour = othermapcolour
-  # get the text surface
-  fulltext = mapname + extrastat + ':  ' + statustext
+def genstatusline(screen, scale, coordwidth, fulltext, colour, statusfontsize):
   statusline, rec, linesize = textmake(fulltext, colour, scale, statusfontsize)
   # and move to its in screen location
   xymove = [coordwidth, screen.get_size()[1] - statusline.get_size()[1]]
@@ -207,6 +204,36 @@ def updatestatusline(screen, scale, coordwidth, mapname, statustext, statusfonts
   screen.fill(blackcolour, blankrec)
   screen.blit(statusline, statusrect)
   pygame.display.update(blankrec)
+  return
+  
+# draw the status line including the current map name
+def updatestatusline(screen, scale, coordwidth, mapname, statustext, statusfontsize):
+  # colour code PK maps
+  extrastat = ''
+  if maptype.has_key(mapname) and maptype[mapname] == 'PK':
+    colour = pkmapcolour
+    extrastat = ' (PK)'
+  else:
+    colour = othermapcolour
+  # get the text surface
+  fulltext = mapname + extrastat + ':  ' + statustext
+  genstatusline(screen, scale, coordwidth, fulltext, colour, statusfontsize)
+  return
+
+def updatesearchline(screen, scale, coordwidth, mapname, marksearch, searchtext, statusfontsize):
+  fulltext = mapname + ": "
+  if marksearch:
+    fulltext += "mark"
+  else:
+    fulltext += "map"
+  fulltext += " search "
+  if searchmatchingmaps == []:
+    fulltext += "(none)"
+  else:
+    fulltext += "(map " + str(currentsearchmapindex+1) + " of " + str(len(searchmatchingmaps)) + ")"
+  fulltext += ": " + searchtext + "_"
+  colour = whitecolour
+  genstatusline(screen, scale, coordwidth, fulltext, colour, statusfontsize)
   return
   
 # clear and redraw the map coords
@@ -239,23 +266,30 @@ def drawhelp(scale):
   helpsurface = pygame.Surface((int(128*scale),int(256*scale)))
   lineoffset = 0
   menuoptions = []
-  menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " i - zoom in", pygame.K_i)
-  menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " o - zoom out", pygame.K_o)
-  menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " f - full screen", pygame.K_f)
-  menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " b - toggle boxes", pygame.K_b)
-  menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " l - edit links", pygame.K_l)
-  menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " m - toggle marks", pygame.K_m)
-  menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " e - edit marks", pygame.K_e)
-  menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " c - edit config", pygame.K_c)
-  menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " r - reload data", pygame.K_r)
-  menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " home - Isla Prima", pygame.K_HOME)
-  menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " bs - back a map", pygame.K_BACKSPACE)
-  menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " up/down - cycle")
-  menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " l-click select")
-  menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " r-click draw box")
-  menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " / - search marks", pygame.K_SLASH)
-  if not noesc:
-    menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " ESC - exit", pygame.K_ESCAPE)
+  if searchmode:
+    menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " Search")
+    menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " up/down")
+    menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, "   - cycle maps")
+    menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " ^ matches start")
+    menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " ESC - end search")
+  else:
+    menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " i - zoom in", pygame.K_i)
+    menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " o - zoom out", pygame.K_o)
+    menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " f - full screen", pygame.K_f)
+    menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " b - toggle boxes", pygame.K_b)
+    menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " l - edit links", pygame.K_l)
+    menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " m - toggle marks", pygame.K_m)
+    menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " e - edit marks", pygame.K_e)
+    menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " c - edit config", pygame.K_c)
+    menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " r - reload data", pygame.K_r)
+    menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " home - Isla Prima", pygame.K_HOME)
+    menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " bs - back a map", pygame.K_BACKSPACE)
+    menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " up/down - cycle")
+    menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " l-click select")
+    menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " r-click draw box")
+    menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " \ / - search", pygame.K_SLASH)
+    if not noesc:
+      menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " q - quit", pygame.K_ESCAPE)
   return menuoptions, helpsurface
 
 # drawhelp stored array of text rec and key options
@@ -277,16 +311,21 @@ def readmapmarkers(userdir, currmap):
       w = line.split()
       if len(w) > 2:
         markers.append(((int(w[0]),int(w[1])),string.join(w[2:])))
+  #print "readmapmarkers: " + currmap
   return markers
 
 # display the users map marks
-def displaymarkers(markers, thismapscale, screen, mapxoffset, mapsize, scale, statustext, markfontsize):
+def displaymarkers(markers, thismapscale, screen, mapxoffset, mapsize, \
+      scale, statustext, markfontsize, searchmode, marksearch, searchtext):
   if thismapscale[0] == 1000 or thismapscale[1] == 1000:
     statustext += 'Unknown scale, markers offset. '
   elif thismapscale[0] == 0 or thismapscale[1] == 0:
     statustext += 'Invalid scale, marker not displayed. '
     return statustext
   for mark in markers:
+    if searchmode and marksearch:
+      if not searchfind(mark[1], searchtext):
+        continue
     x = mapxoffset + (mark[0][0] * mapsize[0] / thismapscale[0])
     y = (thismapscale[1] - mark[0][1]) * mapsize[1] / thismapscale[1]
     text, textrec, linespace = textmake(mark[1], markcolour, scale, markfontsize)
@@ -302,6 +341,7 @@ if not pygame.font:
   sys.exit()
 pygame.display.init()
 pygame.font.init()
+pygame.key.set_repeat(500, 100)
 
 # set default window title and cursor type
 pygame.display.set_caption("Eternal Lands Map Viewer  - "+version, "elmapviewer")
@@ -341,6 +381,15 @@ lastcoordtext = '-'
 statustext = ''               # status text shown at bottom of window with map name
 laststatustext = '-'
 
+searchmode = False
+marksearch = False
+searchtext = ''
+lastsearchtext = '-'
+searchmatchingmaps = []
+currentsearchmapindex = 0
+
+markersstore = {}
+
 # loop forever....
 while 1:
 
@@ -349,6 +398,7 @@ while 1:
     
       statustext = ''
       laststatustext = '-'
+      lastsearchtext = searchtext + "-" # force a redraw
     
       # handle the back key useage, poping the new map name
       if mainmapname == 'pop':
@@ -458,11 +508,15 @@ while 1:
         hotspot.append((cursorbox, hp[1]))
        
       # if user marks are enables, draw them on the main main
-      if marksOn:
-        markers = readmapmarkers(userdir, mainmapname)
+      if marksOn or (searchmode and marksearch):
+        # read the marks if we have not already done so
+        if not markersstore.has_key(mainmapname):
+          markersstore[mainmapname] = readmapmarkers(userdir, mainmapname)
+        # display the mark using any active filter
         if mapscale.has_key(mainmapname):
-          statustext = displaymarkers(markers, mapscale[mainmapname], screen, \
-            mapxoffset, mainmapsize, scale, statustext, markfontsize)
+          statustext = displaymarkers(markersstore[mainmapname], mapscale[mainmapname], screen, \
+            mapxoffset, mainmapsize, scale, statustext, markfontsize, \
+            searchmode, marksearch, searchtext )
       
       # draw the new display
       pygame.display.flip()
@@ -472,8 +526,14 @@ while 1:
 
     # end if map changed
       
+    # if searching, update the search string if it changes
+    if searchmode:
+      if searchtext != lastsearchtext:
+        updatesearchline(screen, scale, coordwidth, mainmapname, marksearch, searchtext, statusfontsize)
+        lastsearchtext = searchtext
+        
     # update the status line if it changes
-    if laststatustext != statustext:
+    elif laststatustext != statustext:
       updatestatusline(screen, scale, coordwidth, mainmapname, statustext, statusfontsize)
       laststatustext = statustext
 
@@ -481,6 +541,8 @@ while 1:
     if lastcoordtext != coordtext:
       updatecoord(screen, scale, coordwidth, coordtext, statusfontsize)
       lastcoordtext = coordtext
+      
+# process events
 
     # get an event from the window
     event = pygame.event.wait()
@@ -525,6 +587,7 @@ while 1:
   
     # if a mouse button is pressed....
     elif event.type == pygame.MOUSEBUTTONDOWN:
+    
       # if sidemap left-clicked, switch side and main maps
       if pygame.mouse.get_pressed()[0] and sidemaprect.collidepoint(pygame.mouse.get_pos()):
         temp = sidemapname
@@ -572,80 +635,173 @@ while 1:
       if pygame.mouse.get_pressed()[0] and helprect.collidepoint(pygame.mouse.get_pos()):
 				event = pygame.event.Event(pygame.KEYDOWN, key=getmenukey(menuoptions))
             
-    # process keyboard events
+    # process keyboard events - could have been inserted due to a mouse event
     if event.type == pygame.KEYDOWN:
     
-      # i - enlarge window, zoom in
-      if event.key == pygame.K_i:
-        if screensize[0]+0.1 < 1152:
-          scale += 0.1
-          lastmap = ''
-          
-      # o - srink window, zoom out
-      elif event.key == pygame.K_o:
-        if screensize[0]-0.1 > 600:
-          scale -= 0.1
+      # non search mode, respond to action keys
+      if not searchmode:
+       
+        # i - enlarge window, zoom in
+        if event.key == pygame.K_i:
+          if screensize[0]+0.1 < 1152:
+            scale += 0.1
+            lastmap = ''
+
+        # o - srink window, zoom out
+        elif event.key == pygame.K_o:
+          if screensize[0]-0.1 > 600:
+            scale -= 0.1
+            lastmap = ''
+
+        # f - toggle window/full screen
+        elif event.key == pygame.K_f:
+          fullscreen = not fullscreen
+          screensize = (0.0)  # force display mode reset
           lastmap = ''
 
-      # f - toggle window/full screen
-      elif event.key == pygame.K_f:
-        fullscreen = not fullscreen
-        screensize = (0.0)  # force display mode reset
-        lastmap = ''
+        # b - toggle drawing of rectangles round link areas
+        elif event.key == pygame.K_b:
+          boxesOn = not boxesOn
+          lastmap = ''
 
-      # b - toggle drawing of rectangles round link areas
-      elif event.key == pygame.K_b:
-        boxesOn = not boxesOn
-        lastmap = ''
+        # l - edit map links
+        elif event.key == pygame.K_l:
+          os.spawnv(os.P_NOWAIT, editor, (editor, mapdatafile, usermapdatafile))
+
+        # m - toggle display of user marks
+        elif event.key == pygame.K_m:
+          marksOn = not marksOn
+          lastmap = ''
+
+        # e - edit user marks in external editor
+        elif event.key == pygame.K_e:
+          if platform.system() == 'Windows':
+            markersfile = '"' + userdir + string.replace(mainmapname,'.bmp','.elm.txt',1) + '"'
+          else:
+            markersfile = userdir + string.replace(mainmapname,'.bmp','.elm.txt',1)
+          os.spawnv(os.P_NOWAIT, editor, (editor, markersfile))
+
+        # c - edit user config
+        elif event.key == pygame.K_c:
+          os.spawnv(os.P_NOWAIT, editor, (editor, rcfile))
+
+        # r - redisplay map, rereading all user data
+        elif event.key == pygame.K_r:
+          mapinfo, mapscale, maptype, parentmap = readinfo(mapdatafile, usermapdatafile)
+          markersstore = {}
+          lastmap = ''
+
+        # home key, go to games start map
+        elif event.key == pygame.K_HOME:
+          mainmapname = homemap
+
+        # backspace go to last visited map
+        elif event.key == pygame.K_BACKSPACE and len(backmap) > 0:
+          mainmapname = 'pop'
+
+        # up cursor is next map in sequence
+        elif event.key == pygame.K_UP:
+          mainmapname = nextmap(mapinfo, mainmapname, 1)
+
+        # down cursor is previous map in sequence
+        elif event.key == pygame.K_DOWN:
+          mainmapname = nextmap(mapinfo, mainmapname, -1)
+
+        # / is search for marks
+        elif event.key == pygame.K_SLASH:
+          searchmode = True
+          marksearch = True
+          lastmap = ''
+
+        # \ is search for map name
+        elif event.key == pygame.K_BACKSLASH:
+          searchmode = True
+          marksearch = False
+          lastmap = ''
+
+        # exit if Q pressed, quit
+        elif not noesc:
+      	  if event.key == pygame.K_q:
+            pygame.QUIT
+            sys.exit()
+
+      # search mode, most keys modify search string
+      else:
+      
+        # exit from search mode, clearing state
+        if event.key == pygame.K_ESCAPE:
+          searchmode = False
+          marksearch = False
+          lastsearchtext = "-"
+          searchtext = ""
+          laststatustext = "-"
+          statustext = ""
+          searchmatchingmaps = []
+          currentsearchmapindex = 0
+          lastmap = ''
         
-      # l - edit map links
-      elif event.key == pygame.K_l:
-        os.spawnv(os.P_NOWAIT, editor, (editor, mapdatafile, usermapdatafile))
-
-      # m - toggle display of user marks
-      elif event.key == pygame.K_m:
-        marksOn = not marksOn
-        lastmap = ''
-
-      # e - edit user marks in external editor
-      elif event.key == pygame.K_e:
-        if platform.system() == 'Windows':
-          markersfile = '"' + userdir + string.replace(mainmapname,'.bmp','.elm.txt',1) + '"'
         else:
-          markersfile = userdir + string.replace(mainmapname,'.bmp','.elm.txt',1)
-        os.spawnv(os.P_NOWAIT, editor, (editor, markersfile))
-
-      # c - edit user config
-      elif event.key == pygame.K_c:
-        os.spawnv(os.P_NOWAIT, editor, (editor, rcfile))
-
-      # r - redisplay map, rereading all user data
-      elif event.key == pygame.K_r:
-        mapinfo, mapscale, maptype, parentmap = readinfo(mapdatafile, usermapdatafile)
-        lastmap = ''
         
-      # home key, go to games start map
-      elif event.key == pygame.K_HOME:
-        mainmapname = homemap
+          # backspace removed last character from search string
+          if event.key == pygame.K_BACKSPACE and len(searchtext) > 0:
+            searchtext = searchtext[0:len(searchtext)-1]
+            searchmatchingmaps = []
+            currentsearchmapindex = 0
+            #print '[' + searchtext + ']', len(searchtext)
 
-      # backspace go to last visited map
-      elif event.key == pygame.K_BACKSPACE and len(backmap) > 0:
-        mainmapname = 'pop'
+          # if have marching maps allow stepping back and forward through
+          elif searchmatchingmaps != [] and event.key == pygame.K_DOWN or event.key == pygame.K_UP:
+            if event.key == pygame.K_DOWN:
+              currentsearchmapindex += 1
+              if currentsearchmapindex >= len(searchmatchingmaps):
+                currentsearchmapindex = 0
+            else:
+              currentsearchmapindex -= 1
+              if currentsearchmapindex < 0:
+                currentsearchmapindex = len(searchmatchingmaps) -1
 
-      # up cursor is next map in sequence
-      elif event.key == pygame.K_UP:
-        mainmapname = nextmap(mapinfo, mainmapname, 1)
+          # add single letter keypresses to search, translating space so that work as a space
+          elif len(pygame.key.name(event.key)) == 1 or event.key == pygame.K_SPACE:
+            if event.key == pygame.K_SPACE:
+              searchtext += " "
+            else:
+              searchtext += pygame.key.name(event.key).lower()
+            searchmatchingmaps = []
+            currentsearchmapindex = 0
+            #print '[' + searchtext + ']', len(searchtext)
 
-      # down cursor is previous map in sequence
-      elif event.key == pygame.K_DOWN:
-        mainmapname = nextmap(mapinfo, mainmapname, -1)
-          
-      # down cursor is previous map in sequence
-      elif event.key == pygame.K_SLASH:
-        statustext = "search under development"
-          
-      # exit if ESC pressed
-      elif not noesc:
-      	if event.key == pygame.K_ESCAPE:
-          pygame.QUIT
-          sys.exit()
+          # if were are searching marks - the search text is used as a filter on the maek display
+          if marksearch:
+            # if we do not have a list of maps containing the current search text, get one
+            if searchmatchingmaps == [] and searchtext != "":
+              mapnames = mapinfo.keys()
+              mapnames.sort()
+              for testmap in mapnames:
+                if not markersstore.has_key(testmap):
+                  markersstore[testmap] = readmapmarkers(userdir, testmap)
+                markers = markersstore[testmap]
+                for mark in markers:
+                  marktext = mark[1]
+                  if searchfind(marktext, searchtext):
+                    searchmatchingmaps.append(testmap)
+                    break
+              if mainmapname in searchmatchingmaps:
+                currentsearchmapindex = searchmatchingmaps.index(mainmapname)
+            # redisplay the map thus applying the latest filter
+            lastmap = ''
+              
+          # if were searching map names, fill matching map array with matching names
+          else:
+            # if not matchin map list available, get one
+            if searchmatchingmaps == [] and searchtext != "":
+              mapnames = mapinfo.keys()
+              mapnames.sort()
+              marchlist = []
+              for testmap in mapnames:
+                if searchfind(testmap, searchtext):
+                  searchmatchingmaps.append(testmap)
+              if mainmapname in searchmatchingmaps:
+                currentsearchmapindex = searchmatchingmaps.index(mainmapname)
+
+          if searchmatchingmaps != [] and searchmatchingmaps[currentsearchmapindex] != mainmapname:
+            mainmapname = searchmatchingmaps[currentsearchmapindex]
