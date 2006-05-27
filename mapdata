@@ -254,7 +254,7 @@ mapnewbie.bmp: 1000 1000 - seridia.bmp
 mapnewbie_insides.bmp: 1000 1000 - seridia.bmp
 mapportalroom.bmp: 1000 1000 - seridia.bmp
 mapunderworld1.bmp: 192 192 - startmap.bmp
-mine1.bmp: 1000 1000 - seridia.bmp
+mine1.bmp: 96 96 - seridia.bmp
 misc1.bmp: 192 192 - seridia.bmp
 neo.bmp: 1000 1000 - seridia.bmp
 newcharactermap.bmp: 1000 1000 - seridia.bmp
