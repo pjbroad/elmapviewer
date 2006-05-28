@@ -1,3 +1,10 @@
+2006-05-18 version 0.3.0
+  Added mark search function /
+  Added map name search function \
+  Allow some actions to be mouse driven in addition to key preses
+  Don't initilise sound at all.
+  More map information
+
 2006-04-09 version 0.2.1
   Modified file loading to work on windows too.
   Added windows .bat file and readme
