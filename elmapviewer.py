@@ -39,7 +39,7 @@
 
 import sys, pygame, string, os, shutil, platform
 
-version = 'v0.3.0 beta 2 May 2006'
+version = 'v0.3.0 May 2006'
 
 # define some basic colours
 blackcolour = 0, 0, 0
@@ -172,10 +172,13 @@ def nextmap(mapinfo, currmap, inc):
     next += len(mapnames)
   return mapnames[next]
   
-# common search find routine - allows ^
+# common find routine for search functions - allows ^
 def searchfind(tosearch, searchtext):
   if len(searchtext) > 0 and searchtext[0] == '^':
-    return tosearch.lower().find(searchtext[1:], 0) == 0
+    if len(searchtext) > 1:
+      return tosearch.lower().find(searchtext[1:], 0) == 0
+    else:
+      return False
   else:
     return tosearch.lower().find(searchtext, 0) != -1
  
@@ -192,6 +195,7 @@ def textmove(x, y, text, textrec ):
     textrec = textrec.move(xymove)
     return textrec
 
+# common function between standard and search status lines
 def genstatusline(screen, scale, coordwidth, fulltext, colour, statusfontsize):
   statusline, rec, linesize = textmake(fulltext, colour, scale, statusfontsize)
   # and move to its in screen location
@@ -220,6 +224,7 @@ def updatestatusline(screen, scale, coordwidth, mapname, statustext, statusfonts
   genstatusline(screen, scale, coordwidth, fulltext, colour, statusfontsize)
   return
 
+# draw the search status line
 def updatesearchline(screen, scale, coordwidth, mapname, marksearch, searchtext, statusfontsize):
   fulltext = mapname + ": "
   if marksearch:
@@ -267,10 +272,13 @@ def drawhelp(scale):
   lineoffset = 0
   menuoptions = []
   if searchmode:
-    menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " Search")
+    if marksearch:
+      menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " Search marks")
+    else:
+      menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " Search mapname")
+    menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " ^ matches start")
     menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " up/down")
     menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, "   - cycle maps")
-    menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " ^ matches start")
     menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " ESC - end search")
   else:
     menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " i - zoom in", pygame.K_i)
@@ -287,9 +295,9 @@ def drawhelp(scale):
     menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " up/down - cycle")
     menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " l-click select")
     menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " r-click draw box")
-    menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " \ / - search", pygame.K_SLASH)
+    menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " / \ - search", pygame.K_SLASH)
     if not noesc:
-      menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " q - quit", pygame.K_ESCAPE)
+      menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " q - quit", pygame.K_q)
   return menuoptions, helpsurface
 
 # drawhelp stored array of text rec and key options
@@ -747,7 +755,6 @@ while 1:
             searchtext = searchtext[0:len(searchtext)-1]
             searchmatchingmaps = []
             currentsearchmapindex = 0
-            #print '[' + searchtext + ']', len(searchtext)
 
           # if have marching maps allow stepping back and forward through
           elif searchmatchingmaps != [] and event.key == pygame.K_DOWN or event.key == pygame.K_UP:
@@ -768,7 +775,6 @@ while 1:
               searchtext += pygame.key.name(event.key).lower()
             searchmatchingmaps = []
             currentsearchmapindex = 0
-            #print '[' + searchtext + ']', len(searchtext)
 
           # if were are searching marks - the search text is used as a filter on the maek display
           if marksearch:
@@ -785,6 +791,7 @@ while 1:
                   if searchfind(marktext, searchtext):
                     searchmatchingmaps.append(testmap)
                     break
+              # make sure we stay on the current map is it matches
               if mainmapname in searchmatchingmaps:
                 currentsearchmapindex = searchmatchingmaps.index(mainmapname)
             # redisplay the map thus applying the latest filter
@@ -800,8 +807,10 @@ while 1:
               for testmap in mapnames:
                 if searchfind(testmap, searchtext):
                   searchmatchingmaps.append(testmap)
+              # make sure we stay on the current map is it matches
               if mainmapname in searchmatchingmaps:
                 currentsearchmapindex = searchmatchingmaps.index(mainmapname)
 
+          # change mape if the current index changes
           if searchmatchingmaps != [] and searchmatchingmaps[currentsearchmapindex] != mainmapname:
             mainmapname = searchmatchingmaps[currentsearchmapindex]
