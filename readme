@@ -9,7 +9,8 @@ but may work on other systems that can run python and pygame.
 
 Requires python http://www.python.org/ and pygame http://www.pygame.org/
 
-Read the man page using man -l elmapviewer.6
+Read the man page using man -l elmapviewer.6 or look at the generated html
+version using your favorite web browser.
 
 Run using ./elmapviewer.py
 
