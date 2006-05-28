@@ -1,6 +1,6 @@
 # anything starting with # ignored
 
-# anything word = .... treaded as program variable
+# anything word = .... treated as program variable
 mapdir = /usr/local/games/EternalLands/maps/
 userdir = ~/.elc/
 scale = 1.0
@@ -12,5 +12,5 @@ markfontsize = 20
 statusfontsize = 25
 mainborderx = 21
 mainbordery = 5
-# option to disable esc key exit
+# option to disable quit/exit option
 noesc = 0
