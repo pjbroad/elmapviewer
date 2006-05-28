@@ -331,7 +331,7 @@ def displaymarkers(markers, thismapscale, screen, mapxoffset, mapsize, \
     statustext += 'Invalid scale, marker not displayed. '
     return statustext
   for mark in markers:
-    if searchmode and marksearch:
+    if searchmode and marksearch and searchtext != "" and searchtext != "^":
       if not searchfind(mark[1], searchtext):
         continue
     x = mapxoffset + (mark[0][0] * mapsize[0] / thismapscale[0])
@@ -769,7 +769,11 @@ while 1:
 
           # add single letter keypresses to search, translating space so that work as a space
           elif len(pygame.key.name(event.key)) == 1 or event.key == pygame.K_SPACE:
-            if event.key == pygame.K_SPACE:
+            # trap keyboard differences, some use ^ directly, other don't
+            modkeys = pygame.key.get_mods()
+            if event.key == pygame.K_6 and ((modkeys & pygame.KMOD_RSHIFT) or (modkeys & pygame.KMOD_LSHIFT)):
+              searchtext += "^"
+            elif event.key == pygame.K_SPACE:
               searchtext += " "
             else:
               searchtext += pygame.key.name(event.key).lower()
