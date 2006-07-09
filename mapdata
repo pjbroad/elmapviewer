@@ -99,13 +99,13 @@ map13.bmp: 192 192 - seridia.bmp
 221 27 102 43 map14f.bmp
 
 map14f.bmp: 192 192 PK seridia.bmp
-359 220 118 26 map5nf.bmp
-228 408 122 58 map13.bmp
-33 379 99 28 map3.bmp
+425 220 75 40 map5nf.bmp
+235 460 140 40 map13.bmp
+15 385 70 40 map3.bmp
 
 map15f.bmp: 384 384 PK seridia.bmp
-393 110 109 35 map3.bmp
-429 431 71 30 map6nf.bmp
+425 50 80 38 map3.bmp
+430 425 80 38 map6nf.bmp
 
 cave1.bmp: 192 192 - map3.bmp
 38 23 52 33 map3.bmp
@@ -264,7 +264,7 @@ cont2map22.bmp: 768 768 - irilion.bmp
 cont2map23.bmp: 384 384 - irilion.bmp
 12 83 73 37 cont2map22.bmp
 406 180 76 38 cont2map24.bmp
-419 370 69 38 cont2map18.bmp
+425 355 70 40 cont2map18.bmp
 250 185 25 20 cont2map12.bmp
 
 cont2map24.bmp: 384 384 - irilion.bmp
