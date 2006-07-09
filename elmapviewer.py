@@ -37,9 +37,9 @@
 # Debian GNU/Linux: http://www.debian.org/
 # Ubuntu: http://www.ubuntu.com/
 
-import sys, pygame, string, os, shutil, platform
+import sys, pygame, string, os, shutil, platform, struct
 
-version = 'v0.3.0 May 2006'
+version = 'v0.3.1 July 2006'
 
 # define some basic colours
 blackcolour = 0, 0, 0
@@ -64,15 +64,35 @@ def expandfilename(filename):
   filename = os.path.expanduser(filename)
   filename = os.path.expandvars(filename)
   return filename
+  
+
+# read the map size from the .elm file assiociated this bmp filename
+def readmapsizefromelm(bmpfilename):
+  elmfilename = string.replace(bmpfilename,'.bmp','.elm',1)
+  if os.access(elmfilename, os.R_OK):
+    fid=open(elmfilename,'rb')
+    info=fid.read(12)
+    fid.close()
+    # the file's data is little endian - hopefully this will work for big endian too
+    size = struct.unpack('<ii',info[4:])
+    return 6*size[0], 6*size[1]
+  else:
+    return 0, 0
+
 
 # read map information from the map data files
 # links, names, sizes, types
-def readinfo(fname, userfname):
+def readinfo(mapdir, fname, userfname):
   mapinfo = {}
   mapscale = {}
   maptype = {}
   parentmap = {}
-  allmaps = []
+  allmaps = {}
+  # create the initial map list form the elm files
+  for elmfile in os.listdir(mapdir):
+    if elmfile[len(elmfile)-4:] == '.elm':
+      mapname = os.path.basename(string.replace(elmfile,'.elm','.bmp',1))
+      allmaps[mapname] = mapname
   for maplinkfile in (fname, userfname):
     if os.access(maplinkfile, os.R_OK):
       currmapname = ''
@@ -84,8 +104,8 @@ def readinfo(fname, userfname):
             continue;
           if w[0][len(w[0])-1] == ":":
             currmapname = w[0][:len(w[0])-1]
-            allmaps.append(currmapname)
-            if len(w) > 2:
+            allmaps[currmapname] = currmapname
+            if len(w) > 2 and w[1] != '-' and w[2] != '-':
               mapscale[currmapname] = (int(w[1]), int(w[2]))
             if len(w) > 3:
               maptype[currmapname] = w[3]
@@ -98,10 +118,17 @@ def readinfo(fname, userfname):
               mapinfo[currmapname] += newlink
             else:
               mapinfo[currmapname] = newlink
-      for mapname in allmaps:
-        if not mapinfo.has_key(mapname):
-          newlink = (((0, 0, 0, 0),''),)
-          mapinfo[mapname] = newlink
+  for mapname in allmaps:
+    if not mapinfo.has_key(mapname):
+      newlink = (((0, 0, 0, 0),''),)
+      mapinfo[mapname] = newlink
+    # get the scale from the elm file and compare
+    sizefromfile = readmapsizefromelm(mapdir + mapname)
+    if mapscale.has_key(mapname):
+      if mapscale[mapname] != sizefromfile:
+        print 'Warning map scale mismatch', mapname, mapscale[mapname], sizefromfile
+    elif sizefromfile != (0,0):
+      mapscale[mapname] = sizefromfile
   return mapinfo, mapscale, maptype, parentmap
 
 # read program variables from the resource file
@@ -117,7 +144,7 @@ def readvars(fname):
   statusfontsize = 21
   mainborder = [10, 10]
   noesc = False
-  # create a defaul rc file if none exists
+  # create a default rc file if none exists
   if not os.access(fname, os.R_OK):
     srcfile = os.path.dirname(sys.argv[0]) + '/example.elmapviewer.rc'
     dstfile = expandfilename('~/.elmapviewer.rc')
@@ -290,9 +317,10 @@ def drawhelp(scale):
     menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " e - edit marks", pygame.K_e)
     menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " c - edit config", pygame.K_c)
     menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " r - reload data", pygame.K_r)
-    menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " home - Isla Prima", pygame.K_HOME)
     menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " bs - back a map", pygame.K_BACKSPACE)
     menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " up/down - cycle")
+    #menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " Fn jump to map")
+    menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " home/end islands")
     menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " l-click select")
     menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " r-click draw box")
     menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " / \ - search", pygame.K_SLASH)
@@ -366,10 +394,10 @@ mapdatafile = os.path.dirname(sys.argv[0]) + os.sep + 'mapdata'
 usermapdatafile = expandfilename('~/.elmapviewer.usermapdata')
 
 mapdir, userdir, scale, fullscreen, boxesOn, marksOn, editor, markfontsize, statusfontsize, mainborder, noesc = readvars(rcfile)
-mapinfo, mapscale, maptype, parentmap = readinfo(mapdatafile, usermapdatafile)
+mapinfo, mapscale, maptype, parentmap = readinfo(mapdir, mapdatafile, usermapdatafile)
   
 normalcursor = True           # holds current cursor state, set to alternative when over links
-mainmapname = 'startmap.bmp'  # the map about to be displayed
+mainmapname = 'seridia.bmp'   # the map about to be displayed
 homemap = mainmapname         # the start map
 lastmap = ''                  # the last map displayed, cleared to force redraw
 
@@ -695,13 +723,17 @@ while 1:
 
         # r - redisplay map, rereading all user data
         elif event.key == pygame.K_r:
-          mapinfo, mapscale, maptype, parentmap = readinfo(mapdatafile, usermapdatafile)
+          mapinfo, mapscale, maptype, parentmap = readinfo(mapdir, mapdatafile, usermapdatafile)
           markersstore = {}
           lastmap = ''
 
         # home key, go to games start map
         elif event.key == pygame.K_HOME:
           mainmapname = homemap
+
+        # home key, go to games start map
+        elif event.key == pygame.K_END:
+          mainmapname = "irilion.bmp"
 
         # backspace go to last visited map
         elif event.key == pygame.K_BACKSPACE and len(backmap) > 0:
@@ -780,7 +812,7 @@ while 1:
             searchmatchingmaps = []
             currentsearchmapindex = 0
 
-          # if were are searching marks - the search text is used as a filter on the maek display
+          # if were are searching marks - the search text is used as a filter on the mark display
           if marksearch:
             # if we do not have a list of maps containing the current search text, get one
             if searchmatchingmaps == [] and searchtext != "":
