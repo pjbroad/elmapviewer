@@ -822,6 +822,8 @@ while 1:
             modkeys = pygame.key.get_mods()
             if event.key == pygame.K_6 and ((modkeys & pygame.KMOD_RSHIFT) or (modkeys & pygame.KMOD_LSHIFT)):
               searchtext += "^"
+            elif event.key == pygame.K_MINUS and ((modkeys & pygame.KMOD_RSHIFT) or (modkeys & pygame.KMOD_LSHIFT)):
+              searchtext += "_"
             elif event.key == pygame.K_SPACE:
               searchtext += " "
             else:
