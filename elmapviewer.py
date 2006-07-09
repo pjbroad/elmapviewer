@@ -88,6 +88,7 @@ def readinfo(mapdir, fname, userfname):
   maptype = {}
   parentmap = {}
   allmaps = {}
+  maptitle = {}
   # create the initial map list form the elm files
   for elmfile in os.listdir(mapdir):
     if elmfile[len(elmfile)-4:] == '.elm':
@@ -129,7 +130,16 @@ def readinfo(mapdir, fname, userfname):
         print 'Warning map scale mismatch', mapname, mapscale[mapname], sizefromfile
     elif sizefromfile != (0,0):
       mapscale[mapname] = sizefromfile
-  return mapinfo, mapscale, maptype, parentmap
+  # get map names from the mapinfo.lst file
+  mapinfolstfile = expandfilename(mapdir + '../mapinfo.lst')
+  if os.access(mapinfolstfile, os.R_OK):
+    for line in open(mapinfolstfile, 'r'):
+      w = line.split()
+      if len(w) > 7:
+        mapfilename = os.path.basename(string.replace(w[5],'.elm','.bmp',1))
+        maptitle[mapfilename] = string.join(w[7:],' ')
+  return mapinfo, mapscale, maptype, parentmap, maptitle
+  
 
 # read program variables from the resource file
 def readvars(fname):
@@ -380,7 +390,6 @@ pygame.font.init()
 pygame.key.set_repeat(500, 100)
 
 # set default window title and cursor type
-pygame.display.set_caption("Eternal Lands Map Viewer  - "+version, "elmapviewer")
 pygame.mouse.set_cursor(*pygame.cursors.arrow)
 
 # get the resource file name and read the data
@@ -394,12 +403,15 @@ mapdatafile = os.path.dirname(sys.argv[0]) + os.sep + 'mapdata'
 usermapdatafile = expandfilename('~/.elmapviewer.usermapdata')
 
 mapdir, userdir, scale, fullscreen, boxesOn, marksOn, editor, markfontsize, statusfontsize, mainborder, noesc = readvars(rcfile)
-mapinfo, mapscale, maptype, parentmap = readinfo(mapdir, mapdatafile, usermapdatafile)
+mapinfo, mapscale, maptype, parentmap, maptitle = readinfo(mapdir, mapdatafile, usermapdatafile)
   
 normalcursor = True           # holds current cursor state, set to alternative when over links
 mainmapname = 'seridia.bmp'   # the map about to be displayed
 homemap = mainmapname         # the start map
 lastmap = ''                  # the last map displayed, cleared to force redraw
+# window title and icon base
+basetitle = 'Eternal Lands Map Viewer: ' + version
+baseicon = 'elmapviewer'
 
 sidemapname = parentmap[mainmapname]  # the current side map
 
@@ -554,6 +566,11 @@ while 1:
             mapxoffset, mainmapsize, scale, statustext, markfontsize, \
             searchmode, marksearch, searchtext )
       
+      currtitle = basetitle
+      if maptitle.has_key(mainmapname):
+        currtitle += ' - [ ' + maptitle[mainmapname] + ' ]'
+      pygame.display.set_caption(currtitle, baseicon)
+
       # draw the new display
       pygame.display.flip()
       
@@ -723,7 +740,7 @@ while 1:
 
         # r - redisplay map, rereading all user data
         elif event.key == pygame.K_r:
-          mapinfo, mapscale, maptype, parentmap = readinfo(mapdir, mapdatafile, usermapdatafile)
+          mapinfo, mapscale, maptype, parentmap, maptitle = readinfo(mapdir, mapdatafile, usermapdatafile)
           markersstore = {}
           lastmap = ''
 
