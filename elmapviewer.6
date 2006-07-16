@@ -1,4 +1,4 @@
-.TH ELMAPVIEWER 6 "May 2006" "elmapviewer-0.3" "Eternal Lands Map Viewer"
+.TH ELMAPVIEWER 6 "July 2006" "elmapviewer-0.4.0" "Eternal Lands Map Viewer"
 
 .SH NAME
 elmapviewer - A map viewer for the Eternal Lands MMORPG
@@ -10,7 +10,7 @@ elmapviewer - A map viewer for the Eternal Lands MMORPG
 ]
 
 .SH DESCRIPTION
-Eternal Lands is a FREE MMORPG (massively multiplayer online role playing 
+Eternal Lands is a FREE MMORPG (massively multi-player online role playing 
 game). This program displays Eternal Lands maps and allows the user to navigate
 the maps using map links.  Users game marks are also displayed and can be
 filtered using a search function.  elmapviewer was written as an experiment in
@@ -22,14 +22,16 @@ not a Python or Pygame expert as I think you can tell from the code :)
 The map links are defined in the mapdata file included in the source archive.
 For each map, the size, type and parent map are specified using the form
 <filename>: <game x size> <game y size> <type ie - or PK> <parent map
-filename>.  The sizes correspond to the maximum coordinates viewable on the
-map inside the game.  Any lines following this initial line, until the next
-map name line, define links to other maps.  The format of these link lines is
-<top left x> <top left y> <width> <height> <filename of map to link to>.  The
-coordinates and sizes are related to the actual size of the map image file. 
-You can get this information by right clicking on a map, first the top left
-corner, second the bottom right corner.  A cyan box will be drawn and the
-coordinates and size printed on the status line.
+filename>.  The sizes correspond to the maximum coordinates viewable on the map
+inside the game.  From version 0.4, the viewer no longer needs the map size to
+be defined in the link information.  The size is read directly from the elm
+files that come with the game. Any lines following this initial line, until the
+next map name line, define links to other maps.  The format of these link lines
+is <top left x> <top left y> <width> <height> <filename of map to link to>.  The
+coordinates and sizes are related to the actual size of the map image file.  You
+can get this information by right clicking on a map, first the top left corner,
+second the bottom right corner.  A cyan box will be drawn and the coordinates
+and size printed on the status line.
 
 .SH User Map link information
 Using the same syntax as the main map file, the user map link information file
@@ -40,6 +42,12 @@ people.  You can add new maps and add more links to existing maps.  For
 existing maps defined in the main map file, you do not need to repeat the
 existing links or map information.  Just add a line with <map name>: and lines
 with link box coordinates and the map to link to.
+
+.SH Function Keys
+The keyboard function keys can be configured (in the resource file) to provide a
+short cut to maps of your choice.  Simply add the key name and desired map in
+the form "F1 = map2.bmp".  The provided resource files contain a couple of
+examples.  F1 to F15 can be configured in this way.
 
 .SH OPTIONS
 .TP

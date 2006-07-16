@@ -18,7 +18,7 @@ elmapviewer - A map viewer for the Eternal Lands MMORPG
 <p> 
 <h2><a name='sect2' href='#toc2'>Description</a></h2>
 Eternal Lands is a FREE MMORPG (massively
-multiplayer online role playing  game). This program displays Eternal Lands
+multi-player online role playing  game). This program displays Eternal Lands
 maps and allows the user to navigate the maps using map links.  Users game
 marks are also displayed and can be filtered using a search function.  elmapviewer
 was written as an experiment in the use of both the Python language and
@@ -31,10 +31,12 @@ The map links are defined
 in the mapdata file included in the source archive. For each map, the size,
 type and parent map are specified using the form &lt;filename&gt;: &lt;game x size&gt;
 &lt;game y size&gt; &lt;type ie - or PK&gt; &lt;parent map filename&gt;.  The sizes correspond to
-the maximum coordinates viewable on the map inside the game.  Any lines
-following this initial line, until the next map name line, define links
-to other maps.  The format of these link lines is &lt;top left x&gt; &lt;top left y&gt;
-&lt;width&gt; &lt;height&gt; &lt;filename of map to link to&gt;.  The coordinates and sizes are
+the maximum coordinates viewable on the map inside the game.  From version
+0.4, the viewer no longer needs the map size to be defined in the link information.
+ The size is read directly from the elm files that come with the game. Any
+lines following this initial line, until the next map name line, define
+links to other maps.  The format of these link lines is &lt;top left x&gt; &lt;top left
+y&gt; &lt;width&gt; &lt;height&gt; &lt;filename of map to link to&gt;.  The coordinates and sizes are
 related to the actual size of the map image file.  You can get this information
 by right clicking on a map, first the top left corner, second the bottom
 right corner.  A cyan box will be drawn and the coordinates and size printed
@@ -51,47 +53,53 @@ map file, you do not need to repeat the existing links or map information.
  Just add a line with &lt;map name&gt;: and lines with link box coordinates and
 the map to link to. 
 <p> 
-<h2><a name='sect5' href='#toc5'>Options</a></h2>
+<h2><a name='sect5' href='#toc5'>Function Keys</a></h2>
+The keyboard function keys can be configured
+(in the resource file) to provide a short cut to maps of your choice.  Simply
+add the key name and desired map in the form "F1 = map2.bmp".  The provided
+resource files contain a couple of examples.  F1 to F15 can be configured
+in this way. 
+<p> 
+<h2><a name='sect6' href='#toc6'>Options</a></h2>
 
 <dl>
 
 <dt><i>resourcefile</i> </dt>
-<dd>Optionally specify the name of
-the resource file.  This file stores program configuration options.  The
-file defaults to .elmapviewer.rc in your HOME directory.  An example rc file
-is provided with the code and will be copied to your home directory when
-you first run the viewer. 
+<dd>Optionally specify the name of the resource
+file.  This file stores program configuration options.  The file defaults
+to .elmapviewer.rc in your HOME directory.  An example rc file is provided
+with the code and will be copied to your home directory when you first
+run the viewer. 
 <p> </dd>
 
-<dt>At least three values in the resource file should
-be checked/modified :- </dt>
+<dt>At least three values in the resource file should be checked/modified
+:- </dt>
 <dd>
 <p> </dd>
 
 <dt><i>mapdir</i> </dt>
-<dd>Specifies the directory for the Eternal Lands
-maps. 
+<dd>Specifies the directory for the Eternal Lands maps. 
 <p> </dd>
 
 <dt><i>userdir</i> </dt>
-<dd>Specifies the directory for the users EL settings. 
+<dd>Specifies
+the directory for the users EL settings. 
 <p> </dd>
 
-<dt><i>editor</i>
-</dt>
-<dd>Specified the full path to your favourite text editor. 
+<dt><i>editor</i> </dt>
+<dd>Specified the full path
+to your favourite text editor. 
 <p> </dd>
 </dl>
 
-<h2><a name='sect6' href='#toc6'>Copyright</a></h2>
-Copyright
-2006 Paul Broadhead. This is free software; see the source for copying conditions.
- There is NO  warranty;  not even for MERCHANTABILITY or FITNESS FOR A
-PARTICULAR PURPOSE. 
+<h2><a name='sect7' href='#toc7'>Copyright</a></h2>
+Copyright 2006 Paul Broadhead. This
+is free software; see the source for copying conditions.  There is NO  warranty;
+ not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
 <p> 
-<h2><a name='sect7' href='#toc7'>Author</a></h2>
-Paul Broadhead (a.k.a. bluap) elmapviewer@twinmoons.clara.co.uk
-<p>
+<h2><a name='sect8' href='#toc8'>Author</a></h2>
+Paul
+Broadhead (a.k.a. bluap) elmapviewer@twinmoons.clara.co.uk <p>
 
 <hr><p>
 <a name='toc'><b>Table of Contents</b></a><p>
@@ -101,9 +109,10 @@ Paul Broadhead (a.k.a. bluap) elmapviewer@twinmoons.clara.co.uk
 <li><a name='toc2' href='#sect2'>Description</a></li>
 <li><a name='toc3' href='#sect3'>Map link information</a></li>
 <li><a name='toc4' href='#sect4'>User Map link information</a></li>
-<li><a name='toc5' href='#sect5'>Options</a></li>
-<li><a name='toc6' href='#sect6'>Copyright</a></li>
-<li><a name='toc7' href='#sect7'>Author</a></li>
+<li><a name='toc5' href='#sect5'>Function Keys</a></li>
+<li><a name='toc6' href='#sect6'>Options</a></li>
+<li><a name='toc7' href='#sect7'>Copyright</a></li>
+<li><a name='toc8' href='#sect8'>Author</a></li>
 </ul>
 </body>
 </html>
