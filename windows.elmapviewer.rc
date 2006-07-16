@@ -1,6 +1,6 @@
 # anything starting with # ignored
 
-# anything word = .... treaded as program variable
+# anything word = .... treaded as program variable, space required next to =
 mapdir = C:\Program Files\Eternal Lands\maps\
 userdir = C:\Program Files\Eternal Lands\
 scale = 1.0
@@ -12,4 +12,9 @@ markfontsize = 20
 statusfontsize = 25
 mainborderx = 21
 mainbordery = 5
+# option to disable quit/exit option
+noesc = 0
 
+# function keys that jump to particular maps
+F1 = map2.bmp
+F2 = cont2map1.bmp

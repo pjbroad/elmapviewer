@@ -1,6 +1,6 @@
 # anything starting with # ignored
 
-# anything word = .... treated as program variable
+# anything word = .... treaded as program variable, space required next to =
 mapdir = /usr/local/games/EternalLands/maps/
 userdir = ~/.elc/
 scale = 1.0
@@ -14,3 +14,7 @@ mainborderx = 21
 mainbordery = 5
 # option to disable quit/exit option
 noesc = 0
+
+# function keys that jump to particular maps
+F1 = map2.bmp
+F2 = cont2map1.bmp
