@@ -39,7 +39,7 @@
 
 import sys, pygame, string, os, shutil, platform, struct
 
-version = 'v0.3.1 July 2006'
+version = 'v0.3.2 July 2006'
 
 # define some basic colours
 blackcolour = 0, 0, 0
@@ -58,6 +58,13 @@ boxcolour = 58, 95, 205
 pkboxcolour = redcolour
 testboxcolour = cyancolour
 helpcolour = 205, 190, 112
+functionkeys = { \
+  'F1': (pygame.K_F1, ''), 'F2': (pygame.K_F2, ''), 'F3': (pygame.K_F3, ''), \
+  'F4': (pygame.K_F4, ''), 'F5': (pygame.K_F5, ''), 'F6': (pygame.K_F6, ''), \
+  'F7': (pygame.K_F7, ''), 'F8': (pygame.K_F8, ''), 'F9': (pygame.K_F9, ''), \
+  'F10': (pygame.K_F10, ''), 'F11': (pygame.K_F11, ''), 'F12': (pygame.K_F12, ''), \
+  'F13': (pygame.K_F13, ''), 'F14': (pygame.K_F14, ''), 'F15': (pygame.K_F15, ''), \
+  }
 
 # expand ~ and environ vars
 def expandfilename(filename):
@@ -174,28 +181,31 @@ def readvars(fname):
             print 'Current value [' + mapdir + ']'
             sys.exit(-1)
         # location of user map information
-        if w[0] == 'userdir':
+        elif w[0] == 'userdir':
           userdir = expandfilename(w[2])
-        if w[0] == 'scale':
+        elif w[0] == 'scale':
           scale = float(w[2])
-        if w[0] == 'fullscreen':
+        elif w[0] == 'fullscreen':
           fullscreen = bool(int(w[2]))
-        if w[0] == 'boxesOn':
+        elif w[0] == 'boxesOn':
           boxesOn = bool(int(w[2]))
-        if w[0] == 'marksOn':
+        elif w[0] == 'marksOn':
           marksOn = bool(int(w[2]))
-        if w[0] == 'editor':
+        elif w[0] == 'editor':
           editor = expandfilename(w[2])
-        if w[0] == 'markfontsize':
+        elif w[0] == 'markfontsize':
           markfontsize = int(w[2])
-        if w[0] == 'statusfontsize':
+        elif w[0] == 'statusfontsize':
           statusfontsize = int(w[2])
-        if w[0] == 'mainborderx':
+        elif w[0] == 'mainborderx':
           mainborder[0] = int(w[2])
-        if w[0] == 'mainbordery':
+        elif w[0] == 'mainbordery':
           mainborder[1] = int(w[2])
-        if w[0] == 'noesc':
+        elif w[0] == 'noesc':
           noesc = bool(int(w[2]))
+        elif functionkeys.has_key(w[0]):
+          keycode = functionkeys[w[0]][0]
+          functionkeys[w[0]] = (keycode,w[2])
   return mapdir, userdir, scale, fullscreen, boxesOn, marksOn, editor, markfontsize, statusfontsize, mainborder, noesc
 
 # get the name of the next map in the list
@@ -777,10 +787,15 @@ while 1:
           lastmap = ''
 
         # exit if Q pressed, quit
-        elif not noesc:
-      	  if event.key == pygame.K_q:
+        elif event.key == pygame.K_q and not noesc:
             pygame.QUIT
             sys.exit()
+
+        # if its one of the function keys with a map defined, use it
+        else:
+          for fkey in functionkeys:
+            if event.key == functionkeys[fkey][0] and functionkeys[fkey][1] != '':
+              mainmapname = functionkeys[fkey][1]
 
       # search mode, most keys modify search string
       else:
