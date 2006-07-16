@@ -1,8 +1,19 @@
+2006-07-16 version 0.4.0
+  Updated for version 1.3.0 release of the game.
+  Now derive map scales from elm files - mapdata scales no longer required.
+  Derive list of maps from all the elm files in the map directory.  This means
+    when new maps are added, they can been seen even if not configured in the
+    map data files.
+  Home/End keys jump to C1 and C2 overview maps.
+  Can now define jump to map shortcuts using function keys.
+  Display map titles as given in game mapinfo.lst file.
+  Allow search functions to use "_".
+
 2006-05-18 version 0.3.0
   Added mark search function /
   Added map name search function \
   Allow some actions to be mouse driven in addition to key preses
-  Don't initilise sound at all.
+  Don't initialise sound at all.
   More map information
 
 2006-04-09 version 0.2.1
