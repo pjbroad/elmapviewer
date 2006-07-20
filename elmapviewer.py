@@ -39,7 +39,7 @@
 
 import sys, pygame, string, os, shutil, platform, struct
 
-version = 'v0.4.0 July 2006'
+version = 'v0.4.1 July 2006'
 
 # define some basic colours
 blackcolour = 0, 0, 0
@@ -70,6 +70,7 @@ functionkeys = { \
 def expandfilename(filename):
   filename = os.path.expanduser(filename)
   filename = os.path.expandvars(filename)
+  filename = os.path.normpath(filename)
   return filename
   
 
@@ -131,14 +132,14 @@ def readinfo(mapdir, fname, userfname):
       newlink = (((0, 0, 0, 0),''),)
       mapinfo[mapname] = newlink
     # get the scale from the elm file and compare
-    sizefromfile = readmapsizefromelm(mapdir + mapname)
+    sizefromfile = readmapsizefromelm(os.path.join(mapdir, mapname))
     if mapscale.has_key(mapname):
       if mapscale[mapname] != sizefromfile:
         print 'Warning map scale mismatch', mapname, mapscale[mapname], sizefromfile
     elif sizefromfile != (0,0):
       mapscale[mapname] = sizefromfile
   # get map names from the mapinfo.lst file
-  mapinfolstfile = expandfilename(mapdir + '../mapinfo.lst')
+  mapinfolstfile = expandfilename(os.path.join(mapdir, '../mapinfo.lst'))
   if os.access(mapinfolstfile, os.R_OK):
     for line in open(mapinfolstfile, 'r'):
       w = line.split()
@@ -161,6 +162,7 @@ def readvars(fname):
   statusfontsize = 21
   mainborder = [10, 10]
   noesc = False
+  copyexec = ''
   # create a default rc file if none exists
   if not os.access(fname, os.R_OK):
     srcfile = os.path.dirname(sys.argv[0]) + '/example.elmapviewer.rc'
@@ -203,10 +205,13 @@ def readvars(fname):
           mainborder[1] = int(w[2])
         elif w[0] == 'noesc':
           noesc = bool(int(w[2]))
+        elif w[0] == 'copytoclipboard':
+          copyexec = w[2]
         elif functionkeys.has_key(w[0]):
           keycode = functionkeys[w[0]][0]
           functionkeys[w[0]] = (keycode,w[2])
-  return mapdir, userdir, scale, fullscreen, boxesOn, marksOn, editor, markfontsize, statusfontsize, mainborder, noesc
+  return mapdir, userdir, scale, fullscreen, boxesOn, marksOn, editor, \
+    markfontsize, statusfontsize, mainborder, noesc, copyexec
 
 # get the name of the next map in the list
 def nextmap(mapinfo, currmap, inc):
@@ -361,7 +366,7 @@ def getmenukey(menuoptions):
 # read the users map marks, coords and text
 def readmapmarkers(userdir, currmap):
   markers = []
-  markersfile = userdir + string.replace(currmap,'.bmp','.elm.txt',1)
+  markersfile = os.path.join(userdir, string.replace(currmap,'.bmp','.elm.txt',1))
   if os.access(markersfile, os.R_OK):
     for line in open(markersfile, 'r'):
       w = line.split()
@@ -412,7 +417,8 @@ rcfile = expandfilename(rcfile)
 mapdatafile = os.path.dirname(sys.argv[0]) + os.sep + 'mapdata'
 usermapdatafile = expandfilename('~/.elmapviewer.usermapdata')
 
-mapdir, userdir, scale, fullscreen, boxesOn, marksOn, editor, markfontsize, statusfontsize, mainborder, noesc = readvars(rcfile)
+mapdir, userdir, scale, fullscreen, boxesOn, marksOn, editor, \
+  markfontsize, statusfontsize, mainborder, noesc, copyexec = readvars(rcfile)
 mapinfo, mapscale, maptype, parentmap, maptitle = readinfo(mapdir, mapdatafile, usermapdatafile)
   
 normalcursor = True           # holds current cursor state, set to alternative when over links
@@ -476,11 +482,12 @@ while 1:
           sidemapname = parentmap[mainmapname]
           
       # get and scale the current size map surface
-      if not os.access(mapdir + sidemapname, os.R_OK):
+      fullpath = os.path.join(mapdir, sidemapname)
+      if not os.access(fullpath, os.R_OK):
         sidemap = pygame.Surface((512, 512))
         statustext += 'Cant load sidemap file. '
       else:
-        sidemap = pygame.image.load(mapdir + sidemapname)
+        sidemap = pygame.image.load(fullpath)
       sidemapsize = sidemap.get_size()
       sidemap = pygame.transform.scale(sidemap, (int(sidemapsize[0]*scale/2), int(sidemapsize[1]*scale/2)))
       sidemapsize = sidemap.get_size()
@@ -491,21 +498,23 @@ while 1:
       helprect = helpsurface.get_rect()
       
       # get and scale the legend surface
-      if not os.access(mapdir + "legend.bmp", os.R_OK):
+      fullpath = os.path.join(mapdir, "legend.bmp")
+      if not os.access(fullpath, os.R_OK):
         legend = pygame.Surface((128, 256))
         statustext += 'Cannot load legend file. '
       else:
-        legend = pygame.image.load(mapdir + "legend.bmp")
+        legend = pygame.image.load(fullpath)
       legendsize = legend.get_size()
       legend = pygame.transform.scale(legend, (int(legendsize[0]*scale), int(legendsize[1]*scale)))
       legendrect = legend.get_rect()
       
       # get and scale the main map surface
-      if not os.access(mapdir + mainmapname, os.R_OK):
+      fullpath = os.path.join(mapdir, mainmapname)
+      if not os.access(fullpath, os.R_OK):
         mainmap = pygame.Surface((512, 512))
         statustext += 'Cannot load main map file. '
       else:
-        mainmap = pygame.image.load(mapdir + mainmapname)
+        mainmap = pygame.image.load(fullpath)
       mainmapsize = mainmap.get_size()
       mainmap = pygame.transform.scale(mainmap, (int(mainmapsize[0]*scale), int(mainmapsize[1]*scale)))
       mainmapsize = mainmap.get_size()
@@ -688,10 +697,12 @@ while 1:
           pygame.draw.rect(screen, testboxcolour, cursorbox, 2)
           pygame.display.update()
           statustext = \
-            str(int((markbox[0][0]-mapxoffset)/scale)) + ', ' + \
-            str(int(markbox[0][1]/scale)) + ', ' +  \
-            str(int((markbox[1][0]-markbox[0][0])/scale))  + ', ' +  \
-            str(int((markbox[1][1]-markbox[0][1])/scale))
+            str(int((markbox[0][0]-mapxoffset)/scale)) + ' ' + \
+            str(int(markbox[0][1]/scale)) + ' ' +  \
+            str(int((markbox[1][0]-markbox[0][0])/scale))  + ' ' +  \
+            str(int((markbox[1][1]-markbox[0][1])/scale))  + ' '
+          if copyexec != '':
+            os.popen(copyexec, 'wb').write(statustext)
 
 			# call help mapping routine to get keypress from mouse position
 			# highlight option box until MOUSEUP
@@ -738,10 +749,9 @@ while 1:
 
         # e - edit user marks in external editor
         elif event.key == pygame.K_e:
+          markersfile = os.path.join(userdir, string.replace(mainmapname,'.bmp','.elm.txt',1))
           if platform.system() == 'Windows':
-            markersfile = '"' + userdir + string.replace(mainmapname,'.bmp','.elm.txt',1) + '"'
-          else:
-            markersfile = userdir + string.replace(mainmapname,'.bmp','.elm.txt',1)
+            markersfile = '"' + markersfile + '"'
           os.spawnv(os.P_NOWAIT, editor, (editor, markersfile))
 
         # c - edit user config
