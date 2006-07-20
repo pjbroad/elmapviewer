@@ -14,6 +14,9 @@ mainborderx = 21
 mainbordery = 5
 # option to disable quit/exit option
 noesc = 0
+# executable used to copy text to clipboard
+# need to install xsel and uncomment to use
+#copytoclipboard = xsel
 
 # function keys that jump to particular maps
 F1 = map2.bmp
