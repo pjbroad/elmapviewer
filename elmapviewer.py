@@ -37,7 +37,7 @@
 # Debian GNU/Linux: http://www.debian.org/
 # Ubuntu: http://www.ubuntu.com/
 
-import sys, pygame, string, os, shutil, platform, struct
+import sys, pygame, string, os, shutil, platform, struct, urllib
 
 version = 'v0.4.1 July 2006'
 
@@ -207,11 +207,13 @@ def readvars(fname):
           noesc = bool(int(w[2]))
         elif w[0] == 'copytoclipboard':
           copyexec = w[2]
+        elif w[0] == 'showgametime':
+          showgametime = bool(int(w[2]))
         elif functionkeys.has_key(w[0]):
           keycode = functionkeys[w[0]][0]
           functionkeys[w[0]] = (keycode,w[2])
   return mapdir, userdir, scale, fullscreen, boxesOn, marksOn, editor, \
-    markfontsize, statusfontsize, mainborder, noesc, copyexec
+    markfontsize, statusfontsize, mainborder, noesc, copyexec, showgametime
 
 # get the name of the next map in the list
 def nextmap(mapinfo, currmap, inc):
@@ -396,6 +398,42 @@ def displaymarkers(markers, thismapscale, screen, mapxoffset, mapsize, \
     screen.blit(text,textrec)
   return statustext
 
+# use the specified url (usually main el site) to get the current game time
+def getgametime(elweburl, starttimestring, endtimestring):
+  wpage=urllib.urlopen(elweburl)
+  pagetext = wpage.read()
+  wpage.close()
+
+  start = string.find(pagetext, starttimestring)
+  end = string.find(pagetext, endtimestring, start)
+  timestring = pagetext[start+len(starttimestring):end].split(':')
+  #print timestring
+  return int(timestring[0]), int(timestring[1])
+
+# increment the game time by a minute
+def updategametime(hour, minute):
+  minute += 1
+  if minute == 60:
+    minute = 0
+    hour += 1
+    if hour == 6:
+      hour = 0
+  return hour, minute
+
+# return a game time string formmatted HH:MM with 0 padding
+def timestring(hour, minute):
+  return (str(hour).rjust(2) + ':' + str(minute).rjust(2)).replace(' ','0')
+
+def settitle(mainmapname, hour, minute, basetitle):
+  if showgametime: 
+    currtitle = ' [Game Time: ' + timestring(hour, minute) + ']'
+  else:
+    currtitle = ''
+  if maptitle.has_key(mainmapname):
+    currtitle += ' [ ' + maptitle[mainmapname] + ' ]'
+  currtitle += ' ' + basetitle
+  pygame.display.set_caption(currtitle, baseicon)
+
 # check sound and font usage and initialise pygame
 if not pygame.font:
   print 'Error, fonts not available'
@@ -418,7 +456,7 @@ mapdatafile = os.path.dirname(sys.argv[0]) + os.sep + 'mapdata'
 usermapdatafile = expandfilename('~/.elmapviewer.usermapdata')
 
 mapdir, userdir, scale, fullscreen, boxesOn, marksOn, editor, \
-  markfontsize, statusfontsize, mainborder, noesc, copyexec = readvars(rcfile)
+  markfontsize, statusfontsize, mainborder, noesc, copyexec, showgametime = readvars(rcfile)
 mapinfo, mapscale, maptype, parentmap, maptitle = readinfo(mapdir, mapdatafile, usermapdatafile)
   
 normalcursor = True           # holds current cursor state, set to alternative when over links
@@ -454,6 +492,19 @@ currentsearchmapindex = 0
 
 markersstore = {}
 
+# game time information
+elweburl = 'http://www.eternal-lands.com'
+starttimestring = 'Game time: '
+endtimestring = '<'
+millisecpergamemillisec = 61 * 1000
+
+# get the initial game time and start the event timer to keep it up to date
+if showgametime:
+  hour, minute = getgametime(elweburl, starttimestring, endtimestring)
+  pygame.time.set_timer(pygame.USEREVENT, millisecpergamemillisec)
+else:
+  hour = minute = 0
+  
 # loop forever....
 while 1:
 
@@ -585,10 +636,7 @@ while 1:
             mapxoffset, mainmapsize, scale, statustext, markfontsize, \
             searchmode, marksearch, searchtext )
       
-      currtitle = basetitle
-      if maptitle.has_key(mainmapname):
-        currtitle += ' - [ ' + maptitle[mainmapname] + ' ]'
-      pygame.display.set_caption(currtitle, baseicon)
+      settitle(mainmapname, hour, minute, basetitle)
 
       # draw the new display
       pygame.display.flip()
@@ -622,6 +670,11 @@ while 1:
     # if exit, then make it so
     if event.type == pygame.QUIT:
       sys.exit()
+    
+    # update the title with the game time each game minute
+    elif showgametime and event.type == pygame.USEREVENT:
+      hour, minute = updategametime(hour, minute)
+      settitle(mainmapname, hour, minute, basetitle)
       
     # if the mouse moves
     elif event.type == pygame.MOUSEMOTION:
