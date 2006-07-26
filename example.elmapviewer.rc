@@ -1,6 +1,6 @@
 # anything starting with # ignored
 
-# anything word = .... treaded as program variable, space required next to =
+# anything word = .... treated as program variable, space required next to =
 mapdir = /usr/local/games/EternalLands/maps/
 userdir = ~/.elc/
 scale = 1.0
@@ -14,10 +14,17 @@ mainborderx = 21
 mainbordery = 5
 # option to disable quit/exit option
 noesc = 0
+
 # executable used to copy text to clipboard
-# need to install xsel and uncomment to use
+# need to install xsel (or similar) and uncomment to use
 #copytoclipboard = xsel
 
 # function keys that jump to particular maps
 F1 = map2.bmp
 F2 = cont2map1.bmp
+
+# option for showing game time
+# will read el web site once at startup then maintain the clock internally
+# the web only show time to the minute so can only be accurate to the minute
+# set to 1 to enable
+showgametime = 0
