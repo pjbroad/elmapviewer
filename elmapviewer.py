@@ -496,12 +496,14 @@ markersstore = {}
 elweburl = 'http://www.eternal-lands.com'
 starttimestring = 'Game time: '
 endtimestring = '<'
-millisecpergamemillisec = 61 * 1000
+# 59 game seconds is 60 second normal time
+millisecpergamemillisec = int(0.5 + 1000.0 * 60.0 * 60.0 / 59.0)
 
 # get the initial game time and start the event timer to keep it up to date
 if showgametime:
   hour, minute = getgametime(elweburl, starttimestring, endtimestring)
   pygame.time.set_timer(pygame.USEREVENT, millisecpergamemillisec)
+  print 'Game time:', timestring(hour, minute)
 else:
   hour = minute = 0
   
