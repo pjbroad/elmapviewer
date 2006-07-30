@@ -65,6 +65,8 @@ functionkeys = { \
   'F10': (pygame.K_F10, ''), 'F11': (pygame.K_F11, ''), 'F12': (pygame.K_F12, ''), \
   'F13': (pygame.K_F13, ''), 'F14': (pygame.K_F14, ''), 'F15': (pygame.K_F15, ''), \
   }
+gameminuteevent = pygame.USEREVENT
+clockresyncevent = pygame.USEREVENT+1
 
 # expand ~ and environ vars
 def expandfilename(filename):
@@ -400,38 +402,45 @@ def displaymarkers(markers, thismapscale, screen, mapxoffset, mapsize, \
   return statustext
 
 # use the specified url (usually main el site) to get the current game time
-def getgametime(elweburl, starttimestring, endtimestring, millisecpergamemillisec):
-  pygame.time.set_timer(pygame.USEREVENT, 0)
+def getgametime():
+  # game time information
+  elweburl = 'http://www.eternal-lands.com'
+  starttimestring = 'Game time: '
+  endtimestring = '<'
+  # 59 game seconds is 60 second normal time
+  millisecpergamemillisec = int(0.5 + 1000.0 * 60 * 60.0 / 59.0)
+  # (re)start the game minute timer
+  pygame.time.set_timer(gameminuteevent, 0)
+  pygame.time.set_timer(gameminuteevent, millisecpergamemillisec)
+  # read the webpage
   wpage=urllib.urlopen(elweburl)
   pagetext = wpage.read()
   wpage.close()
-  # start the game minute timter
-  pygame.time.set_timer(pygame.USEREVENT, millisecpergamemillisec)
-  lasttimeupdate = pygame.time.get_ticks()
   # process the page to retrieve the start time
   start = string.find(pagetext, starttimestring)
   end = string.find(pagetext, endtimestring, start)
   timestring = pagetext[start+len(starttimestring):end].split(':')
-  #print 'read game time from web:', timestring
-  return int(timestring[0]), int(timestring[1]), lasttimeupdate
+  return (int(timestring[0]), int(timestring[1]))
 
-# increment the game time by a minute
-def updategametime(hour, minute):
-  minute += 1
+# increment the game time by a minute gametime = (hour, minute)
+def updategametime(gametime):
+  hour = gametime[0]
+  minute = gametime[1] + 1
   if minute == 60:
     minute = 0
     hour += 1
     if hour == 6:
       hour = 0
-  return hour, minute
-
+  return (hour, minute)
+  
 # return a game time string formmatted HH:MM with 0 padding
-def timestring(hour, minute):
-  return (str(hour).rjust(2) + ':' + str(minute).rjust(2)).replace(' ','0')
+def timestring(gametime):
+  return (str(gametime[0]).rjust(2) + ':' + str(gametime[1]).rjust(2)).replace(' ','0')
 
-def settitle(mainmapname, hour, minute, basetitle):
+# update the window title
+def settitle(mainmapname, gametime, basetitle):
   if showgametime: 
-    currtitle = ' [Game Time: ' + timestring(hour, minute) + ']'
+    currtitle = ' [Game Time: ' + timestring(gametime) + ']'
   else:
     currtitle = ''
   if maptitle.has_key(mainmapname):
@@ -439,7 +448,7 @@ def settitle(mainmapname, hour, minute, basetitle):
   currtitle += ' ' + basetitle
   pygame.display.set_caption(currtitle, baseicon)
 
-# check sound and font usage and initialise pygame
+# check font usage and initialise pygame
 if not pygame.font:
   print 'Error, fonts not available'
   sys.exit()
@@ -497,21 +506,13 @@ currentsearchmapindex = 0
 
 markersstore = {}
 
-# game time information
-elweburl = 'http://www.eternal-lands.com'
-starttimestring = 'Game time: '
-endtimestring = '<'
-# 59 game seconds is 60 second normal time
-millisecpergamemillisec = int(0.5 + 1000.0 * 60.0 * 60.0 / 59.0)
-# resync the clock every hour - one day the tracking will be accurate enough to drop this
-resynctimedelay = 1000 * 60 * 60
-
-# get the initial game time and start the event timer to keep it up to date
+# get the initial game time and start the event timers to keep it up to date
 if showgametime:
-  hour, minute, lasttimeupdate = getgametime(elweburl, starttimestring, endtimestring, millisecpergamemillisec)
-  pygame.time.set_timer(pygame.USEREVENT+1, resynctimedelay)
+  gametime = getgametime()
+  # resync the clock every hour - one day the tracking will be accurate enough to drop this
+  pygame.time.set_timer(clockresyncevent, 1000 * 60 * 60)
 else:
-  hour = minute = 0
+  gametime = (0,0)
   
 # loop forever....
 while 1:
@@ -644,7 +645,7 @@ while 1:
             mapxoffset, mainmapsize, scale, statustext, markfontsize, \
             searchmode, marksearch, searchtext )
       
-      settitle(mainmapname, hour, minute, basetitle)
+      settitle(mainmapname, gametime, basetitle)
 
       # draw the new display
       pygame.display.flip()
@@ -680,18 +681,16 @@ while 1:
       sys.exit()
     
     # update the title with the game time each game minute
-    elif showgametime and event.type == pygame.USEREVENT:
-      currtime = pygame.time.get_ticks()
-      while lasttimeupdate + millisecpergamemillisec < currtime:
-        hour, minute = updategametime(hour, minute)
-        lasttimeupdate += millisecpergamemillisec
-        settitle(mainmapname, hour, minute, basetitle)
+    elif showgametime and event.type == gameminuteevent:
+      gametime = updategametime(gametime)
+      settitle(mainmapname, gametime, basetitle)
         
     # resync the clock with the web now and then
-    elif showgametime and event.type == pygame.USEREVENT+1:
-      #print "resyncing clock, was", hour, minute
-      hour, minute, lasttimeupdate = getgametime(elweburl, starttimestring, endtimestring, millisecpergamemillisec)
-      settitle(mainmapname, hour, minute, basetitle)
+    elif showgametime and event.type == clockresyncevent:
+      print 'resync game time, was ', gametime,
+      gametime = getgametime()
+      print ' now ', gametime
+      settitle(mainmapname, gametime, basetitle)
       
     # if the mouse moves
     elif event.type == pygame.MOUSEMOTION:
@@ -719,7 +718,7 @@ while 1:
           normalcursor = True
       # update the coordinate display
       if mapscale.has_key(mainmapname) and mainmaprect.collidepoint(pygame.mouse.get_pos()) \
-       and mapscale[mainmapname][0] != 1000 and mapscale[mainmapname][1]:
+       and mapscale[mainmapname][0] != 1000 and mapscale[mainmapname][1] != 1000:
         mousexy = pygame.mouse.get_pos()
         x = int((float(mousexy[0]-mapxoffset) / mainmapsize[0] * mapscale[mainmapname][0]))
         y = int(mapscale[mainmapname][1] - (float(mousexy[1]) / mainmapsize[1] * mapscale[mainmapname][1]))
