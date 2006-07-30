@@ -163,6 +163,7 @@ def readvars(fname):
   mainborder = [10, 10]
   noesc = False
   copyexec = ''
+  showgametime = False
   # create a default rc file if none exists
   if not os.access(fname, os.R_OK):
     srcfile = os.path.dirname(sys.argv[0]) + '/example.elmapviewer.rc'
@@ -399,16 +400,20 @@ def displaymarkers(markers, thismapscale, screen, mapxoffset, mapsize, \
   return statustext
 
 # use the specified url (usually main el site) to get the current game time
-def getgametime(elweburl, starttimestring, endtimestring):
+def getgametime(elweburl, starttimestring, endtimestring, millisecpergamemillisec):
+  pygame.time.set_timer(pygame.USEREVENT, 0)
   wpage=urllib.urlopen(elweburl)
   pagetext = wpage.read()
   wpage.close()
-
+  # start the game minute timter
+  pygame.time.set_timer(pygame.USEREVENT, millisecpergamemillisec)
+  lasttimeupdate = pygame.time.get_ticks()
+  # process the page to retrieve the start time
   start = string.find(pagetext, starttimestring)
   end = string.find(pagetext, endtimestring, start)
   timestring = pagetext[start+len(starttimestring):end].split(':')
-  #print timestring
-  return int(timestring[0]), int(timestring[1])
+  #print 'read game time from web:', timestring
+  return int(timestring[0]), int(timestring[1]), lasttimeupdate
 
 # increment the game time by a minute
 def updategametime(hour, minute):
@@ -498,12 +503,13 @@ starttimestring = 'Game time: '
 endtimestring = '<'
 # 59 game seconds is 60 second normal time
 millisecpergamemillisec = int(0.5 + 1000.0 * 60.0 * 60.0 / 59.0)
+# resync the clock every hour - one day the tracking will be accurate enough to drop this
+resynctimedelay = 1000 * 60 * 60
 
 # get the initial game time and start the event timer to keep it up to date
 if showgametime:
-  hour, minute = getgametime(elweburl, starttimestring, endtimestring)
-  pygame.time.set_timer(pygame.USEREVENT, millisecpergamemillisec)
-  print 'Game time:', timestring(hour, minute)
+  hour, minute, lasttimeupdate = getgametime(elweburl, starttimestring, endtimestring, millisecpergamemillisec)
+  pygame.time.set_timer(pygame.USEREVENT+1, resynctimedelay)
 else:
   hour = minute = 0
   
@@ -675,7 +681,16 @@ while 1:
     
     # update the title with the game time each game minute
     elif showgametime and event.type == pygame.USEREVENT:
-      hour, minute = updategametime(hour, minute)
+      currtime = pygame.time.get_ticks()
+      while lasttimeupdate + millisecpergamemillisec < currtime:
+        hour, minute = updategametime(hour, minute)
+        lasttimeupdate += millisecpergamemillisec
+        settitle(mainmapname, hour, minute, basetitle)
+        
+    # resync the clock with the web now and then
+    elif showgametime and event.type == pygame.USEREVENT+1:
+      #print "resyncing clock, was", hour, minute
+      hour, minute, lasttimeupdate = getgametime(elweburl, starttimestring, endtimestring, millisecpergamemillisec)
       settitle(mainmapname, hour, minute, basetitle)
       
     # if the mouse moves
