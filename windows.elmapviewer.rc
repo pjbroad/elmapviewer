@@ -24,7 +24,7 @@ F1 = map2.bmp
 F2 = cont2map1.bmp
 
 # option for showing game time
-# will read el web site once at startup then maintain the clock internally
+# will read el web site at startup then maintain the clock internally (resyncing now and then)
 # the webpage only shows time to the minute so we can only be accurate to the minute
 # set to 1 to enable
 showgametime = 0
