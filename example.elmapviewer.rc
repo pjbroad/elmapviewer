@@ -1,4 +1,4 @@
-# anything starting with # ignored
+# anything starting with # is treated as a comment and ignored
 
 # anything word = .... treated as program variable, space required next to =
 mapdir = /usr/local/games/EternalLands/maps/
@@ -16,7 +16,7 @@ mainbordery = 5
 noesc = 0
 
 # executable used to copy text to clipboard
-# need to install xsel (or similar) and uncomment to use
+# need to install xsel (or similar) and uncomment (remove #) to use
 #copytoclipboard = xsel
 
 # function keys that jump to particular maps
@@ -25,6 +25,6 @@ F2 = cont2map1.bmp
 
 # option for showing game time
 # will read el web site once at startup then maintain the clock internally
-# the web only show time to the minute so can only be accurate to the minute
+# the webpage only shows time to the minute so we can only be accurate to the minute
 # set to 1 to enable
 showgametime = 0
