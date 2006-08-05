@@ -37,9 +37,9 @@
 # Debian GNU/Linux: http://www.debian.org/
 # Ubuntu: http://www.ubuntu.com/
 
-import sys, pygame, string, os, shutil, platform, struct, urllib
+import sys, pygame, string, os, shutil, platform, struct, urllib, math
 
-version = 'v0.4.1 July 2006'
+version = 'v0.4.2 August 2006'
 
 # define some basic colours
 blackcolour = 0, 0, 0
@@ -48,9 +48,11 @@ greencolour = 0, 255, 0
 bluecolour = 0, 0, 255
 yellowcolour = 255, 255, 0
 cyancolour = 0, 255, 255
+orangecolour = 255, 185, 15
 whitecolour = 255, 255, 255
 # and some item colours
 pkmapcolour = redcolour
+hlmapcolour = orangecolour
 othermapcolour = greencolour
 markcolour = 179, 238,  58
 markcrosscolour = whitecolour
@@ -274,6 +276,9 @@ def updatestatusline(screen, scale, coordwidth, mapname, statustext, statusfonts
   if maptype.has_key(mapname) and maptype[mapname] == 'PK':
     colour = pkmapcolour
     extrastat = ' (PK)'
+  elif maptype.has_key(mapname) and maptype[mapname] == 'HL':
+    colour = hlmapcolour
+    extrastat = ' (HL)'
   else:
     colour = othermapcolour
   # get the text surface
@@ -447,6 +452,25 @@ def settitle(mainmapname, gametime, basetitle):
     currtitle += ' [ ' + maptitle[mainmapname] + ' ]'
   currtitle += ' ' + basetitle
   pygame.display.set_caption(currtitle, baseicon)
+  
+# convert display coords to game map coords
+def togamecood(point, mapxoffset, thismainmapsize, thismapscale):
+  x = int((float(point[0]-mapxoffset) / thismainmapsize[0] * thismapscale[0]))
+  y = int(thismapscale[1] - (float(point[1]) / mainmapsize[1] * thismapscale[1]))
+  return (x,y)
+
+# calculate the distance between the two points and return as walking time
+def calcdistance(point1, point2, mapxoffset, thismapsize, thismapscale ):
+  point1 = togamecood(point1, mapxoffset, thismapsize, thismapscale)
+  point2 = togamecood(point2, mapxoffset, thismapsize, thismapscale)
+  xdist = point2[0] - point1[0]
+  ydist = point2[1] - point1[1]
+  # divisor was empirically measured, its not that accurate
+  crowflydist = math.sqrt(xdist*xdist + ydist*ydist)/3.32
+  minutes = int(crowflydist / 60.0)
+  seconds = int(crowflydist - 60 * minutes)
+  return 'time to walk ' + str(point1) + '->' + str(point2) + ' ' + \
+    (str(minutes).rjust(2) + ':' + str(seconds).rjust(2)).replace(' ','0')
 
 # check font usage and initialise pygame
 if not pygame.font:
@@ -629,6 +653,8 @@ while 1:
         if boxesOn:
           if maptype.has_key(hp[1]) and maptype[hp[1]] == 'PK':
             colour = pkboxcolour
+          elif maptype.has_key(hp[1]) and maptype[hp[1]] == 'HL':
+            colour = hlmapcolour
           else:
             colour = boxcolour
           pygame.draw.rect(screen, colour, cursorbox, 2)
@@ -719,10 +745,8 @@ while 1:
       # update the coordinate display
       if mapscale.has_key(mainmapname) and mainmaprect.collidepoint(pygame.mouse.get_pos()) \
        and mapscale[mainmapname][0] != 1000 and mapscale[mainmapname][1] != 1000:
-        mousexy = pygame.mouse.get_pos()
-        x = int((float(mousexy[0]-mapxoffset) / mainmapsize[0] * mapscale[mainmapname][0]))
-        y = int(mapscale[mainmapname][1] - (float(mousexy[1]) / mainmapsize[1] * mapscale[mainmapname][1]))
-        coordtext = str(x) + ',' + str(y)
+        coords = togamecood(pygame.mouse.get_pos(), mapxoffset, mainmapsize, mapscale[mainmapname] )
+        coordtext = str(coords[0]) + ',' + str(coords[1])
       else:
         coordtext = ''
   
@@ -760,18 +784,24 @@ while 1:
         # if we've already had both and drawn the box, clear it this time
         else:
           lastmap = ''
+          markbox = []
         # if now we have the two corners, draw the box and display coords suitable for map link
         if len(markbox) == 2:
-          cursorbox = pygame.Rect(markbox[0][0],markbox[0][1],markbox[1][0]-markbox[0][0], markbox[1][1]-markbox[0][1])
-          pygame.draw.rect(screen, testboxcolour, cursorbox, 2)
+          modkeys = pygame.key.get_mods()
+          if modkeys == pygame.KMOD_LCTRL or modkeys == pygame.KMOD_RCTRL:
+            cursorbox = pygame.Rect(markbox[0][0],markbox[0][1],markbox[1][0]-markbox[0][0], markbox[1][1]-markbox[0][1])
+            pygame.draw.rect(screen, testboxcolour, cursorbox, 2)
+            statustext = \
+              str(int((markbox[0][0]-mapxoffset)/scale)) + ' ' + \
+              str(int(markbox[0][1]/scale)) + ' ' +  \
+              str(int((markbox[1][0]-markbox[0][0])/scale))  + ' ' +  \
+              str(int((markbox[1][1]-markbox[0][1])/scale))  + ' '
+            if copyexec != '':
+              os.popen(copyexec, 'wb').write(statustext)
+          elif mapscale.has_key(mainmapname):
+            pygame.draw.line(screen, testboxcolour, markbox[0], markbox[1], 2)
+            statustext = calcdistance(markbox[0], markbox[1], mapxoffset, mainmapsize, mapscale[mainmapname] )
           pygame.display.update()
-          statustext = \
-            str(int((markbox[0][0]-mapxoffset)/scale)) + ' ' + \
-            str(int(markbox[0][1]/scale)) + ' ' +  \
-            str(int((markbox[1][0]-markbox[0][0])/scale))  + ' ' +  \
-            str(int((markbox[1][1]-markbox[0][1])/scale))  + ' '
-          if copyexec != '':
-            os.popen(copyexec, 'wb').write(statustext)
 
 			# call help mapping routine to get keypress from mouse position
 			# highlight option box until MOUSEUP
