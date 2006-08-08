@@ -127,10 +127,10 @@ map5nf_insides.bmp: - - - map5nf.bmp
 map6nf_insides.bmp: - - - map6nf.bmp
 map7_cave.bmp: - - - map7.bmp
 map7_insides.bmp: - - - map7.bmp
-map8_catacombs.bmp: - - - map8.bmp
+map8_catacombs.bmp: - - HL map8.bmp
 map8_insides.bmp: - - - map8.bmp
 map9f_insides.bmp: - - - map9f.bmp
-map11_crypt.bmp: - - - map11.bmp
+map11_crypt.bmp: - - HL map11.bmp
 map11_insides.bmp: - - - map11.bmp
 map11_insmsch.bmp: - - - map11.bmp
 map11_mschcave.bmp: - - - map11.bmp
