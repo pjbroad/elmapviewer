@@ -365,11 +365,11 @@ def drawhelp(scale):
 
 # drawhelp stored array of text rec and key options
 # scan though for collide and return key option
-def getmenukey(menuoptions):
+def getmenukey(menuoptions, mousecoord, sidemapsize):
   xymove = [0, sidemapsize[1]]
   for option in menuoptions:
     realrec = option[0].move(xymove)
-    if realrec.collidepoint(pygame.mouse.get_pos()):
+    if realrec.collidepoint(mousecoord):
       return option[1]
   return 0
 
@@ -701,6 +701,10 @@ while 1:
 
     # get an event from the window
     event = pygame.event.wait()
+    mousecoord = pygame.mouse.get_pos()
+    mousebuttons = pygame.mouse.get_pressed()
+    modkeys = pygame.key.get_mods()
+    mouseonmainmap = mainmaprect.collidepoint(mousecoord)
     
     # if exit, then make it so
     if event.type == pygame.QUIT:
@@ -723,7 +727,7 @@ while 1:
       # check for cursor changes in link boxes
       inhotspot = False
       for hp in hotspot:
-        if hp[0].collidepoint(pygame.mouse.get_pos()):
+        if hp[0].collidepoint(mousecoord):
           if normalcursor:
             pygame.mouse.set_cursor(*pygame.cursors.diamond)
             normalcursor = False
@@ -731,8 +735,8 @@ while 1:
           break
       # if not in a map hot spot, check for menu option
       if not inhotspot:
-        if helprect.collidepoint(pygame.mouse.get_pos()):
-          if getmenukey(menuoptions) != 0:
+        if helprect.collidepoint(mousecoord):
+          if getmenukey(menuoptions, mousecoord, sidemapsize) != 0:
             if normalcursor:
               pygame.mouse.set_cursor(*pygame.cursors.diamond)
               normalcursor = False
@@ -743,9 +747,9 @@ while 1:
           pygame.mouse.set_cursor(*pygame.cursors.arrow)
           normalcursor = True
       # update the coordinate display
-      if mapscale.has_key(mainmapname) and mainmaprect.collidepoint(pygame.mouse.get_pos()) \
+      if mapscale.has_key(mainmapname) and mouseonmainmap \
        and mapscale[mainmapname][0] != 1000 and mapscale[mainmapname][1] != 1000:
-        coords = togamecood(pygame.mouse.get_pos(), mapxoffset, mainmapsize, mapscale[mainmapname] )
+        coords = togamecood(mousecoord, mapxoffset, mainmapsize, mapscale[mainmapname] )
         coordtext = str(coords[0]) + ',' + str(coords[1])
       else:
         coordtext = ''
@@ -754,59 +758,59 @@ while 1:
     elif event.type == pygame.MOUSEBUTTONDOWN:
     
       # if sidemap left-clicked, switch side and main maps
-      if pygame.mouse.get_pressed()[0] and sidemaprect.collidepoint(pygame.mouse.get_pos()):
+      if mousebuttons[0] and sidemaprect.collidepoint(mousecoord):
         temp = sidemapname
         sidemapname = mainmapname
         mainmapname = temp
+      
+      elif mouseonmainmap:
             
-      # if main map left-click, check for map link
-      if pygame.mouse.get_pressed()[0] and pygame.mouse.get_pos()[0] > mapxoffset:
-        for hp in hotspot:
-          if hp[0].collidepoint(pygame.mouse.get_pos()):
-            mainmapname = hp[1]
-            
-      # if middle-click in link area, show information about the link
-      if pygame.mouse.get_pressed()[1] and pygame.mouse.get_pos()[0] > mapxoffset:
-        for hp in hotspot:
-          if hp[0].collidepoint(pygame.mouse.get_pos()):
-            statustext = 'link info: ' + str(hp)
-            
-      # help create new map link areas by drawning a box on the map
-      # if right-click form box with next click, then clear on third
-      if pygame.mouse.get_pressed()[2] and pygame.mouse.get_pos()[0] > mapxoffset:
-        xycoord = (pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1])
-        # store and draw first 2 click positions 
-        if len(markbox) < 2:
-          markbox.append(xycoord)
-          pygame.draw.line(screen, testboxcolour, (xycoord[0]-5, xycoord[1]), (xycoord[0]+5, xycoord[1]), 1)
-          pygame.draw.line(screen, testboxcolour, (xycoord[0], xycoord[1]-5), (xycoord[0], xycoord[1]+5), 1)
-          pygame.display.update()
-        # if we've already had both and drawn the box, clear it this time
-        else:
-          lastmap = ''
-          markbox = []
-        # if now we have the two corners, draw the box and display coords suitable for map link
-        if len(markbox) == 2:
-          modkeys = pygame.key.get_mods()
-          if modkeys == pygame.KMOD_LCTRL or modkeys == pygame.KMOD_RCTRL:
-            cursorbox = pygame.Rect(markbox[0][0],markbox[0][1],markbox[1][0]-markbox[0][0], markbox[1][1]-markbox[0][1])
-            pygame.draw.rect(screen, testboxcolour, cursorbox, 2)
-            statustext = \
-              str(int((markbox[0][0]-mapxoffset)/scale)) + ' ' + \
-              str(int(markbox[0][1]/scale)) + ' ' +  \
-              str(int((markbox[1][0]-markbox[0][0])/scale))  + ' ' +  \
-              str(int((markbox[1][1]-markbox[0][1])/scale))  + ' '
-            if copyexec != '':
-              os.popen(copyexec, 'wb').write(statustext)
-          elif mapscale.has_key(mainmapname):
-            pygame.draw.line(screen, testboxcolour, markbox[0], markbox[1], 2)
-            statustext = calcdistance(markbox[0], markbox[1], mapxoffset, mainmapsize, mapscale[mainmapname] )
-          pygame.display.update()
+        # if main map left-click, check for map link
+        if mousebuttons[0]:
+          for hp in hotspot:
+            if hp[0].collidepoint(mousecoord):
+              mainmapname = hp[1]
+
+        # if middle-click in link area, show information about the link
+        elif mousebuttons[1]:
+          for hp in hotspot:
+            if hp[0].collidepoint(mousecoord):
+              statustext = 'link info: ' + str(hp)
+
+        # help create new map link areas by drawning a box on the map
+        # if right-click form box with next click, then clear on third
+        elif mousebuttons[2]:
+          # store and draw first 2 click positions 
+          if len(markbox) < 2:
+            markbox.append(mousecoord)
+            pygame.draw.line(screen, testboxcolour, (mousecoord[0]-5, mousecoord[1]), (mousecoord[0]+5, mousecoord[1]), 1)
+            pygame.draw.line(screen, testboxcolour, (mousecoord[0], mousecoord[1]-5), (mousecoord[0], mousecoord[1]+5), 1)
+            pygame.display.update()
+          # if we've already had both and drawn the box, clear it this time
+          else:
+            lastmap = ''
+            markbox = []
+          # if now we have the two corners, draw the box and display coords suitable for map link
+          if len(markbox) == 2:
+            if modkeys == pygame.KMOD_LCTRL or modkeys == pygame.KMOD_RCTRL:
+              cursorbox = pygame.Rect(markbox[0][0],markbox[0][1],markbox[1][0]-markbox[0][0], markbox[1][1]-markbox[0][1])
+              pygame.draw.rect(screen, testboxcolour, cursorbox, 2)
+              statustext = \
+                str(int((markbox[0][0]-mapxoffset)/scale)) + ' ' + \
+                str(int(markbox[0][1]/scale)) + ' ' +  \
+                str(int((markbox[1][0]-markbox[0][0])/scale))  + ' ' +  \
+                str(int((markbox[1][1]-markbox[0][1])/scale))  + ' '
+              if copyexec != '':
+                os.popen(copyexec, 'wb').write(statustext)
+            elif mapscale.has_key(mainmapname):
+              pygame.draw.line(screen, testboxcolour, markbox[0], markbox[1], 2)
+              statustext = calcdistance(markbox[0], markbox[1], mapxoffset, mainmapsize, mapscale[mainmapname] )
+            pygame.display.update()
 
 			# call help mapping routine to get keypress from mouse position
 			# highlight option box until MOUSEUP
-      if pygame.mouse.get_pressed()[0] and helprect.collidepoint(pygame.mouse.get_pos()):
-				event = pygame.event.Event(pygame.KEYDOWN, key=getmenukey(menuoptions))
+      elif mousebuttons[0] and helprect.collidepoint(mousecoord):
+				event = pygame.event.Event(pygame.KEYDOWN, key=getmenukey(menuoptions, mousecoord, sidemapsize))
             
     # process keyboard events - could have been inserted due to a mouse event
     if event.type == pygame.KEYDOWN:
@@ -943,7 +947,6 @@ while 1:
           # add single letter keypresses to search, translating space so that work as a space
           elif len(pygame.key.name(event.key)) == 1 or event.key == pygame.K_SPACE:
             # trap keyboard differences, some use ^ directly, other don't
-            modkeys = pygame.key.get_mods()
             if event.key == pygame.K_6 and ((modkeys & pygame.KMOD_RSHIFT) or (modkeys & pygame.KMOD_LSHIFT)):
               searchtext += "^"
             elif event.key == pygame.K_MINUS and ((modkeys & pygame.KMOD_RSHIFT) or (modkeys & pygame.KMOD_LSHIFT)):
