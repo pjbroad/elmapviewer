@@ -13,7 +13,7 @@
 startmap.bmp: - - - seridia.bmp
 35 395 60 30 map2.bmp
 
-seridia.bmp: - - - startmap.bmp
+seridia.bmp: 1920 1920 - startmap.bmp
 15 80 65 110 map15f.bmp
 85 60 90 90 map3.bmp
 85 155 90 90 map6nf.bmp
@@ -160,7 +160,7 @@ anitora.bmp: - - - irilion.bmp
 94 271 47 31 map2.bmp
 375 229 40 51 cont2map1.bmp
 
-irilion.bmp: - - - anitora.bmp
+irilion.bmp: 2304 2304 - anitora.bmp
 60 45 165 140 cont2map1.bmp
 230 45 45 45 cont2map2.bmp
 275 45 45 45 cont2map3.bmp
