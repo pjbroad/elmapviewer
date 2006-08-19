@@ -39,7 +39,7 @@
 
 import sys, pygame, string, os, shutil, platform, struct, urllib, math
 
-version = 'v0.4.2 August 2006'
+version = 'v0.4.3 August 2006'
 
 # define some basic colours
 blackcolour = 0, 0, 0
@@ -138,7 +138,7 @@ def readinfo(mapdir, fname, userfname):
     # get the scale from the elm file and compare
     sizefromfile = readmapsizefromelm(os.path.join(mapdir, mapname))
     if mapscale.has_key(mapname):
-      if mapscale[mapname] != sizefromfile:
+      if mapscale[mapname] != sizefromfile and sizefromfile != (0,0):
         print 'Warning map scale mismatch', mapname, mapscale[mapname], sizefromfile
     elif sizefromfile != (0,0):
       mapscale[mapname] = sizefromfile
@@ -342,6 +342,14 @@ def drawhelp(scale):
     menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " up/down")
     menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, "   - cycle maps")
     menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " ESC - end search")
+  elif walktimemeasure:
+    menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " Walk Time")
+    menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, "  r click -")
+    menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, "    draw lines")
+    menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, "  ctrl-r click -")
+    menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, "    start new line")
+    menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, "  w - reset time")
+    menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, "  ESC - stop")
   else:
     menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " i - zoom in", pygame.K_i)
     menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " o - zoom out", pygame.K_o)
@@ -353,11 +361,12 @@ def drawhelp(scale):
     menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " c - edit config", pygame.K_c)
     menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " r - reload data", pygame.K_r)
     menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " bs - back a map", pygame.K_BACKSPACE)
-    menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " up/down - cycle")
+    #menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " up/down - cycle")
     #menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " Fn jump to map")
     menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " home/end islands")
     menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " l-click select")
     menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " r-click draw box")
+    menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " w - walk time", pygame.K_w)
     menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " / \ - search", pygame.K_SLASH)
     if not noesc:
       menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " q - quit", pygame.K_q)
@@ -460,7 +469,7 @@ def togamecood(point, mapxoffset, thismainmapsize, thismapscale):
   return (x,y)
 
 # calculate the distance between the two points and return as walking time
-def calcdistance(point1, point2, mapxoffset, thismapsize, thismapscale ):
+def calcdistance(point1, point2, mapxoffset, thismapsize, thismapscale, totalwalktime ):
   point1 = togamecood(point1, mapxoffset, thismapsize, thismapscale)
   point2 = togamecood(point2, mapxoffset, thismapsize, thismapscale)
   xdist = point2[0] - point1[0]
@@ -469,8 +478,13 @@ def calcdistance(point1, point2, mapxoffset, thismapsize, thismapscale ):
   crowflydist = math.sqrt(xdist*xdist + ydist*ydist)/3.32
   minutes = int(crowflydist / 60.0)
   seconds = int(crowflydist - 60 * minutes)
-  return 'time to walk ' + str(point1) + '->' + str(point2) + ' ' + \
-    (str(minutes).rjust(2) + ':' + str(seconds).rjust(2)).replace(' ','0')
+  legdiststr = (str(minutes).rjust(2) + ':' + str(seconds).rjust(2)).replace(' ','0')
+  totalwalktime += crowflydist
+  minutes = int(totalwalktime / 60.0)
+  seconds = int(totalwalktime - 60 * minutes)
+  totaldiststr = (str(minutes).rjust(2) + ':' + str(seconds).rjust(2)).replace(' ','0')
+  return totalwalktime, 'time to walk ' + str(point1) + '->' + str(point2) + \
+    ' ' + legdiststr + ' -> total ' + totaldiststr
 
 # check font usage and initialise pygame
 if not pygame.font:
@@ -529,6 +543,9 @@ searchmatchingmaps = []
 currentsearchmapindex = 0
 
 markersstore = {}
+
+walktimemeasure = False
+totalwalktime = 0
 
 # get the initial game time and start the event timers to keep it up to date
 if showgametime:
@@ -605,7 +622,7 @@ while 1:
       mainmaprect = mainmap.get_rect()
       
       # update font related sizes
-      coordwidth = pygame.font.Font(None, int(statusfontsize*scale)).size('000,000  ')[0]
+      coordwidth = pygame.font.Font(None, int(statusfontsize*scale)).size('0000,0000 ')[0]
       statusheight = pygame.font.Font(None, int(statusfontsize*scale)).get_height()
       
       # get the screen size
@@ -777,11 +794,14 @@ while 1:
             if hp[0].collidepoint(mousecoord):
               statustext = 'link info: ' + str(hp)
 
-        # help create new map link areas by drawning a box on the map
-        # if right-click form box with next click, then clear on third
+        # link box drawing or walktime measure
+        # walktime measure: normally joins lines, ctrl starts new line, ESC exists and clears
         elif mousebuttons[2]:
           # store and draw first 2 click positions 
           if len(markbox) < 2:
+            if modkeys == pygame.KMOD_LCTRL or modkeys == pygame.KMOD_RCTRL:
+              if walktimemeasure and len(markbox) == 1:
+                markbox = []
             markbox.append(mousecoord)
             pygame.draw.line(screen, testboxcolour, (mousecoord[0]-5, mousecoord[1]), (mousecoord[0]+5, mousecoord[1]), 1)
             pygame.draw.line(screen, testboxcolour, (mousecoord[0], mousecoord[1]-5), (mousecoord[0], mousecoord[1]+5), 1)
@@ -790,9 +810,18 @@ while 1:
           else:
             lastmap = ''
             markbox = []
-          # if now we have the two corners, draw the box and display coords suitable for map link
+          # can now draw box or line
           if len(markbox) == 2:
-            if modkeys == pygame.KMOD_LCTRL or modkeys == pygame.KMOD_RCTRL:
+            # draw a line
+            if walktimemeasure:
+              if mapscale.has_key(mainmapname):
+                pygame.draw.line(screen, testboxcolour, markbox[0], markbox[1], 2)
+                totalwalktime, statustext = calcdistance(markbox[0], markbox[1], mapxoffset, mainmapsize, mapscale[mainmapname], totalwalktime )
+                temp = markbox[1]
+                markbox = []
+                markbox.append(temp)
+            # if now we have the two corners, draw the box and display coords suitable for map link
+            else:
               cursorbox = pygame.Rect(markbox[0][0],markbox[0][1],markbox[1][0]-markbox[0][0], markbox[1][1]-markbox[0][1])
               pygame.draw.rect(screen, testboxcolour, cursorbox, 2)
               statustext = \
@@ -802,9 +831,6 @@ while 1:
                 str(int((markbox[1][1]-markbox[0][1])/scale))  + ' '
               if copyexec != '':
                 os.popen(copyexec, 'wb').write(statustext)
-            elif mapscale.has_key(mainmapname):
-              pygame.draw.line(screen, testboxcolour, markbox[0], markbox[1], 2)
-              statustext = calcdistance(markbox[0], markbox[1], mapxoffset, mainmapsize, mapscale[mainmapname] )
             pygame.display.update()
 
 			# call help mapping routine to get keypress from mouse position
@@ -867,6 +893,21 @@ while 1:
           markersstore = {}
           lastmap = ''
 
+        # w - enter walk time measuring mode or reset current total time
+        elif event.key == pygame.K_w:
+          if not walktimemeasure:
+            walktimemeasure = True
+          totalwalktime = 0
+          markbox = []
+          lastmap = ''
+
+        # exit any special more \/ done in search mode
+        elif event.key == pygame.K_ESCAPE:
+            lastmap = ''
+            markbox = []
+            totalwalktime = 0
+            walktimemeasure = False
+
         # home key, go to games start map
         elif event.key == pygame.K_HOME:
           mainmapname = homemap
@@ -903,7 +944,7 @@ while 1:
         elif event.key == pygame.K_q and not noesc:
             pygame.QUIT
             sys.exit()
-
+        
         # if its one of the function keys with a map defined, use it
         else:
           for fkey in functionkeys:
