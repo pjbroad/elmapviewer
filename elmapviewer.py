@@ -39,7 +39,7 @@
 
 import sys, pygame, string, os, shutil, platform, struct, urllib, math
 
-version = 'v0.4.3 August 2006'
+version = 'v0.4.4 August 2006'
 
 # define some basic colours
 blackcolour = 0, 0, 0
@@ -341,15 +341,15 @@ def drawhelp(scale):
     menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " ^ matches start")
     menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " up/down")
     menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, "   - cycle maps")
-    menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " ESC - end search")
+    menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " ESC - end search", pygame.K_ESCAPE)
   elif walktimemeasure:
     menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " Walk Time")
     menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, "  r click -")
     menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, "    draw lines")
     menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, "  ctrl-r click -")
     menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, "    start new line")
-    menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, "  w - reset time")
-    menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, "  ESC - stop")
+    menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, "  w - reset time", pygame.K_w)
+    menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, "  ESC - stop", pygame.K_ESCAPE)
   else:
     menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " i - zoom in", pygame.K_i)
     menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " o - zoom out", pygame.K_o)
@@ -427,17 +427,26 @@ def getgametime():
   pygame.time.set_timer(gameminuteevent, 0)
   pygame.time.set_timer(gameminuteevent, millisecpergamemillisec)
   # read the webpage
-  wpage=urllib.urlopen(elweburl)
-  pagetext = wpage.read()
-  wpage.close()
-  # process the page to retrieve the start time
-  start = string.find(pagetext, starttimestring)
-  end = string.find(pagetext, endtimestring, start)
-  timestring = pagetext[start+len(starttimestring):end].split(':')
-  return (int(timestring[0]), int(timestring[1]))
+  try:
+    wpage=urllib.urlopen(elweburl)
+    pagetext = wpage.read()
+    wpage.close()
+    # process the page to retrieve the start time
+    start = string.find(pagetext, starttimestring)
+    end = string.find(pagetext, endtimestring, start)
+    if start == -1 or end == -1:
+      print 'Error getting time from web, time not found'
+      return (99,99)
+    timestring = pagetext[start+len(starttimestring):end].split(':')
+    return (int(timestring[0]), int(timestring[1]))
+  except:
+    print 'Error getting time from web', sys.exc_info()[0], sys.exc_info()[1]
+    return (99,99)
 
 # increment the game time by a minute gametime = (hour, minute)
 def updategametime(gametime):
+  if gametime == (99,99):
+    return gametime
   hour = gametime[0]
   minute = gametime[1] + 1
   if minute == 60:
@@ -453,8 +462,11 @@ def timestring(gametime):
 
 # update the window title
 def settitle(mainmapname, gametime, basetitle):
-  if showgametime: 
-    currtitle = ' [Game Time: ' + timestring(gametime) + ']'
+  if showgametime:
+    if gametime == (99,99):
+      currtitle = ' [Game Time: error]'
+    else:
+      currtitle = ' [Game Time: ' + timestring(gametime) + ']'
   else:
     currtitle = ''
   if maptitle.has_key(mainmapname):
