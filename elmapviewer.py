@@ -99,6 +99,7 @@ def readinfo(mapdir, fname, userfname):
   mapscale = {}
   maptype = {}
   parentmap = {}
+  continent = {}
   allmaps = {}
   maptitle = {}
   # create the initial map list form the elm files
@@ -149,8 +150,9 @@ def readinfo(mapdir, fname, userfname):
       w = line.split()
       if len(w) > 7:
         mapfilename = os.path.basename(string.replace(w[5],'.elm','.bmp',1))
+        continent[mapfilename] = w[0]
         maptitle[mapfilename] = string.join(w[7:],' ')
-  return mapinfo, mapscale, maptype, parentmap, maptitle
+  return mapinfo, mapscale, maptype, parentmap, maptitle, continent
   
 
 # read program variables from the resource file
@@ -281,7 +283,11 @@ def updatestatusline(screen, scale, coordwidth, mapname, statustext, statusfonts
     extrastat = ' (HL)'
   else:
     colour = othermapcolour
+  cont = ''
+  if continent.has_key(mapname):
+    cont = continent[mapname]
   # get the text surface
+  #fulltext = mapname + '(' + cont + ')' + extrastat + ':  ' + statustext
   fulltext = mapname + extrastat + ':  ' + statustext
   genstatusline(screen, scale, coordwidth, fulltext, colour, statusfontsize)
   return
@@ -521,7 +527,7 @@ usermapdatafile = expandfilename('~/.elmapviewer.usermapdata')
 
 mapdir, userdir, scale, fullscreen, boxesOn, marksOn, editor, \
   markfontsize, statusfontsize, mainborder, noesc, copyexec, showgametime = readvars(rcfile)
-mapinfo, mapscale, maptype, parentmap, maptitle = readinfo(mapdir, mapdatafile, usermapdatafile)
+mapinfo, mapscale, maptype, parentmap, maptitle, continent = readinfo(mapdir, mapdatafile, usermapdatafile)
   
 normalcursor = True           # holds current cursor state, set to alternative when over links
 mainmapname = 'seridia.bmp'   # the map about to be displayed
@@ -901,7 +907,7 @@ while 1:
 
         # r - redisplay map, rereading all user data
         elif event.key == pygame.K_r:
-          mapinfo, mapscale, maptype, parentmap, maptitle = readinfo(mapdir, mapdatafile, usermapdatafile)
+          mapinfo, mapscale, maptype, parentmap, maptitle, continent = readinfo(mapdir, mapdatafile, usermapdatafile)
           markersstore = {}
           lastmap = ''
 
