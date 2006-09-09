@@ -91,6 +91,19 @@ def readmapsizefromelm(bmpfilename):
   else:
     return 0, 0
 
+# loop back through parent maps to find the maps continent
+def getcontinent(parentmap,mapname):
+  continent = mapname
+  loopmax = 10
+  loopcnt = 0
+  while loopcnt < loopmax and parentmap.has_key(continent) \
+      and (continent != 'seridia.bmp' and continent != 'irilion.bmp'):
+    continent = parentmap[continent]
+    loopcnt += 1
+  if loopcnt == loopmax:
+    print 'Map parent loop while finding continent', mapname
+    sys.exit()  
+  return continent
 
 # read map information from the map data files
 # links, names, sizes, types
@@ -148,10 +161,17 @@ def readinfo(mapdir, fname, userfname):
   if os.access(mapinfolstfile, os.R_OK):
     for line in open(mapinfolstfile, 'r'):
       w = line.split()
-      if len(w) > 7:
+      if len(w) > 5:
         mapfilename = os.path.basename(string.replace(w[5],'.elm','.bmp',1))
-        continent[mapfilename] = w[0]
-        maptitle[mapfilename] = string.join(w[7:],' ')
+        if w[0] == 'Seridia':
+          continent[mapfilename] = 'seridia.bmp'
+        else:
+          continent[mapfilename] = 'irilion.bmp'          
+      	if len(w) > 7:
+        	maptitle[mapfilename] = string.join(w[7:],' ')
+  for mapname in allmaps:
+    if not continent.has_key(mapname):
+      continent[mapname] = getcontinent(parentmap,mapname)
   return mapinfo, mapscale, maptype, parentmap, maptitle, continent
   
 
@@ -283,11 +303,7 @@ def updatestatusline(screen, scale, coordwidth, mapname, statustext, statusfonts
     extrastat = ' (HL)'
   else:
     colour = othermapcolour
-  cont = ''
-  if continent.has_key(mapname):
-    cont = continent[mapname]
   # get the text surface
-  #fulltext = mapname + '(' + cont + ')' + extrastat + ':  ' + statustext
   fulltext = mapname + extrastat + ':  ' + statustext
   genstatusline(screen, scale, coordwidth, fulltext, colour, statusfontsize)
   return
@@ -347,6 +363,9 @@ def drawhelp(scale):
     menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " ^ matches start")
     menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " up/down")
     menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, "   - cycle maps")
+    menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " TAB - filter", pygame.K_TAB)
+    limitname = limitsearch[0:limitsearch.find('.')]
+    menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, "   ("+limitname+")", pygame.K_TAB)
     menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " ESC - end search", pygame.K_ESCAPE)
   elif walktimemeasure:
     menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " Walk Time")
@@ -559,6 +578,7 @@ searchtext = ''
 lastsearchtext = '-'
 searchmatchingmaps = []
 currentsearchmapindex = 0
+limitsearch = 'none.bmp'
 
 markersstore = {}
 
@@ -599,6 +619,9 @@ while 1:
       if parentmap.has_key(mainmapname):
         if sidemapname != parentmap[mainmapname]:
           sidemapname = parentmap[mainmapname]
+      else:
+        if sidemapname != continent[mainmapname]:
+          sidemapname = continent[mainmapname]
           
       # get and scale the current size map surface
       fullpath = os.path.join(mapdir, sidemapname)
@@ -1002,6 +1025,20 @@ while 1:
               currentsearchmapindex -= 1
               if currentsearchmapindex < 0:
                 currentsearchmapindex = len(searchmatchingmaps) -1
+                
+          # TAB will cycle through no limit, Seridia only and Irilion only maps
+          if event.key == pygame.K_TAB:
+            if limitsearch == 'none.bmp':
+              limitsearch = 'seridia.bmp'
+            elif limitsearch == 'seridia.bmp':
+              limitsearch = 'irilion.bmp'
+            else:
+              limitsearch = 'none.bmp'
+            searchmatchingmaps = []
+            currentsearchmapindex = 0
+            # make sure the help is updated
+            lastmap = ''
+
 
           # add single letter keypresses to search, translating space so that work as a space
           elif len(pygame.key.name(event.key)) == 1 or event.key == pygame.K_SPACE:
@@ -1024,6 +1061,9 @@ while 1:
               mapnames = mapinfo.keys()
               mapnames.sort()
               for testmap in mapnames:
+                if limitsearch != 'none.bmp':
+                  if continent[testmap] != limitsearch:
+                    continue
                 if not markersstore.has_key(testmap):
                   markersstore[testmap] = readmapmarkers(userdir, testmap)
                 markers = markersstore[testmap]
@@ -1032,11 +1072,12 @@ while 1:
                   if searchfind(marktext, searchtext):
                     searchmatchingmaps.append(testmap)
                     break
-              # make sure we stay on the current map is it matches
+              # make sure we stay on the current map if it matches
               if mainmapname in searchmatchingmaps:
                 currentsearchmapindex = searchmatchingmaps.index(mainmapname)
             # redisplay the map thus applying the latest filter
             lastmap = ''
+
               
           # if were searching map names, fill matching map array with matching names
           else:
@@ -1046,12 +1087,15 @@ while 1:
               mapnames.sort()
               marchlist = []
               for testmap in mapnames:
+                if limitsearch != 'none.bmp':
+                  if continent[testmap] != limitsearch:
+                    continue
                 if searchfind(testmap, searchtext):
                   searchmatchingmaps.append(testmap)
               # make sure we stay on the current map is it matches
               if mainmapname in searchmatchingmaps:
                 currentsearchmapindex = searchmatchingmaps.index(mainmapname)
-
+                
           # change mape if the current index changes
           if searchmatchingmaps != [] and searchmatchingmaps[currentsearchmapindex] != mainmapname:
             mainmapname = searchmatchingmaps[currentsearchmapindex]
