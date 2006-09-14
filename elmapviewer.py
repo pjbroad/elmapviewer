@@ -39,7 +39,7 @@
 
 import sys, pygame, string, os, shutil, platform, struct, urllib, math
 
-version = 'v0.4.4 August 2006'
+version = 'v0.4.5 September 2006'
 
 # define some basic colours
 blackcolour = 0, 0, 0
@@ -67,6 +67,13 @@ functionkeys = { \
   'F10': (pygame.K_F10, ''), 'F11': (pygame.K_F11, ''), 'F12': (pygame.K_F12, ''), \
   'F13': (pygame.K_F13, ''), 'F14': (pygame.K_F14, ''), 'F15': (pygame.K_F15, ''), \
   }
+# shift+key conversion - I know, UK keyboard, but that's what mine is.  could put into resource file...
+convertKey = { pygame.K_1:"!", pygame.K_2:"\"", pygame.K_4:"$", \
+  pygame.K_5:"%", pygame.K_6:"^", pygame.K_7:"&", pygame.K_8:"*", \
+  pygame.K_9:"(", pygame.K_0:")", pygame.K_MINUS:"_", pygame.K_EQUALS:"+", \
+  pygame.K_LEFTBRACKET:"{", pygame.K_RIGHTBRACKET:"}", \
+  pygame.K_SEMICOLON:":", pygame.K_QUOTE:"@", pygame.K_HASH:"~", \
+  pygame.K_BACKSLASH:"|", pygame.K_COMMA:"<", pygame.K_PERIOD:">", pygame.K_SLASH:"?" }
 gameminuteevent = pygame.USEREVENT
 clockresyncevent = pygame.USEREVENT+1
 
@@ -924,6 +931,16 @@ while 1:
             markersfile = '"' + markersfile + '"'
           os.spawnv(os.P_NOWAIT, editor, (editor, markersfile))
 
+        # n - edit map notes in external editor
+        elif event.key == pygame.K_n:
+          nametag = ''
+          if maptitle.has_key(mainmapname):
+            nametag = '.' + string.replace(maptitle[mainmapname],' ', '.' ,1)
+          markersfile = os.path.join(userdir, string.replace(mainmapname,'.bmp',nametag+'.notes.txt',1))
+          if platform.system() == 'Windows':
+            markersfile = '"' + markersfile + '"'
+          os.spawnv(os.P_NOWAIT, editor, (editor, markersfile))
+
         # c - edit user config
         elif event.key == pygame.K_c:
           os.spawnv(os.P_NOWAIT, editor, (editor, rcfile))
@@ -1040,13 +1057,13 @@ while 1:
             lastmap = ''
 
 
-          # add single letter keypresses to search, translating space so that work as a space
+          # add single letter keypresses to search
           elif len(pygame.key.name(event.key)) == 1 or event.key == pygame.K_SPACE:
-            # trap keyboard differences, some use ^ directly, other don't
-            if event.key == pygame.K_6 and ((modkeys & pygame.KMOD_RSHIFT) or (modkeys & pygame.KMOD_LSHIFT)):
-              searchtext += "^"
-            elif event.key == pygame.K_MINUS and ((modkeys & pygame.KMOD_RSHIFT) or (modkeys & pygame.KMOD_LSHIFT)):
-              searchtext += "_"
+            # convert shift+keys to text
+            if (modkeys & pygame.KMOD_RSHIFT) or (modkeys & pygame.KMOD_LSHIFT):
+              if convertKey.has_key(event.key):
+                searchtext += convertKey[event.key]
+            # translate space so that it works as a space
             elif event.key == pygame.K_SPACE:
               searchtext += " "
             else:
