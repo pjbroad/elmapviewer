@@ -54,7 +54,8 @@ whitecolour = 255, 255, 255
 pkmapcolour = redcolour
 hlmapcolour = orangecolour
 othermapcolour = greencolour
-markcolour = 179, 238,  58
+markcolours = ((179, 238,  58), (33, 164, 0), (51, 254, 0))
+markcolour = markcolours[0]
 markcrosscolour = whitecolour
 boxcolour = 58, 95, 205
 pkboxcolour = redcolour
@@ -497,6 +498,8 @@ def settitle(mainmapname, gametime, basetitle):
   if showgametime:
     if gametime == (99,99):
       currtitle = ' [Game Time: error]'
+    elif gametime == (100,100):
+      currtitle = ' [Game Time: --:--]'
     else:
       currtitle = ' [Game Time: ' + timestring(gametime) + ']'
   else:
@@ -593,12 +596,11 @@ walktimemeasure = False
 totalwalktime = 0
 
 # get the initial game time and start the event timers to keep it up to date
+gametime = (100,100)
 if showgametime:
-  gametime = getgametime()
+  pygame.event.post(pygame.event.Event(clockresyncevent))
   # resync the clock every hour - one day the tracking will be accurate enough to drop this
   pygame.time.set_timer(clockresyncevent, 1000 * 60 * 60)
-else:
-  gametime = (0,0)
   
 # loop forever....
 while 1:
@@ -782,6 +784,7 @@ while 1:
         
     # resync the clock with the web now and then
     elif showgametime and event.type == clockresyncevent:
+      settitle(mainmapname, (100,100), basetitle)
       print 'resync game time, was ', gametime,
       gametime = getgametime()
       print ' now ', gametime
@@ -919,9 +922,17 @@ while 1:
         elif event.key == pygame.K_l:
           os.spawnv(os.P_NOWAIT, editor, (editor, mapdatafile, usermapdatafile))
 
-        # m - toggle display of user marks
+        # m - toggle colour/display of user marks
         elif event.key == pygame.K_m:
-          marksOn = not marksOn
+          if not marksOn:
+            markcolour = markcolours[0]
+            marksOn = not marksOn
+          elif markcolour == markcolours[0]:
+            markcolour = markcolours[1]
+          elif markcolour == markcolours[1]:
+            markcolour = markcolours[2]
+          elif markcolour == markcolours[2]:
+            marksOn = not marksOn
           lastmap = ''
 
         # e - edit user marks in external editor
