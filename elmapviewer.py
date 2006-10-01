@@ -39,7 +39,7 @@
 
 import sys, pygame, string, os, shutil, platform, struct, urllib, math
 
-version = 'v0.4.5 September 2006'
+version = 'v0.4.6 September 2006'
 
 # define some basic colours
 blackcolour = 0, 0, 0
@@ -168,9 +168,14 @@ def readinfo(mapdir, fname, userfname):
   mapinfolstfile = expandfilename(os.path.join(mapdir, '../mapinfo.lst'))
   if os.access(mapinfolstfile, os.R_OK):
     for line in open(mapinfolstfile, 'r'):
+      if (len(line) == 0) or (line[0] == "#"):
+        continue
       w = line.split()
       if len(w) > 5:
         mapfilename = os.path.basename(string.replace(w[5],'.elm','.bmp',1))
+        if not allmaps.has_key(mapfilename):
+          print 'Invalid mapfile in mapinfo.lst', mapfilename
+          continue
         if w[0] == 'Seridia':
           continent[mapfilename] = 'seridia.bmp'
         else:
@@ -367,7 +372,8 @@ def drawhelp(scale):
     if marksearch:
       menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " Search marks")
     else:
-      menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " Search mapname")
+      menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " Search map title")
+      menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, "   or file name")
     menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " ^ matches start")
     menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " up/down")
     menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, "   - cycle maps")
@@ -384,13 +390,16 @@ def drawhelp(scale):
     menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, "  w - reset time", pygame.K_w)
     menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, "  ESC - stop", pygame.K_ESCAPE)
   else:
-    menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " i - zoom in", pygame.K_i)
-    menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " o - zoom out", pygame.K_o)
-    menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " f - full screen", pygame.K_f)
+    menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " i/o/f - zoom")
+    menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, "    in/out/full")
+#    menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " i - zoom in", pygame.K_i)
+#    menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " o - zoom out", pygame.K_o)
+#    menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " f - full screen", pygame.K_f)
     menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " b - toggle boxes", pygame.K_b)
     menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " l - edit links", pygame.K_l)
     menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " m - toggle marks", pygame.K_m)
     menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " e - edit marks", pygame.K_e)
+    menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " n - map notes", pygame.K_n)
     menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " c - edit config", pygame.K_c)
     menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " r - reload data", pygame.K_r)
     menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " bs - back a map", pygame.K_BACKSPACE)
@@ -532,6 +541,19 @@ def calcdistance(point1, point2, mapxoffset, thismapsize, thismapscale, totalwal
   totaldiststr = (str(minutes).rjust(2) + ':' + str(seconds).rjust(2)).replace(' ','0')
   return totalwalktime, 'time to walk ' + str(point1) + '->' + str(point2) + \
     ' ' + legdiststr + ' -> total ' + totaldiststr
+
+
+# if links enabled, draw a coloured link box
+def drawmaplink(boxesOn, maptype, hp, screen ):
+  if boxesOn:
+    if maptype.has_key(hp[1]) and maptype[hp[1]] == 'PK':
+      colour = pkboxcolour
+    elif maptype.has_key(hp[1]) and maptype[hp[1]] == 'HL':
+      colour = hlmapcolour
+    else:
+      colour = boxcolour
+    pygame.draw.rect(screen, colour, cursorbox, 2)
+
 
 # check font usage and initialise pygame
 if not pygame.font:
@@ -717,15 +739,19 @@ while 1:
         rectcoord =  (hp[0][0]*scale, hp[0][1]*scale, hp[0][2]*scale, hp[0][3]*scale)
         cursorbox = pygame.Rect(rectcoord)
         cursorbox = cursorbox.move(mainmapmove)
-        if boxesOn:
-          if maptype.has_key(hp[1]) and maptype[hp[1]] == 'PK':
-            colour = pkboxcolour
-          elif maptype.has_key(hp[1]) and maptype[hp[1]] == 'HL':
-            colour = hlmapcolour
-          else:
-            colour = boxcolour
-          pygame.draw.rect(screen, colour, cursorbox, 2)
+        drawmaplink(boxesOn, maptype, hp, screen )
         hotspot.append((cursorbox, hp[1]))
+        
+      # find the parents link(s) that come to this map and display on the parent (side map)
+      if parentmap.has_key(mainmapname):
+        for hp in mapinfo[parentmap[mainmapname]]:
+          rectcoord =  (hp[0][0]*scale/2, hp[0][1]*scale/2, hp[0][2]*scale/2, hp[0][3]*scale/2)
+          cursorbox = pygame.Rect(rectcoord)
+          if hp[1] == mainmapname:
+            pygame.draw.rect(screen, whitecolour, cursorbox, 2)
+          else:
+            drawmaplink(boxesOn, maptype, hp, screen )
+            hotspot.append((cursorbox, hp[1]))
        
       # if user marks are enables, draw them on the main main
       if marksOn or (searchmode and marksearch):
@@ -772,7 +798,8 @@ while 1:
     mousebuttons = pygame.mouse.get_pressed()
     modkeys = pygame.key.get_mods()
     mouseonmainmap = mainmaprect.collidepoint(mousecoord)
-    
+    mouseonsidemap = sidemaprect.collidepoint(mousecoord)
+
     # if exit, then make it so
     if event.type == pygame.QUIT:
       sys.exit()
@@ -825,29 +852,36 @@ while 1:
     # if a mouse button is pressed....
     elif event.type == pygame.MOUSEBUTTONDOWN:
     
-      # if sidemap left-clicked, switch side and main maps
-      if mousebuttons[0] and sidemaprect.collidepoint(mousecoord):
-        temp = sidemapname
-        sidemapname = mainmapname
-        mainmapname = temp
+      if mouseonmainmap or mouseonsidemap:
       
-      elif mouseonmainmap:
-            
-        # if main map left-click, check for map link
+        # if left-click, check for map link
         if mousebuttons[0]:
+          inhotspot = False
           for hp in hotspot:
             if hp[0].collidepoint(mousecoord):
+              inhotspot = True
               mainmapname = hp[1]
+              break
+          # if not a hotspot, switch side and main maps
+          if (not inhotspot) and mouseonsidemap:
+            temp = sidemapname
+            sidemapname = mainmapname
+            mainmapname = temp
 
         # if middle-click in link area, show information about the link
         elif mousebuttons[1]:
           for hp in hotspot:
             if hp[0].collidepoint(mousecoord):
-              statustext = 'link info: ' + str(hp)
-
+              statustext = 'to '
+              if maptitle.has_key(hp[1]):
+                statustext += maptitle[hp[1]] + ' (' + hp[1] + ')'
+              else:
+                statustext += hp[1]
+              break
+      
         # link box drawing or walktime measure
         # walktime measure: normally joins lines, ctrl starts new line, ESC exists and clears
-        elif mousebuttons[2]:
+        elif mouseonmainmap and mousebuttons[2]:
           # store and draw first 2 click positions 
           if len(markbox) < 2:
             if modkeys == pygame.KMOD_LCTRL or modkeys == pygame.KMOD_RCTRL:
@@ -885,7 +919,7 @@ while 1:
             pygame.display.update()
 
 			# call help mapping routine to get keypress from mouse position
-			# highlight option box until MOUSEUP
+			# need to highlight option box until MOUSEUP
       elif mousebuttons[0] and helprect.collidepoint(mousecoord):
 				event = pygame.event.Event(pygame.KEYDOWN, key=getmenukey(menuoptions, mousecoord, sidemapsize))
             
@@ -947,10 +981,13 @@ while 1:
           nametag = ''
           if maptitle.has_key(mainmapname):
             nametag = '.' + string.replace(maptitle[mainmapname],' ', '.' ,1)
-          markersfile = os.path.join(userdir, string.replace(mainmapname,'.bmp',nametag+'.notes.txt',1))
+          notesfile = os.path.join(userdir, string.replace(mainmapname,'.bmp',nametag+'.notes.txt',1))
+          if not os.access(notesfile, os.R_OK):
+            fid = open(notesfile,'w')
+            fid.close()
           if platform.system() == 'Windows':
-            markersfile = '"' + markersfile + '"'
-          os.spawnv(os.P_NOWAIT, editor, (editor, markersfile))
+            notesfile = '"' + notesfile + '"'
+          os.spawnv(os.P_NOWAIT, editor, (editor, notesfile))
 
         # c - edit user config
         elif event.key == pygame.K_c:
@@ -1120,6 +1157,15 @@ while 1:
                     continue
                 if searchfind(testmap, searchtext):
                   searchmatchingmaps.append(testmap)
+              for mapfilename in maptitle:
+                thismaptitle = maptitle[mapfilename]
+                print thismaptitle, searchmatchingmaps.count(mapfilename)
+                if searchmatchingmaps.count(mapfilename) == 0:
+                  if limitsearch != 'none.bmp':
+                    if continent[mapfilename] != limitsearch:
+                      continue
+                  if searchfind(thismaptitle, searchtext):
+                    searchmatchingmaps.append(mapfilename)
               # make sure we stay on the current map is it matches
               if mainmapname in searchmatchingmaps:
                 currentsearchmapindex = searchmatchingmaps.index(mainmapname)
