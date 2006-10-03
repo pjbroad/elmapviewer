@@ -396,9 +396,6 @@ def drawhelp(scale):
   else:
     menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " i/o/f - zoom")
     menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, "    in/out/full")
-#    menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " i - zoom in", pygame.K_i)
-#    menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " o - zoom out", pygame.K_o)
-#    menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " f - full screen", pygame.K_f)
     menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " b - toggle boxes", pygame.K_b)
     menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " l - edit links", pygame.K_l)
     menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " m - toggle marks", pygame.K_m)
@@ -615,6 +612,7 @@ lastsearchtext = '-'
 searchmatchingmaps = []
 currentsearchmapindex = 0
 limitsearch = 'none.bmp'
+forcesidemap = False
 
 markersstore = {}
 
@@ -651,12 +649,15 @@ while 1:
       markbox = []
         
       # always restore the big map to the side map if nolonger the main map
-      if parentmap.has_key(mainmapname):
-        if sidemapname != parentmap[mainmapname]:
-          sidemapname = parentmap[mainmapname]
+      if not forcesidemap:
+        if parentmap.has_key(mainmapname):
+          if sidemapname != parentmap[mainmapname]:
+            sidemapname = parentmap[mainmapname]
+        else:
+          if sidemapname != continent[mainmapname]:
+            sidemapname = continent[mainmapname]
       else:
-        if sidemapname != continent[mainmapname]:
-          sidemapname = continent[mainmapname]
+        forcesidemap = False
           
       # get and scale the current size map surface
       fullpath = os.path.join(mapdir, sidemapname)
@@ -746,16 +747,15 @@ while 1:
         drawmaplink(boxesOn, maptype, hp, screen )
         hotspot.append((cursorbox, hp[1]))
         
-      # find the parents link(s) that come to this map and display on the parent (side map)
-      if parentmap.has_key(mainmapname):
-        for hp in mapinfo[parentmap[mainmapname]]:
-          rectcoord =  (hp[0][0]*scale/2, hp[0][1]*scale/2, hp[0][2]*scale/2, hp[0][3]*scale/2)
-          cursorbox = pygame.Rect(rectcoord)
-          if hp[1] == mainmapname:
-            pygame.draw.rect(screen, whitecolour, cursorbox, 2)
-          else:
-            drawmaplink(boxesOn, maptype, hp, screen )
-            hotspot.append((cursorbox, hp[1]))
+      # show the links on the side map
+      for hp in mapinfo[sidemapname]:
+        rectcoord =  (hp[0][0]*scale/2, hp[0][1]*scale/2, hp[0][2]*scale/2, hp[0][3]*scale/2)
+        cursorbox = pygame.Rect(rectcoord)
+        if hp[1] == mainmapname:
+          pygame.draw.rect(screen, whitecolour, cursorbox, 2)
+        else:
+          drawmaplink(boxesOn, maptype, hp, screen )
+        hotspot.append((cursorbox, hp[1]))
        
       # if user marks are enables, draw them on the main main
       if marksOn or (searchmode and marksearch):
@@ -871,6 +871,7 @@ while 1:
             temp = sidemapname
             sidemapname = mainmapname
             mainmapname = temp
+            forcesidemap = True
 
         # if middle-click in link area, show information about the link
         elif mousebuttons[1]:
