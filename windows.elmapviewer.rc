@@ -28,3 +28,8 @@ F2 = cont2map1.bmp
 # the webpage only shows time to the minute so we can only be accurate to the minute
 # set to 1 to enable
 showgametime = 0
+
+# the factor used to calculate walk times, empirically derived!
+# higher values, walk faster
+# basically this many map coords per second
+walkfactor = 3.32
