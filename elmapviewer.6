@@ -31,7 +31,7 @@ is <top left x> <top left y> <width> <height> <filename of map to link to>.  The
 coordinates and sizes are related to the actual size of the map image file.  You
 can get this information by right clicking on a map, first the top left corner,
 second the bottom right corner.  A cyan box will be drawn and the coordinates
-and size printed on the status line.
+printed on the status line.
 
 .SH User Map link information
 Using the same syntax as the main map file, the user map link information file
@@ -71,6 +71,130 @@ Specifies the directory for the users EL settings.
 .TP 5
 .I editor
 Specified the full path to your favourite text editor.
+
+.TP 5
+.I showgametime
+Disabled by default.  When enabled, during startup elmapviewer will access the
+Eternal Lands main web page and read the current game time.  This time will then
+be displayed in the title bar of the mapviewer window.  The website time does
+not appear to be that accurate so the game time is re-read once an hour.
+
+.SH Command Summary
+
+.TP
+.I i/o/f - zoom in/out/full
+Zoom program window in (make bigger), out (make smaller) and full screen.
+
+.TP
+.I b - toggle boxes
+Toggle display of link boxes.  Even when not display, the links are 
+still active.
+
+.TP
+.I l - edit links
+Opens the link files mapdata and ~/.elmapviewer.usermapdata in the editor you
+have configured in the resource file.  It is recommended to use the later file
+to configure your own, private links.
+
+.TP
+.I m - toggle marks
+Toggles/cycles the display of game mark text through three colours (chosen to
+have varying contrast for varying maps) and not displayed.  Note: marks will be
+display while searching even if turned off using this option.
+
+.TP
+.I e - edit marks
+Opens the in-game mark file for the current map in the editor you have
+configured in the resource file.  WARNING: changes made in these files will
+affect in game marker display.
+
+.TP
+.I n - map notes
+Creates or opens a non-game file for you to make notes associated with the
+current map.  The editor you have configured in the resource file will be
+used.  The files are stored in the same directory as your in-game mark files.
+
+.TP
+.I c - edit config
+Opens the configuration file for elmapviewer in the editor you have
+configured in the resource file.
+
+.TP
+.I r - reload data
+Reloads map link information and mark data.
+
+.TP
+.I bs - back map
+Moves back to the previous map.  Many previous maps are remembered so you can
+retrace your steps.
+
+.TP
+.I home/end - islands
+Home takes you straight to the Seridia map, End to Irilion.
+
+.TP
+.I l-click draw boxes
+Allows you to draw link boxes that can be added to either mapdata or 
+~/.elmapviewer.usermapdata (later recommended).  The coordinates required
+to go into the file are written in the status line.  If you have enabled
+a copy program, the same information will be copied into your window managers
+copy buffer (clip board).
+
+.TP
+.I r-click select
+Allows you to select a function with the mouse pointer.  That is links or
+some menu options.  Normally the mouse cursor will change when you hover over a
+link.
+
+.TP
+.I middle-click
+Shows link information, the destination of the link.
+
+
+.TP
+.I w - walk time
+Enters the walk time calculation sub menu.  This function allows you to
+measure the approximate time it will take, in-game, to walk between to
+locations.  A mouse right click will draw a point, a second click will 
+draw another point and a joining link.  The walk time total will then
+be display in the status line.  If you right click on the map again, another
+point will be display and another connecting line added - the walk time 
+updated.  You can move between maps and keep adding to the walk time total.
+To start a new line without resetting the total walk time or changing maps,
+hold down control and right click the mouse.  A new point will be display but
+no connecting line drawn and no addition to the total walk time made.  This is
+useful if you intend to use teleports etc.  To exit the walk time function
+press ESC, to reset the time to zero and clear the lines press w.
+
+.TP
+.I \\ - search
+\\ will enter the map name search function.  As you type, your text will be
+displayed in the status bar and map names or titles matching the text will be
+found.  The number of maps matching the name is displayed with the index of the
+current map - i.e. (map 3 of 6).  You can cycle through and display the matching
+maps using the up and down arrow keys.  Starting the search string with the ^
+character will anchor the search string to the start of the map name.  Pressing
+TAB will cycle though options to limit the search to maps in Seridia, Irillion
+or all maps.  Press Backspace to delete the last search string character, ESC 
+to exit the search function.
+
+.TP
+.I / - search
+/ will enter the map mark search function.  As you type, your text will be
+displayed in the status bar and maps containing marks matching the text will be
+found.  The displayed marks will also be filtered so that only marks matching
+the search string are displayed.  The number of maps matching the mark is
+displayed with the index of the current map - i.e. (map 3 of 6).  You can cycle
+through and display the matching maps using the up and down arrow keys. 
+Starting the search string with the ^ character will anchor the search string
+to the start of the mark text.  Pressing TAB will cycle though options to limit
+the search to maps in Seridia, Irillion or all maps.  Press Backspace to delete
+the last search string character, ESC  to exit the search function.
+
+.TP
+.I q -quit
+Exits the elmapviewer program.  This option can be disabled using the noesc
+option in the resource file.
 
 .SH COPYRIGHT
 Copyright 2006 Paul Broadhead. This is free software; see the source for
