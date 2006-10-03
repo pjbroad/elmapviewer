@@ -39,7 +39,7 @@
 
 import sys, pygame, string, os, shutil, platform, struct, urllib, math
 
-version = 'v0.4.6 September 2006'
+version = 'v0.5 October 2006'
 
 # define some basic colours
 blackcolour = 0, 0, 0
@@ -174,7 +174,7 @@ def readinfo(mapdir, fname, userfname):
       if len(w) > 5:
         mapfilename = os.path.basename(string.replace(w[5],'.elm','.bmp',1))
         if not allmaps.has_key(mapfilename):
-          print 'Invalid mapfile in mapinfo.lst', mapfilename
+          #print 'Invalid mapfile in mapinfo.lst', mapfilename
           continue
         if w[0] == 'Seridia':
           continent[mapfilename] = 'seridia.bmp'
@@ -203,6 +203,7 @@ def readvars(fname):
   noesc = False
   copyexec = ''
   showgametime = False
+  walkfactor = 3.32
   # create a default rc file if none exists
   if not os.access(fname, os.R_OK):
     srcfile = os.path.dirname(sys.argv[0]) + '/example.elmapviewer.rc'
@@ -249,11 +250,13 @@ def readvars(fname):
           copyexec = w[2]
         elif w[0] == 'showgametime':
           showgametime = bool(int(w[2]))
+        elif w[0] == 'walkfactor':
+          walkfactor = float(w[2])
         elif functionkeys.has_key(w[0]):
           keycode = functionkeys[w[0]][0]
           functionkeys[w[0]] = (keycode,w[2])
   return mapdir, userdir, scale, fullscreen, boxesOn, marksOn, editor, \
-    markfontsize, statusfontsize, mainborder, noesc, copyexec, showgametime
+    markfontsize, statusfontsize, mainborder, noesc, copyexec, showgametime, walkfactor
 
 # get the name of the next map in the list
 def nextmap(mapinfo, currmap, inc):
@@ -377,6 +380,7 @@ def drawhelp(scale):
     menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " ^ matches start")
     menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " up/down")
     menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, "   - cycle maps")
+    menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " bs - delete")
     menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " TAB - filter", pygame.K_TAB)
     limitname = limitsearch[0:limitsearch.find('.')]
     menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, "   ("+limitname+")", pygame.K_TAB)
@@ -525,13 +529,13 @@ def togamecood(point, mapxoffset, thismainmapsize, thismapscale):
   return (x,y)
 
 # calculate the distance between the two points and return as walking time
-def calcdistance(point1, point2, mapxoffset, thismapsize, thismapscale, totalwalktime ):
+def calcdistance(point1, point2, mapxoffset, thismapsize, thismapscale, totalwalktime, walkfactor ):
   point1 = togamecood(point1, mapxoffset, thismapsize, thismapscale)
   point2 = togamecood(point2, mapxoffset, thismapsize, thismapscale)
   xdist = point2[0] - point1[0]
   ydist = point2[1] - point1[1]
   # divisor was empirically measured, its not that accurate
-  crowflydist = math.sqrt(xdist*xdist + ydist*ydist)/3.32
+  crowflydist = math.sqrt(xdist*xdist + ydist*ydist)/walkfactor 
   minutes = int(crowflydist / 60.0)
   seconds = int(crowflydist - 60 * minutes)
   legdiststr = (str(minutes).rjust(2) + ':' + str(seconds).rjust(2)).replace(' ','0')
@@ -577,7 +581,7 @@ mapdatafile = os.path.dirname(sys.argv[0]) + os.sep + 'mapdata'
 usermapdatafile = expandfilename('~/.elmapviewer.usermapdata')
 
 mapdir, userdir, scale, fullscreen, boxesOn, marksOn, editor, \
-  markfontsize, statusfontsize, mainborder, noesc, copyexec, showgametime = readvars(rcfile)
+  markfontsize, statusfontsize, mainborder, noesc, copyexec, showgametime, walkfactor = readvars(rcfile)
 mapinfo, mapscale, maptype, parentmap, maptitle, continent = readinfo(mapdir, mapdatafile, usermapdatafile)
   
 normalcursor = True           # holds current cursor state, set to alternative when over links
@@ -812,9 +816,9 @@ while 1:
     # resync the clock with the web now and then
     elif showgametime and event.type == clockresyncevent:
       settitle(mainmapname, (100,100), basetitle)
-      print 'resync game time, was ', gametime,
+      #print 'resync game time, was ', gametime,
       gametime = getgametime()
-      print ' now ', gametime
+      #print ' now ', gametime
       settitle(mainmapname, gametime, basetitle)
       
     # if the mouse moves
@@ -901,19 +905,26 @@ while 1:
             if walktimemeasure:
               if mapscale.has_key(mainmapname):
                 pygame.draw.line(screen, testboxcolour, markbox[0], markbox[1], 2)
-                totalwalktime, statustext = calcdistance(markbox[0], markbox[1], mapxoffset, mainmapsize, mapscale[mainmapname], totalwalktime )
+                totalwalktime, statustext = calcdistance(markbox[0], markbox[1], mapxoffset, mainmapsize, mapscale[mainmapname], totalwalktime, walkfactor )
                 temp = markbox[1]
                 markbox = []
                 markbox.append(temp)
             # if now we have the two corners, draw the box and display coords suitable for map link
             else:
               cursorbox = pygame.Rect(markbox[0][0],markbox[0][1],markbox[1][0]-markbox[0][0], markbox[1][1]-markbox[0][1])
+              # fix coords if rect not draw top left to bottom right
+              if cursorbox[2] < 0:
+                cursorbox[0] += cursorbox[2]
+                cursorbox[2] *= -1
+              if cursorbox[3] < 0:
+                cursorbox[1] += cursorbox[3]
+                cursorbox[3] *= -1
               pygame.draw.rect(screen, testboxcolour, cursorbox, 2)
               statustext = \
-                str(int((markbox[0][0]-mapxoffset)/scale)) + ' ' + \
-                str(int(markbox[0][1]/scale)) + ' ' +  \
-                str(int((markbox[1][0]-markbox[0][0])/scale))  + ' ' +  \
-                str(int((markbox[1][1]-markbox[0][1])/scale))  + ' '
+                str(int((cursorbox[0]-mapxoffset)/scale)) + ' ' + \
+                str(int(cursorbox[1]/scale)) + ' ' +  \
+                str(int((cursorbox[2])/scale))  + ' ' +  \
+                str(int((cursorbox[3])/scale))  + ' '
               if copyexec != '':
                 os.popen(copyexec, 'wb').write(statustext)
             pygame.display.update()
@@ -1159,7 +1170,6 @@ while 1:
                   searchmatchingmaps.append(testmap)
               for mapfilename in maptitle:
                 thismaptitle = maptitle[mapfilename]
-                print thismaptitle, searchmatchingmaps.count(mapfilename)
                 if searchmatchingmaps.count(mapfilename) == 0:
                   if limitsearch != 'none.bmp':
                     if continent[mapfilename] != limitsearch:
