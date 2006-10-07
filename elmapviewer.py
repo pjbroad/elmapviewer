@@ -39,7 +39,7 @@
 
 import sys, pygame, string, os, shutil, platform, struct, urllib, math
 
-version = 'v0.5 October 2006'
+version = 'v0.5.0 October 2006'
 
 # define some basic colours
 blackcolour = 0, 0, 0
@@ -434,7 +434,6 @@ def readmapmarkers(userdir, currmap):
       w = line.split()
       if len(w) > 2:
         markers.append(((int(w[0]),int(w[1])),string.join(w[2:])))
-  #print "readmapmarkers: " + currmap
   return markers
 
 # display the users map marks
@@ -816,9 +815,7 @@ while 1:
     # resync the clock with the web now and then
     elif showgametime and event.type == clockresyncevent:
       settitle(mainmapname, (100,100), basetitle)
-      #print 'resync game time, was ', gametime,
       gametime = getgametime()
-      #print ' now ', gametime
       settitle(mainmapname, gametime, basetitle)
       
     # if the mouse moves
