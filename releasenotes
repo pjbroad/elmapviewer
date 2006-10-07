@@ -1,3 +1,16 @@
+2006-10-07 version 0.5.0
+  Walk time function - draw lines to calculate waling time.
+  Display in-game time derived from EL web site.
+  Map and mark searching can be filtered by continent.
+  Map search will match map filename or map title.
+  Display (working) link boxes on side map and highlight current main map.
+  Added notes function.  Opens a map tagged text file for your own notes.
+  Colour tag maps with high level monsters.
+  Full shift keys available in search strings (UK keyboard default).
+  Can cycle mark text colour for better contrast on different maps.
+  When creating new link boxes, the coordinates are copied to the clipboard.
+  Link boxes can be drawn starting from any corner.
+
 2006-07-16 version 0.4.0
   Updated for version 1.3.0 release of the game.
   Now derive map scales from elm files - mapdata scales no longer required.
