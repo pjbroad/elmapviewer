@@ -53,7 +53,7 @@ map3.bmp: - - - seridia.bmp
 175 191 29 23 cave1.bmp
 71 114 24 25 cave1.bmp
 
-map4f.bmp: - - PK seridia.bmp
+map4f.bmp: - - HL seridia.bmp
 130 5 50 40 map2.bmp
 
 map5nf.bmp: - - - seridia.bmp
