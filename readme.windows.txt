@@ -27,6 +27,6 @@ I used version 2 for 98.
 Get the pygame modules from "http://www.pygame.org/download.shtml". I tested
 version 1.7 "http://www.pygame.org/ftp/pygame-1.7.1release.win32-py2.4.exe".
 
-Now you're ready to run the viewer.  User the elmapviewer.bat script.
+Now you're ready to run the viewer.  Use the elmapviewer.bat script.
 
 Hope you like it.

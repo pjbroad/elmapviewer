@@ -15,6 +15,6 @@ version using your favorite web browser.
 Run using ./elmapviewer.py
 
 In your configuration file, make sure you check the "mapdir", "userdir" and
-"editor" options as these are bound to be different on you system.
+"editor" options as these are bound to be different on your system.
 
 Read the code and make it better... Let me know what you think...
