@@ -199,7 +199,7 @@ cont2map3.bmp: - - - irilion.bmp
 299 441 92 56 cont2map5.bmp
 415 366 66 32 cont2map4.bmp
 
-cont2map4.bmp: - - - irilion.bmp
+cont2map4.bmp: - - HL irilion.bmp
 23 364 70 36 cont2map3.bmp
 279 142 20 20 cont2map1.bmp
 319 142 20 20 cont2map17.bmp
