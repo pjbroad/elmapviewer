@@ -190,6 +190,7 @@ cont2map1.bmp: - - - irilion.bmp
 100 320 20 10 anitora.bmp
 100 333 20 10 cont2map22.bmp
 100 346 20 10 cont2map4.bmp
+100 359 20 10 cont2map15.bmp
 429 139 65 43 cont2map2.bmp
 410 467 88 40 cont2map9.bmp
 197 465 117 42 cont2map8.bmp
@@ -220,20 +221,22 @@ cont2map5.bmp: - - - irilion.bmp
 194 15 71 44 cont2map2.bmp
 8 211 69 30 cont2map1.bmp
 
-cont2map6.bmp: - - - irilion.bmp
+cont2map6.bmp: - - PK irilion.bmp
 5 117 83 45 cont2map5.bmp
 51 462 99 40 cont2map10.bmp
+350 147 30 15 cont2map15.bmp
 
 cont2map7.bmp: - - - irilion.bmp
 364 9 84 39 cont2map1.bmp
 432 141 69 46 cont2map8.bmp
+54 387 30 15 cont2map14.bmp
 
 cont2map8.bmp: - - - irilion.bmp
 394 20 95 48 cont2map1.bmp
 433 217 75 32 cont2map9.bmp
 28 138 50 32 cont2map7.bmp
 
-cont2map9.bmp: - - PK irilion.bmp
+cont2map9.bmp: - - HL irilion.bmp
 8 280 75 50 cont2map8.bmp
 239 8 81 41 cont2map1.bmp
 411 7 89 50 cont2map5.bmp
@@ -250,8 +253,9 @@ cont2map10.bmp: - - HL irilion.bmp
 cont2map11.bmp: - - - irilion.bmp
 275 1 83 41 cont2map8.bmp
 454 109 52 45 cont2map12.bmp
+39 37 20 30 cont2map14.bmp
 
-cont2map12.bmp: - - - irilion.bmp
+cont2map12.bmp: - - PK irilion.bmp
 35 5 105 40 cont2map9.bmp
 415 155 85 35 cont2map13.bmp
 460 320 15 20 cont2map23.bmp
@@ -264,9 +268,13 @@ cont2map13.bmp: - - HL irilion.bmp
 
 cont2map14.bmp: - - - irilion.bmp
 30 190 20 30 cont2map22.bmp
+17 246 20 30 cont2map7.bmp
+288 51 20 30 cont2map11.bmp
 
-cont2map15.bmp: - - - irilion.bmp
+cont2map15.bmp: - - HL irilion.bmp
 343 464 72 43 cont2map16.bmp
+438 34 30 15 cont2map1.bmp
+387 39 30 15 cont2map6.bmp
 
 cont2map16.bmp: - - - irilion.bmp
 220 475 20 25 cont2map17.bmp
@@ -335,7 +343,7 @@ cont2map9_insides.bmp: - - - cont2map9.bmp
 cont2map9_temple.bmp: - - - cont2map9.bmp
 cont2map10_caves.bmp: - - - cont2map10.bmp
 cont2map10_insides.bmp: - - - cont2map10.bmp
-cont2map12_cave1.bmp: - - - cont2map12.bmp
+cont2map12_cave1.bmp: - - HL cont2map12.bmp
 cont2map12_cave2.bmp: - - - cont2map12.bmp
 cont2map12_fortress.bmp: - - - cont2map12.bmp
 cont2map12_insides.bmp: - - - cont2map12.bmp
