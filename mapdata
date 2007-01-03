@@ -235,6 +235,7 @@ cont2map8.bmp: - - - irilion.bmp
 394 20 95 48 cont2map1.bmp
 433 217 75 32 cont2map9.bmp
 28 138 50 32 cont2map7.bmp
+411 465 35 25 cont2map11.bmp
 
 cont2map9.bmp: - - HL irilion.bmp
 8 280 75 50 cont2map8.bmp
