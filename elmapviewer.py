@@ -39,7 +39,7 @@
 
 import sys, pygame, string, os, shutil, platform, struct, urllib, math
 
-version = 'v0.5.1 January 2007'
+version = 'v0.6.0 January 2007'
 
 # define some basic colours
 blackcolour = 0, 0, 0
@@ -123,6 +123,7 @@ def readinfo(mapdir, fname, userfname):
   continent = {}
   allmaps = {}
   maptitle = {}
+  mapbanner = {}
   # create the initial map list form the elm files
   for elmfile in os.listdir(mapdir):
     if elmfile[len(elmfile)-4:] == '.elm':
@@ -142,10 +143,12 @@ def readinfo(mapdir, fname, userfname):
             allmaps[currmapname] = currmapname
             if len(w) > 2 and w[1] != '-' and w[2] != '-':
               mapscale[currmapname] = (int(w[1]), int(w[2]))
-            if len(w) > 3:
+            if len(w) > 3 and w[3] != "-":
               maptype[currmapname] = w[3]
-            if len(w) > 4:
+            if len(w) > 4 and w[4] != "-":
               parentmap[currmapname] = w[4]
+            if len(w) > 6 and w[5] != "-" and w[6] != "-":
+              mapbanner[currmapname] = (w[5],w[6])
           # link line format "tlX tlR width height <link map name>"
           else:
             newlink = (((int(w[0]), int(w[1]), int(w[2]), int(w[3])),w[4]),)
@@ -185,7 +188,7 @@ def readinfo(mapdir, fname, userfname):
   for mapname in allmaps:
     if not continent.has_key(mapname):
       continent[mapname] = getcontinent(parentmap,mapname)
-  return mapinfo, mapscale, maptype, parentmap, maptitle, continent
+  return mapinfo, mapscale, maptype, parentmap, maptitle, continent, mapbanner
   
 
 # read program variables from the resource file
@@ -554,6 +557,27 @@ def drawmaplink(boxesOn, maptype, hp, screen ):
       colour = boxcolour
     pygame.draw.rect(screen, colour, cursorbox, 2)
 
+# get the map banner logo
+def getbannersurface(bannerimages ,bannerinfo):
+  if not bannerimages.has_key(bannerinfo[0]):
+    fullpath = os.path.join(mapdir, '../3dobjects/structures/banners'+bannerinfo[0]+'.bmp')
+    if not os.access(fullpath, os.R_OK):
+      print 'Missing banner image file: ' + fullpath
+      sys.exit()
+    bannerimages[bannerinfo[0]] = pygame.image.load(fullpath)
+  size = bannerimages[bannerinfo[0]].get_size()
+  subnum = int(bannerinfo[1])
+  if subnum == 2 or subnum == 4:
+    xoffset = size[0]/2
+  else:
+    xoffset = 0
+  if subnum == 3 or subnum == 4:
+    yoffset = size[1]/2
+  else:
+    yoffset = 0
+  #print bannerinfo, xoffset, yoffset, size
+  retsurface = bannerimages[bannerinfo[0]].subsurface(xoffset,yoffset,size[0]/2,size[1]/2)
+  return bannerimages, retsurface
 
 # check font usage and initialise pygame
 if not pygame.font:
@@ -578,7 +602,7 @@ usermapdatafile = expandfilename('~/.elmapviewer.usermapdata')
 
 mapdir, userdir, scale, fullscreen, boxesOn, marksOn, editor, \
   markfontsize, statusfontsize, mainborder, noesc, copyexec, showgametime, walkfactor = readvars(rcfile)
-mapinfo, mapscale, maptype, parentmap, maptitle, continent = readinfo(mapdir, mapdatafile, usermapdatafile)
+mapinfo, mapscale, maptype, parentmap, maptitle, continent, mapbanner = readinfo(mapdir, mapdatafile, usermapdatafile)
   
 normalcursor = True           # holds current cursor state, set to alternative when over links
 mainmapname = 'seridia.bmp'   # the map about to be displayed
@@ -614,6 +638,7 @@ limitsearch = 'none.bmp'
 forcesidemap = False
 
 markersstore = {}
+bannerimages = {}
 
 walktimemeasure = False
 totalwalktime = 0
@@ -683,6 +708,7 @@ while 1:
         legend = pygame.image.load(fullpath)
       legendsize = legend.get_size()
       legend = pygame.transform.scale(legend, (int(legendsize[0]*scale), int(legendsize[1]*scale)))
+      legendsize = legend.get_size()
       legendrect = legend.get_rect()
       
       # get and scale the main map surface
@@ -734,6 +760,18 @@ while 1:
       screen.blit(mainmap, mainmaprect)
       screen.blit(legend, legendrect)
       screen.blit(helpsurface, helprect)
+      
+      # get the main map banner logo if there is one - display over the legend image
+      # could display full size over the sidemap if hover over this image
+      if mapbanner.has_key(mainmapname):
+        bannerimages, bannerlogo = getbannersurface(bannerimages, mapbanner[mainmapname])
+        bannerlogosize = bannerlogo.get_size()
+        bannerlogo = pygame.transform.scale(bannerlogo, (int(bannerlogosize[0]*0.35*scale), int(bannerlogosize[1]*0.35*scale)))
+        bannerlogosize = bannerlogo.get_size()
+        bannerlogorect = bannerlogo.get_rect()
+        xymove = [sidemapsize[0]/2+(legendsize[0]-bannerlogosize[0])/2, sidemapsize[1]+legendsize[1]-bannerlogosize[1]*1.2]
+        bannerlogorect = bannerlogorect.move(xymove)
+        screen.blit(bannerlogo, bannerlogorect)
       
       # get the list of main map links, and optionally draw rectangles for them
       hotspot = []
@@ -1004,8 +1042,9 @@ while 1:
 
         # r - redisplay map, rereading all user data
         elif event.key == pygame.K_r:
-          mapinfo, mapscale, maptype, parentmap, maptitle, continent = readinfo(mapdir, mapdatafile, usermapdatafile)
+          mapinfo, mapscale, maptype, parentmap, maptitle, continent, mapbanner = readinfo(mapdir, mapdatafile, usermapdatafile)
           markersstore = {}
+          scale = 1.0
           lastmap = ''
 
         # w - enter walk time measuring mode or reset current total time
