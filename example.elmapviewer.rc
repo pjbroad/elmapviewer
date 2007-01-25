@@ -33,3 +33,16 @@ showgametime = 0
 # higher values, walk faster
 # basically this many map coords per second
 walkfactor = 3.32
+
+# Moraf's idea for web based map marks:
+# enable loading map markers from a web URL
+usewebmarkers = 0
+# full path to the directory on the web server containing the marker files
+webmarkerbaseurl = http://your.domain/your_directory/
+# The directory must contain the file 'maplist' which is a simple text
+# file with a lists of map files have marker files stored in the directory
+# e.g. maplist could contain the line "map2.bmp" then the file "map2.elm.txt"
+# will be in the web directory and contain mark information in the normal 
+# marker file format - hope that all makes sense.
+# For sites protected my username/passwords, you will be prompted on the
+# console to enter your details.  I might improve this later....

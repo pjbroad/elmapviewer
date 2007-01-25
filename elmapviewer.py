@@ -55,7 +55,9 @@ pkmapcolour = redcolour
 hlmapcolour = orangecolour
 othermapcolour = greencolour
 markcolours = ((179, 238,  58), (33, 164, 0), (51, 254, 0))
+webmarkcolours = ((50, 50,  250), (50, 0, 150), (50, 0, 250))
 markcolour = markcolours[0]
+webmarkcolour = webmarkcolours[0]
 markcrosscolour = whitecolour
 boxcolour = 58, 95, 205
 pkboxcolour = redcolour
@@ -207,6 +209,8 @@ def readvars(fname):
   copyexec = ''
   showgametime = False
   walkfactor = 3.32
+  usewebmarkers = False
+  webmarkerbaseurl = ''
   # create a default rc file if none exists
   if not os.access(fname, os.R_OK):
     srcfile = os.path.dirname(sys.argv[0]) + '/example.elmapviewer.rc'
@@ -255,11 +259,16 @@ def readvars(fname):
           showgametime = bool(int(w[2]))
         elif w[0] == 'walkfactor':
           walkfactor = float(w[2])
+        elif w[0] == 'usewebmarkers':
+          usewebmarkers = bool(int(w[2]))
+        elif w[0] == 'webmarkerbaseurl':
+          webmarkerbaseurl = w[2]          
         elif functionkeys.has_key(w[0]):
           keycode = functionkeys[w[0]][0]
           functionkeys[w[0]] = (keycode,w[2])
   return mapdir, userdir, scale, fullscreen, boxesOn, marksOn, editor, \
-    markfontsize, statusfontsize, mainborder, noesc, copyexec, showgametime, walkfactor
+    markfontsize, statusfontsize, mainborder, noesc, copyexec, \
+    showgametime, walkfactor, usewebmarkers, webmarkerbaseurl
 
 # get the name of the next map in the list
 def nextmap(mapinfo, currmap, inc):
@@ -387,6 +396,9 @@ def drawhelp(scale):
     menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " TAB - filter", pygame.K_TAB)
     limitname = limitsearch[0:limitsearch.find('.')]
     menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, "   ("+limitname+")", pygame.K_TAB)
+    if usewebmarkers:
+      menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " Ctrl TAB - mark")
+      menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, "   source ("+limitsource+")")
     menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " ESC - end search", pygame.K_ESCAPE)
   elif walktimemeasure:
     menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " Walk Time")
@@ -428,6 +440,54 @@ def getmenukey(menuoptions, mousecoord, sidemapsize):
       return option[1]
   return 0
 
+# if web marks in use, rotate the filter for web/local marks 
+def rotatesearchsource(limitsource):
+  if limitsource == 'all':
+    limitsource = 'web'
+  elif limitsource == 'web':
+    limitsource = 'local'
+  else:
+    limitsource = 'all'    
+  return limitsource
+
+# load the list of web based marker files
+def getwebmaplist(webmarkerbaseurl):
+  webmaplist = {}
+  if webmarkerbaseurl == '':
+    print 'Error webmarkerbaseurl is not set' 
+    return webmaplist
+  webmaplisturl = os.path.join(webmarkerbaseurl, 'maplist')
+  # read the webpage
+  try:
+    wpage=urllib.urlopen(webmaplisturl)
+    pagelines = wpage.readlines()
+    wpage.close()
+    for line in pagelines:
+      if line != '':
+        webmaplist[line.rstrip()] = []
+    #print webmaplist
+  except:
+    print 'Error reading maplist from web', sys.exc_info()[0], sys.exc_info()[1]
+  return webmaplist
+
+# load specified the web base marker file
+def readwebmarkers(currmap, webmarkerbaseurl):
+  markersfile = string.replace(currmap,'.bmp','.elm.txt',1)
+  webmapurl = os.path.join(webmarkerbaseurl, markersfile)
+  markers = []
+  try:
+    wpage=urllib.urlopen(webmapurl)
+    pagelines = wpage.readlines()
+    wpage.close()
+    for line in pagelines:
+      w = line.split()
+      if len(w) > 2:
+        markers.append(((int(w[0]),int(w[1])),string.join(w[2:])))
+  except:
+    print 'Error reading markers from web', markersfile, sys.exc_info()[0], sys.exc_info()[1]
+  #print 'Reading web markers', currmap, markersfile
+  return markers
+
 # read the users map marks, coords and text
 def readmapmarkers(userdir, currmap):
   markers = []
@@ -441,7 +501,8 @@ def readmapmarkers(userdir, currmap):
 
 # display the users map marks
 def displaymarkers(markers, thismapscale, screen, mapxoffset, mapsize, \
-      scale, statustext, markfontsize, searchmode, marksearch, searchtext):
+      scale, statustext, markfontsize, searchmode, marksearch, searchtext, \
+      colour, crosscolour):
   if thismapscale[0] == 1000 or thismapscale[1] == 1000:
     statustext += 'Unknown scale, markers offset. '
   elif thismapscale[0] == 0 or thismapscale[1] == 0:
@@ -453,10 +514,10 @@ def displaymarkers(markers, thismapscale, screen, mapxoffset, mapsize, \
         continue
     x = mapxoffset + (mark[0][0] * mapsize[0] / thismapscale[0])
     y = (thismapscale[1] - mark[0][1]) * mapsize[1] / thismapscale[1]
-    text, textrec, linespace = textmake(mark[1], markcolour, scale, markfontsize)
+    text, textrec, linespace = textmake(mark[1], colour, scale, markfontsize)
     textrec = textmove(x, y, text, textrec )
-    pygame.draw.line(screen, markcrosscolour, (x-5, y), (x+5, y), 1)
-    pygame.draw.line(screen, markcrosscolour, (x, y-5), (x, y+5), 1)
+    pygame.draw.line(screen, crosscolour, (x-5, y), (x+5, y), 1)
+    pygame.draw.line(screen, crosscolour, (x, y-5), (x, y+5), 1)
     screen.blit(text,textrec)
   return statustext
 
@@ -601,7 +662,8 @@ mapdatafile = os.path.dirname(sys.argv[0]) + os.sep + 'mapdata'
 usermapdatafile = expandfilename('~/.elmapviewer.usermapdata')
 
 mapdir, userdir, scale, fullscreen, boxesOn, marksOn, editor, \
-  markfontsize, statusfontsize, mainborder, noesc, copyexec, showgametime, walkfactor = readvars(rcfile)
+  markfontsize, statusfontsize, mainborder, noesc, copyexec, \
+  showgametime, walkfactor, usewebmarkers, webmarkerbaseurl = readvars(rcfile)
 mapinfo, mapscale, maptype, parentmap, maptitle, continent, mapbanner = readinfo(mapdir, mapdatafile, usermapdatafile)
   
 normalcursor = True           # holds current cursor state, set to alternative when over links
@@ -635,10 +697,14 @@ lastsearchtext = '-'
 searchmatchingmaps = []
 currentsearchmapindex = 0
 limitsearch = 'none.bmp'
+limitsource = 'all'
 forcesidemap = False
 
 markersstore = {}
 bannerimages = {}
+
+webmaplist = {}
+readwebmaplist = True
 
 walktimemeasure = False
 totalwalktime = 0
@@ -649,7 +715,7 @@ if showgametime:
   pygame.event.post(pygame.event.Event(clockresyncevent))
   # resync the clock every hour - one day the tracking will be accurate enough to drop this
   pygame.time.set_timer(clockresyncevent, 1000 * 60 * 60)
-  
+
 # loop forever....
 while 1:
 
@@ -794,17 +860,25 @@ while 1:
           drawmaplink(boxesOn, maptype, hp, screen )
         hotspot.append((cursorbox, hp[1]))
        
-      # if user marks are enables, draw them on the main main
+      # if user marks are enables, draw them on the main map
       if marksOn or (searchmode and marksearch):
         # read the marks if we have not already done so
         if not markersstore.has_key(mainmapname):
           markersstore[mainmapname] = readmapmarkers(userdir, mainmapname)
+        if usewebmarkers and webmaplist.has_key(mainmapname) and webmaplist[mainmapname] == []:
+          webmaplist[mainmapname] = readwebmarkers(mainmapname, webmarkerbaseurl)
         # display the mark using any active filter
         if mapscale.has_key(mainmapname):
-          statustext = displaymarkers(markersstore[mainmapname], mapscale[mainmapname], screen, \
-            mapxoffset, mainmapsize, scale, statustext, markfontsize, \
-            searchmode, marksearch, searchtext )
-      
+          if limitsource != 'web':
+            statustext = displaymarkers(markersstore[mainmapname], mapscale[mainmapname], screen, \
+              mapxoffset, mainmapsize, scale, statustext, markfontsize, \
+              searchmode, marksearch, searchtext, markcolour, markcrosscolour)
+          if limitsource != 'local':
+            if webmaplist.has_key(mainmapname):
+              displaymarkers(webmaplist[mainmapname], mapscale[mainmapname], screen, \
+                mapxoffset, mainmapsize, scale, statustext, markfontsize, \
+                searchmode, marksearch, searchtext, webmarkcolour, markcrosscolour)
+          
       settitle(mainmapname, gametime, basetitle)
 
       # draw the new display
@@ -832,6 +906,11 @@ while 1:
       lastcoordtext = coordtext
       
 # process events
+
+    # if require, read the web markers list
+    if usewebmarkers and readwebmaplist:
+      webmaplist = getwebmaplist(webmarkerbaseurl)
+      readwebmaplist = False
 
     # get an event from the window
     event = pygame.event.wait()
@@ -1007,11 +1086,14 @@ while 1:
         elif event.key == pygame.K_m:
           if not marksOn:
             markcolour = markcolours[0]
+            webmarkcolour = webmarkcolours[0]
             marksOn = not marksOn
           elif markcolour == markcolours[0]:
             markcolour = markcolours[1]
+            webmarkcolour = webmarkcolours[1]
           elif markcolour == markcolours[1]:
             markcolour = markcolours[2]
+            webmarkcolour = webmarkcolours[2]
           elif markcolour == markcolours[2]:
             marksOn = not marksOn
           lastmap = ''
@@ -1046,6 +1128,9 @@ while 1:
           markersstore = {}
           scale = 1.0
           lastmap = ''
+          if usewebmarkers:
+            webmaplist = getwebmaplist(webmarkerbaseurl)
+            readwebmaplist = False
 
         # w - enter walk time measuring mode or reset current total time
         elif event.key == pygame.K_w:
@@ -1094,6 +1179,11 @@ while 1:
           marksearch = False
           lastmap = ''
 
+        # if web marks in use, rotate the filter for web/local marks 
+        elif usewebmarkers and (modkeys & pygame.KMOD_LCTRL) and event.key == pygame.K_TAB:
+          limitsource = rotatesearchsource(limitsource)
+          lastmap = ''
+           
         # exit if Q pressed, quit
         elif event.key == pygame.K_q and not noesc:
             pygame.QUIT
@@ -1140,7 +1230,7 @@ while 1:
                 currentsearchmapindex = len(searchmatchingmaps) -1
                 
           # TAB will cycle through no limit, Seridia only and Irilion only maps
-          if event.key == pygame.K_TAB:
+          if modkeys == pygame.KMOD_NONE and event.key == pygame.K_TAB:
             if limitsearch == 'none.bmp':
               limitsearch = 'seridia.bmp'
             elif limitsearch == 'seridia.bmp':
@@ -1151,8 +1241,12 @@ while 1:
             currentsearchmapindex = 0
             # make sure the help is updated
             lastmap = ''
-
-
+            
+          # if web marks in use, rotate the filter for web/local marks 
+          if usewebmarkers and (modkeys & pygame.KMOD_LCTRL) and event.key == pygame.K_TAB:
+            limitsource = rotatesearchsource(limitsource)
+            lastmap = ''
+            
           # add single letter keypresses to search
           elif len(pygame.key.name(event.key)) == 1 or event.key == pygame.K_SPACE:
             # convert shift+keys to text
@@ -1174,17 +1268,29 @@ while 1:
               mapnames = mapinfo.keys()
               mapnames.sort()
               for testmap in mapnames:
+                mapmatches = False
                 if limitsearch != 'none.bmp':
                   if continent[testmap] != limitsearch:
                     continue
-                if not markersstore.has_key(testmap):
-                  markersstore[testmap] = readmapmarkers(userdir, testmap)
-                markers = markersstore[testmap]
-                for mark in markers:
-                  marktext = mark[1]
-                  if searchfind(marktext, searchtext):
-                    searchmatchingmaps.append(testmap)
-                    break
+                if limitsource != 'web':
+                  if not markersstore.has_key(testmap):
+                    markersstore[testmap] = readmapmarkers(userdir, testmap)
+                  for mark in markersstore[testmap]:
+                    if searchfind(mark[1], searchtext):
+                      searchmatchingmaps.append(testmap)
+                      mapmatches = True
+                      break
+                  if mapmatches:
+                    continue
+                if limitsource != 'local':
+                  if usewebmarkers and webmaplist.has_key(testmap):
+                    if webmaplist[testmap] == []:
+                      webmaplist[testmap] = readwebmarkers(testmap, webmarkerbaseurl)
+                    for mark in webmaplist[testmap]:
+                      if searchfind(mark[1], searchtext):
+                        searchmatchingmaps.append(testmap)
+                        mapmatches = True
+                        break
               # make sure we stay on the current map if it matches
               if mainmapname in searchmatchingmaps:
                 currentsearchmapindex = searchmatchingmaps.index(mainmapname)
