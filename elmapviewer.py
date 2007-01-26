@@ -702,6 +702,7 @@ forcesidemap = False
 
 markersstore = {}
 bannerimages = {}
+bannerzoom = False
 
 webmaplist = {}
 readwebmaplist = True
@@ -780,8 +781,14 @@ while 1:
       # get and scale the main map surface
       fullpath = os.path.join(mapdir, mainmapname)
       if not os.access(fullpath, os.R_OK):
-        mainmap = pygame.Surface((512, 512))
-        statustext += 'Cannot load main map file. '
+        statustext += 'Cannot load main map file, using default. '
+        defmap = os.path.join(mapdir, '../textures/openscreen.bmp')
+        if not os.access(defmap, os.R_OK):
+          mainmap = pygame.Surface((512, 512))
+        else:
+          mainmap = pygame.image.load(defmap)
+          mainmapsize = mainmap.get_size()
+          mainmap = pygame.transform.scale(mainmap, (int(512), int(512)))
       else:
         mainmap = pygame.image.load(fullpath)
       mainmapsize = mainmap.get_size()
@@ -805,11 +812,35 @@ while 1:
         if fullscreen:
           pygame.display.toggle_fullscreen()
       
+      # get the main map banner logo if there is one - display over the legend image
+      # could display full size over the sidemap if hover over this image
+      if mapbanner.has_key(mainmapname):
+        bannerimages, bannerlogo = getbannersurface(bannerimages, mapbanner[mainmapname])
+        bannerlogosize = bannerlogo.get_size()
+        if bannerzoom:
+          bannerlogo = pygame.transform.scale(bannerlogo, (int(bannerlogosize[0]*scale), int(bannerlogosize[1]*scale)))
+          # adjust the legend size to fit the zoomed banner
+          legend = pygame.transform.scale(legend, (int(legendsize[0]*0.5), int(legendsize[1]*0.5)))
+          legendsize = legend.get_size()
+          legendrect = legend.get_rect()
+        else:  
+          bannerlogo = pygame.transform.scale(bannerlogo, (int(bannerlogosize[0]*0.35*scale), int(bannerlogosize[1]*0.35*scale)))
+        bannerlogosize = bannerlogo.get_size()
+        bannerlogorect = bannerlogo.get_rect()
+        
       # now we have the screen size, move surfaces into place
       
-      # position the legend
-      xymove = [int(sidemapsize[0]/2), sidemapsize[1]]
-      legendrect = legendrect.move(xymove)
+      # position the legend and banner
+      if mapbanner.has_key(mainmapname) and bannerzoom:
+        legendxymove = [int(sidemapsize[0]/2+legendsize[1]/4), sidemapsize[1]]
+        bannerxymove = [sidemapsize[0]/2, sidemapsize[1]+legendsize[1]]
+      else:
+        legendxymove = [int(sidemapsize[0]/2), sidemapsize[1]]
+        if mapbanner.has_key(mainmapname):
+          bannerxymove = [sidemapsize[0]/2+(legendsize[0]-bannerlogosize[0])/2, sidemapsize[1]+legendsize[1]-bannerlogosize[1]*1.2]
+      legendrect = legendrect.move(legendxymove)
+      if mapbanner.has_key(mainmapname):
+        bannerlogorect = bannerlogorect.move(bannerxymove)
       
       # position the help
       xymove = [0, sidemapsize[1]]
@@ -820,23 +851,14 @@ while 1:
       mainmapmove = [mapxoffset, 0]
       mainmaprect = mainmaprect.move(mainmapmove)
       
+      
       # clear the display and redraw the components
       screen.fill(blackcolour)
       screen.blit(sidemap, sidemaprect)
       screen.blit(mainmap, mainmaprect)
       screen.blit(legend, legendrect)
       screen.blit(helpsurface, helprect)
-      
-      # get the main map banner logo if there is one - display over the legend image
-      # could display full size over the sidemap if hover over this image
       if mapbanner.has_key(mainmapname):
-        bannerimages, bannerlogo = getbannersurface(bannerimages, mapbanner[mainmapname])
-        bannerlogosize = bannerlogo.get_size()
-        bannerlogo = pygame.transform.scale(bannerlogo, (int(bannerlogosize[0]*0.35*scale), int(bannerlogosize[1]*0.35*scale)))
-        bannerlogosize = bannerlogo.get_size()
-        bannerlogorect = bannerlogo.get_rect()
-        xymove = [sidemapsize[0]/2+(legendsize[0]-bannerlogosize[0])/2, sidemapsize[1]+legendsize[1]-bannerlogosize[1]*1.2]
-        bannerlogorect = bannerlogorect.move(xymove)
         screen.blit(bannerlogo, bannerlogorect)
       
       # get the list of main map links, and optionally draw rectangles for them
@@ -954,6 +976,13 @@ while 1:
               pygame.mouse.set_cursor(*pygame.cursors.diamond)
               normalcursor = False
             inhotspot = True
+      # if still no in hotspot, check for banner
+      if mapbanner.has_key(mainmapname) and not inhotspot:
+        if bannerlogorect.collidepoint(mousecoord):
+          if normalcursor:
+            pygame.mouse.set_cursor(*pygame.cursors.diamond)
+            normalcursor = False
+          inhotspot = True
       # if still no in hotspot, make sure the cursor is normal
       if not inhotspot:
         if not normalcursor:
@@ -969,8 +998,12 @@ while 1:
   
     # if a mouse button is pressed....
     elif event.type == pygame.MOUSEBUTTONDOWN:
+        
+      if mapbanner.has_key(mainmapname) and mousebuttons[0] and bannerlogorect.collidepoint(mousecoord):
+        bannerzoom = not bannerzoom
+        lastmap = ''
     
-      if mouseonmainmap or mouseonsidemap:
+      elif mouseonmainmap or mouseonsidemap:
       
         # if left-click, check for map link
         if mousebuttons[0]:
