@@ -37,9 +37,9 @@
 # Debian GNU/Linux: http://www.debian.org/
 # Ubuntu: http://www.ubuntu.com/
 
-import sys, pygame, string, os, shutil, platform, struct, urllib, math
+import sys, pygame, string, os, shutil, platform, struct, urllib, math, gzip
 
-version = 'v0.6.0 January 2007'
+version = 'v0.6.1 March 2007'
 
 # define some basic colours
 blackcolour = 0, 0, 0
@@ -80,26 +80,40 @@ convertKey = { pygame.K_1:"!", pygame.K_2:"\"", pygame.K_4:"$", \
 gameminuteevent = pygame.USEREVENT
 clockresyncevent = pygame.USEREVENT+1
 
+# Thanks to Lenard Lindstrom and Brian Fisher on the pygame mailing list
+# for this solution to the problem of using pygame.image.load() with
+# a gziped file stream.
+class GzipImageFile(gzip.GzipFile):
+   def seek(self, offset, whence=0):
+       assert(whence == 0)
+       gzip.GzipFile.seek(self, offset)
+
+# hide if we're using a compressed file
+def fileopen(filename, mode):
+  if os.access(filename, os.R_OK):
+    return open(filename, mode)
+  if os.access(filename+'.gz', os.R_OK):
+    return GzipImageFile(filename+'.gz',mode)
+  return 0
+
 # expand ~ and environ vars
 def expandfilename(filename):
   filename = os.path.expanduser(filename)
   filename = os.path.expandvars(filename)
   filename = os.path.normpath(filename)
   return filename
-  
 
 # read the map size from the .elm file assiociated this bmp filename
 def readmapsizefromelm(bmpfilename):
   elmfilename = string.replace(bmpfilename,'.bmp','.elm',1)
-  if os.access(elmfilename, os.R_OK):
-    fid=open(elmfilename,'rb')
-    info=fid.read(12)
-    fid.close()
-    # the file's data is little endian - hopefully this will work for big endian too
-    size = struct.unpack('<ii',info[4:])
-    return 6*size[0], 6*size[1]
-  else:
+  fid = fileopen(elmfilename,'rb')
+  if fid == 0:
     return 0, 0
+  # the file's data is little endian - hopefully this will work for big endian too
+  info=fid.read(12)
+  fid.close()
+  size = struct.unpack('<ii',info[4:])
+  return 6*size[0], 6*size[1]
 
 # loop back through parent maps to find the maps continent
 def getcontinent(parentmap,mapname):
@@ -171,8 +185,9 @@ def readinfo(mapdir, fname, userfname):
       mapscale[mapname] = sizefromfile
   # get map names from the mapinfo.lst file
   mapinfolstfile = expandfilename(os.path.join(mapdir, '../mapinfo.lst'))
-  if os.access(mapinfolstfile, os.R_OK):
-    for line in open(mapinfolstfile, 'r'):
+  fid = fileopen(mapinfolstfile, 'r')
+  if fid != 0:
+    for line in fid:
       if (len(line) == 0) or (line[0] == "#"):
         continue
       w = line.split()
@@ -492,8 +507,9 @@ def readwebmarkers(currmap, webmarkerbaseurl):
 def readmapmarkers(userdir, currmap):
   markers = []
   markersfile = os.path.join(userdir, string.replace(currmap,'.bmp','.elm.txt',1))
-  if os.access(markersfile, os.R_OK):
-    for line in open(markersfile, 'r'):
+  fid = fileopen(markersfile, 'r')
+  if fid != 0:
+    for line in fid:
       w = line.split()
       if len(w) > 2:
         markers.append(((int(w[0]),int(w[1])),string.join(w[2:])))
@@ -619,13 +635,14 @@ def drawmaplink(boxesOn, maptype, hp, screen ):
     pygame.draw.rect(screen, colour, cursorbox, 2)
 
 # get the map banner logo
-def getbannersurface(bannerimages ,bannerinfo):
+def getbannersurface(bannerimages, bannerinfo):
   if not bannerimages.has_key(bannerinfo[0]):
     fullpath = os.path.join(mapdir, '../3dobjects/structures/banners'+bannerinfo[0]+'.bmp')
-    if not os.access(fullpath, os.R_OK):
-      print 'Missing banner image file: ' + fullpath
-      sys.exit()
-    bannerimages[bannerinfo[0]] = pygame.image.load(fullpath)
+    fid = fileopen(fullpath, 'rb')
+    if fid == 0:
+      print 'Missing banner image file: ' + fullpath + ' - so disabling'
+      return bannerimages, 0
+    bannerimages[bannerinfo[0]] = pygame.image.load(fid)
   size = bannerimages[bannerinfo[0]].get_size()
   subnum = int(bannerinfo[1])
   if subnum == 2 or subnum == 4:
@@ -752,11 +769,12 @@ while 1:
           
       # get and scale the current size map surface
       fullpath = os.path.join(mapdir, sidemapname)
-      if not os.access(fullpath, os.R_OK):
+      fid = fileopen(fullpath, 'rb')
+      if fid == 0:
         sidemap = pygame.Surface((512, 512))
         statustext += 'Cant load sidemap file. '
       else:
-        sidemap = pygame.image.load(fullpath)
+        sidemap = pygame.image.load(fid)
       sidemapsize = sidemap.get_size()
       sidemap = pygame.transform.scale(sidemap, (int(sidemapsize[0]*scale/2), int(sidemapsize[1]*scale/2)))
       sidemapsize = sidemap.get_size()
@@ -768,11 +786,12 @@ while 1:
       
       # get and scale the legend surface
       fullpath = os.path.join(mapdir, "legend.bmp")
-      if not os.access(fullpath, os.R_OK):
+      fid = fileopen(fullpath, 'rb')
+      if fid == 0:
         legend = pygame.Surface((128, 256))
         statustext += 'Cannot load legend file. '
       else:
-        legend = pygame.image.load(fullpath)
+        legend = pygame.image.load(fid)
       legendsize = legend.get_size()
       legend = pygame.transform.scale(legend, (int(legendsize[0]*scale), int(legendsize[1]*scale)))
       legendsize = legend.get_size()
@@ -780,17 +799,19 @@ while 1:
       
       # get and scale the main map surface
       fullpath = os.path.join(mapdir, mainmapname)
-      if not os.access(fullpath, os.R_OK):
+      fid = fileopen(fullpath, 'rb')
+      if fid == 0:
         statustext += 'Cannot load main map file, using default. '
         defmap = os.path.join(mapdir, '../textures/openscreen.bmp')
-        if not os.access(defmap, os.R_OK):
+      	fid = fileopen(defmap, 'rb')
+        if fid == 0:
           mainmap = pygame.Surface((512, 512))
         else:
-          mainmap = pygame.image.load(defmap)
+          mainmap = pygame.image.load(fid)
           mainmapsize = mainmap.get_size()
           mainmap = pygame.transform.scale(mainmap, (int(512), int(512)))
       else:
-        mainmap = pygame.image.load(fullpath)
+        mainmap = pygame.image.load(fid)
       mainmapsize = mainmap.get_size()
       mainmap = pygame.transform.scale(mainmap, (int(mainmapsize[0]*scale), int(mainmapsize[1]*scale)))
       mainmapsize = mainmap.get_size()
@@ -816,17 +837,20 @@ while 1:
       # could display full size over the sidemap if hover over this image
       if mapbanner.has_key(mainmapname):
         bannerimages, bannerlogo = getbannersurface(bannerimages, mapbanner[mainmapname])
-        bannerlogosize = bannerlogo.get_size()
-        if bannerzoom:
-          bannerlogo = pygame.transform.scale(bannerlogo, (int(bannerlogosize[0]*scale), int(bannerlogosize[1]*scale)))
-          # adjust the legend size to fit the zoomed banner
-          legend = pygame.transform.scale(legend, (int(legendsize[0]*0.5), int(legendsize[1]*0.5)))
-          legendsize = legend.get_size()
-          legendrect = legend.get_rect()
-        else:  
-          bannerlogo = pygame.transform.scale(bannerlogo, (int(bannerlogosize[0]*0.35*scale), int(bannerlogosize[1]*0.35*scale)))
-        bannerlogosize = bannerlogo.get_size()
-        bannerlogorect = bannerlogo.get_rect()
+        if bannerlogo == 0:
+          del mapbanner[mainmapname]
+        else:
+          bannerlogosize = bannerlogo.get_size()
+          if bannerzoom:
+            bannerlogo = pygame.transform.scale(bannerlogo, (int(bannerlogosize[0]*scale), int(bannerlogosize[1]*scale)))
+            # adjust the legend size to fit the zoomed banner
+            legend = pygame.transform.scale(legend, (int(legendsize[0]*0.5), int(legendsize[1]*0.5)))
+            legendsize = legend.get_size()
+            legendrect = legend.get_rect()
+          else:  
+            bannerlogo = pygame.transform.scale(bannerlogo, (int(bannerlogosize[0]*0.35*scale), int(bannerlogosize[1]*0.35*scale)))
+          bannerlogosize = bannerlogo.get_size()
+          bannerlogorect = bannerlogo.get_rect()
         
       # now we have the screen size, move surfaces into place
       
@@ -1173,7 +1197,7 @@ while 1:
           markbox = []
           lastmap = ''
 
-        # exit any special more \/ done in search mode
+        # exit any special mode \/ done in search mode
         elif event.key == pygame.K_ESCAPE:
             lastmap = ''
             markbox = []
@@ -1218,7 +1242,7 @@ while 1:
           lastmap = ''
            
         # exit if Q pressed, quit
-        elif event.key == pygame.K_q and not noesc:
+        elif not noesc and (event.key == pygame.K_q or event.key == pygame.K_x):
             pygame.QUIT
             sys.exit()
         
