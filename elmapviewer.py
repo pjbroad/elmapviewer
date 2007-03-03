@@ -39,7 +39,7 @@
 
 import sys, pygame, string, os, shutil, platform, struct, urllib, math, gzip
 
-version = 'v0.6.1 March 2007'
+version = 'v0.6.0 March 2007'
 
 # define some basic colours
 blackcolour = 0, 0, 0
@@ -87,6 +87,21 @@ class GzipImageFile(gzip.GzipFile):
    def seek(self, offset, whence=0):
        assert(whence == 0)
        gzip.GzipFile.seek(self, offset)
+
+# automatically provide username/password when you open a protected webfile
+class MyURLopener(urllib.FancyURLopener):
+  authentication = ('', '')
+  reqestcount = 0
+  ok = True
+  def prompt_user_passwd(self, host, realm):
+    if self.reqestcount > 3:
+      self.ok = False
+      print 'Web authentication failed for ['+host+'] ['+realm+']'
+      return ('', '')
+    self.reqestcount += 1
+    return self.authentication
+  def setauthentication(self, authentication ):
+    self.authentication = authentication
 
 # hide if we're using a compressed file
 def fileopen(filename, mode):
@@ -226,6 +241,7 @@ def readvars(fname):
   walkfactor = 3.32
   usewebmarkers = False
   webmarkerbaseurl = ''
+  authentication = ('', '')
   # create a default rc file if none exists
   if not os.access(fname, os.R_OK):
     srcfile = os.path.dirname(sys.argv[0]) + '/example.elmapviewer.rc'
@@ -278,12 +294,15 @@ def readvars(fname):
           usewebmarkers = bool(int(w[2]))
         elif w[0] == 'webmarkerbaseurl':
           webmarkerbaseurl = w[2]          
+        elif w[0] == 'authentication':
+          tmpw = w[2].split(None,2)
+          authentication = (tmpw[0], tmpw[1])
         elif functionkeys.has_key(w[0]):
           keycode = functionkeys[w[0]][0]
           functionkeys[w[0]] = (keycode,w[2])
   return mapdir, userdir, scale, fullscreen, boxesOn, marksOn, editor, \
     markfontsize, statusfontsize, mainborder, noesc, copyexec, \
-    showgametime, walkfactor, usewebmarkers, webmarkerbaseurl
+    showgametime, walkfactor, usewebmarkers, webmarkerbaseurl, authentication
 
 # get the name of the next map in the list
 def nextmap(mapinfo, currmap, inc):
@@ -466,7 +485,7 @@ def rotatesearchsource(limitsource):
   return limitsource
 
 # load the list of web based marker files
-def getwebmaplist(webmarkerbaseurl):
+def getwebmaplist(webmarkerbaseurl, authentication):
   webmaplist = {}
   if webmarkerbaseurl == '':
     print 'Error webmarkerbaseurl is not set' 
@@ -474,30 +493,36 @@ def getwebmaplist(webmarkerbaseurl):
   webmaplisturl = os.path.join(webmarkerbaseurl, 'maplist')
   # read the webpage
   try:
-    wpage=urllib.urlopen(webmaplisturl)
+    opener=MyURLopener()
+    opener.setauthentication(authentication)
+    wpage=opener.open(webmaplisturl)
     pagelines = wpage.readlines()
     wpage.close()
-    for line in pagelines:
-      if line != '':
-        webmaplist[line.rstrip()] = []
-    #print webmaplist
+    if opener.ok:
+      for line in pagelines:
+        if line != '':
+          webmaplist[line.rstrip()] = []
+      #print webmaplist
   except:
     print 'Error reading maplist from web', sys.exc_info()[0], sys.exc_info()[1]
   return webmaplist
 
 # load specified the web base marker file
-def readwebmarkers(currmap, webmarkerbaseurl):
+def readwebmarkers(currmap, webmarkerbaseurl, authentication):
   markersfile = string.replace(currmap,'.bmp','.elm.txt',1)
   webmapurl = os.path.join(webmarkerbaseurl, markersfile)
   markers = []
   try:
-    wpage=urllib.urlopen(webmapurl)
+    opener=MyURLopener()
+    opener.setauthentication(authentication)
+    wpage=opener.open(webmapurl)
     pagelines = wpage.readlines()
     wpage.close()
-    for line in pagelines:
-      w = line.split()
-      if len(w) > 2:
-        markers.append(((int(w[0]),int(w[1])),string.join(w[2:])))
+    if opener.ok:
+      for line in pagelines:
+        w = line.split()
+        if len(w) > 2:
+          markers.append(((int(w[0]),int(w[1])),string.join(w[2:])))
   except:
     print 'Error reading markers from web', markersfile, sys.exc_info()[0], sys.exc_info()[1]
   #print 'Reading web markers', currmap, markersfile
@@ -680,7 +705,7 @@ usermapdatafile = expandfilename('~/.elmapviewer.usermapdata')
 
 mapdir, userdir, scale, fullscreen, boxesOn, marksOn, editor, \
   markfontsize, statusfontsize, mainborder, noesc, copyexec, \
-  showgametime, walkfactor, usewebmarkers, webmarkerbaseurl = readvars(rcfile)
+  showgametime, walkfactor, usewebmarkers, webmarkerbaseurl, authentication = readvars(rcfile)
 mapinfo, mapscale, maptype, parentmap, maptitle, continent, mapbanner = readinfo(mapdir, mapdatafile, usermapdatafile)
   
 normalcursor = True           # holds current cursor state, set to alternative when over links
@@ -912,7 +937,7 @@ while 1:
         if not markersstore.has_key(mainmapname):
           markersstore[mainmapname] = readmapmarkers(userdir, mainmapname)
         if usewebmarkers and webmaplist.has_key(mainmapname) and webmaplist[mainmapname] == []:
-          webmaplist[mainmapname] = readwebmarkers(mainmapname, webmarkerbaseurl)
+          webmaplist[mainmapname] = readwebmarkers(mainmapname, webmarkerbaseurl, authentication)
         # display the mark using any active filter
         if mapscale.has_key(mainmapname):
           if limitsource != 'web':
@@ -955,7 +980,7 @@ while 1:
 
     # if require, read the web markers list
     if usewebmarkers and readwebmaplist:
-      webmaplist = getwebmaplist(webmarkerbaseurl)
+      webmaplist = getwebmaplist(webmarkerbaseurl, authentication)
       readwebmaplist = False
 
     # get an event from the window
@@ -1186,7 +1211,7 @@ while 1:
           scale = 1.0
           lastmap = ''
           if usewebmarkers:
-            webmaplist = getwebmaplist(webmarkerbaseurl)
+            webmaplist = getwebmaplist(webmarkerbaseurl, authentication)
             readwebmaplist = False
 
         # w - enter walk time measuring mode or reset current total time
@@ -1342,7 +1367,7 @@ while 1:
                 if limitsource != 'local':
                   if usewebmarkers and webmaplist.has_key(testmap):
                     if webmaplist[testmap] == []:
-                      webmaplist[testmap] = readwebmarkers(testmap, webmarkerbaseurl)
+                      webmaplist[testmap] = readwebmarkers(testmap, webmarkerbaseurl, authentication)
                     for mark in webmaplist[testmap]:
                       if searchfind(mark[1], searchtext):
                         searchmatchingmaps.append(testmap)
