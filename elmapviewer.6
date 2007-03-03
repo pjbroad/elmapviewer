@@ -1,4 +1,4 @@
-.TH ELMAPVIEWER 6 "July 2006" "elmapviewer-0.4.0" "Eternal Lands Map Viewer"
+.TH ELMAPVIEWER 6 "March 2007" "elmapviewer-0.6.0" "Eternal Lands Map Viewer"
 
 .SH NAME
 elmapviewer - A map viewer for the Eternal Lands MMORPG
@@ -12,7 +12,7 @@ elmapviewer - A map viewer for the Eternal Lands MMORPG
 .SH DESCRIPTION
 Eternal Lands is a FREE MMORPG (massively multi-player online role playing 
 game). This program displays Eternal Lands maps and allows the user to navigate
-the maps using map links.  Users game marks are also displayed and can be
+the maps using map links.  Users game map marks are also displayed and can be
 filtered using a search function.  elmapviewer was written as an experiment in
 the use of both the Python language and the Pygame modules.  It suits my
 personal use and I release it in the hope it may  be useful to others.  I am
@@ -48,6 +48,20 @@ The keyboard function keys can be configured (in the resource file) to provide a
 short cut to maps of your choice.  Simply add the key name and desired map in
 the form "F1 = map2.bmp".  The provided resource files contain a couple of
 examples.  F1 to F15 can be configured in this way.
+
+.SH Using map marks located on a website
+Game player Moraf suggested it would be useful if the map viewer could access
+map marks located on a web site.  This would allow groups to share marks.  I
+thought this was a nice idea so have added it.  You create a directory on your
+web server and use it to store the map mark files you want to share.  In
+addition to these standard format, standard named mark files, you need one extra
+file, called "maplist". This lists all the maps for which you have mark files on
+you server.  For example, the maplist file could contain the line "map2.bmp"
+then the file "map2.elm.txt" will be in the server directory and contain mark
+information.  You must specify each file in the list on a new line of text.  The
+configuration file contains the directory URL and any user authorisation
+username/password required for access.  Ctrl+TAB can be used to cycle though
+local, web and both settings for displayed and search map marks.
 
 .SH OPTIONS
 .TP
@@ -97,13 +111,13 @@ have configured in the resource file.  It is recommended to use the later file
 to configure your own, private links.
 
 .TP
-.I m - toggle marks
+.I m - toggle map marks
 Toggles/cycles the display of game mark text through three colours (chosen to
-have varying contrast for varying maps) and not displayed.  Note: marks will be
-display while searching even if turned off using this option.
+have varying contrast for varying maps) and not displayed.  Note: map marks will
+be display while searching even if turned off using this option.
 
 .TP
-.I e - edit marks
+.I e - edit map marks
 Opens the in-game mark file for the current map in the editor you have
 configured in the resource file.  WARNING: changes made in these files will
 affect in game marker display.
@@ -167,7 +181,8 @@ useful if you intend to use teleports etc.  To exit the walk time function
 press ESC, to reset the time to zero and clear the lines press w.
 
 .TP
-.I \\ - search
+.I 
+\\ - search
 \\ will enter the map name search function.  As you type, your text will be
 displayed in the status bar and map names or titles matching the text will be
 found.  The number of maps matching the name is displayed with the index of the
@@ -182,22 +197,27 @@ to exit the search function.
 .I / - search
 / will enter the map mark search function.  As you type, your text will be
 displayed in the status bar and maps containing marks matching the text will be
-found.  The displayed marks will also be filtered so that only marks matching
-the search string are displayed.  The number of maps matching the mark is
-displayed with the index of the current map - i.e. (map 3 of 6).  You can cycle
-through and display the matching maps using the up and down arrow keys. 
-Starting the search string with the ^ character will anchor the search string
-to the start of the mark text.  Pressing TAB will cycle though options to limit
-the search to maps in Seridia, Irillion or all maps.  Press Backspace to delete
-the last search string character, ESC  to exit the search function.
+found.  The displayed map marks will also be filtered so that only marks
+matching the search string are displayed.  The number of maps matching the mark
+is displayed with the index of the current map - i.e. (map 3 of 6).  You can
+cycle through and display the matching maps using the up and down arrow keys. 
+Starting the search string with the ^ character will anchor the search string to
+the start of the mark text.  Pressing TAB will cycle though options to limit the
+search to maps in Seridia, Irillion or all maps.  Press Backspace to delete the
+last search string character, ESC  to exit the search function.
 
 .TP
-.I q -quit
+.I Ctrl+TAB - mark source selection
+Press to cycle though the options for map mark source - local, web and both. 
+Controls the source of map marks displayed and available for mark search.
+
+.TP
+.I q or x - quit
 Exits the elmapviewer program.  This option can be disabled using the noesc
 option in the resource file.
 
 .SH COPYRIGHT
-Copyright 2006 Paul Broadhead. This is free software; see the source for
+Copyright 2006, 2007 Paul Broadhead. This is free software; see the source for
 copying conditions.  There is NO  warranty;  not even for MERCHANTABILITY or
 FITNESS FOR A PARTICULAR PURPOSE.
 

@@ -60,190 +60,212 @@ add the key name and desired map in the form "F1 = map2.bmp".  The provided
 resource files contain a couple of examples.  F1 to F15 can be configured
 in this way. 
 <p> 
-<h2><a name='sect6' href='#toc6'>Options</a></h2>
+<h2><a name='sect6' href='#toc6'>Using map marks located on a website</a></h2>
+Game player Moraf suggested
+it would be useful if the map viewer could access map marks located on
+a web site.  This would allow groups to share marks.  I thought this was
+a nice idea so have added it.  You create a directory on your web server
+and use it to store the map mark files you want to share.  In addition to
+these standard format, standard named mark files, you need one extra file,
+called "maplist". This lists all the maps for which you have mark files
+on you server.  For example, the maplist file could contain the line "map2.bmp"
+then the file "map2.elm.txt" will be in the server directory and contain
+mark information.  You must specify each file in the list on a new line
+of text.  The configuration contains the directory URL and any user authorisation
+username/password required for access.  Ctrl+TAB can be used to cycle though
+local, web and both settings for displayed and search mapmarks. 
+<p> 
+<h2><a name='sect7' href='#toc7'>Options</a></h2>
 
 <dl>
 
-<dt><i>resourcefile</i> </dt>
-<dd>Optionally specify the name of the resource
-file.  This file stores program configuration options.  The file defaults
-to .elmapviewer.rc in your HOME directory.  An example rc file is provided
-with the code and will be copied to your home directory when you first
-run the viewer. 
+<dt><i>resourcefile</i>
+</dt>
+<dd>Optionally specify the name of the resource file.  This file stores program
+configuration options.  The file defaults to .elmapviewer.rc in your HOME
+directory.  An example rc file is provided with the code and will be copied
+to your home directory when you first run the viewer. 
 <p> </dd>
 
-<dt>At least three values in the resource file should be checked/modified
-:- </dt>
+<dt>At least three values
+in the resource file should be checked/modified :- </dt>
 <dd>
 <p> </dd>
 
 <dt><i>mapdir</i> </dt>
-<dd>Specifies the directory for the Eternal Lands maps. 
+<dd>Specifies the
+directory for the Eternal Lands maps. 
 <p> </dd>
 
 <dt><i>userdir</i> </dt>
-<dd>Specifies
-the directory for the users EL settings. 
+<dd>Specifies the directory for
+the users EL settings. 
 <p> </dd>
 
 <dt><i>editor</i> </dt>
-<dd>Specified the full path
-to your favourite text editor. 
+<dd>Specified the full path to your favourite
+text editor. 
 <p> </dd>
 
 <dt><i>showgametime</i> </dt>
-<dd>Disabled by default.  When enabled,
-during startup elmapviewer will access the Eternal Lands main web page
-and read the current game time.  This time will then be displayed in the
-title bar of the mapviewer window.  The website time does not appear to
-be that accurate so the game time is re-read once an hour. 
+<dd>Disabled by default.  When enabled, during startup
+elmapviewer will access the Eternal Lands main web page and read the current
+game time.  This time will then be displayed in the title bar of the mapviewer
+window.  The website time does not appear to be that accurate so the game
+time is re-read once an hour. 
 <p> </dd>
 </dl>
 
-<h2><a name='sect7' href='#toc7'>Command Summary</a></h2>
+<h2><a name='sect8' href='#toc8'>Command Summary</a></h2>
 
-<p>
-
+<p> 
 <dl>
 
 <dt><i>i/o/f</i> - zoom in/out/full </dt>
-<dd>Zoom program window in (make bigger), out (make
-smaller) and full screen. 
+<dd>Zoom
+program window in (make bigger), out (make smaller) and full screen. 
 <p> </dd>
 
-<dt><i>b</i> - toggle boxes </dt>
-<dd>Toggle display of link boxes.
- Even when not display, the links are  still active. 
+<dt><i>b</i>
+- toggle boxes </dt>
+<dd>Toggle display of link boxes.  Even when not display, the
+links are  still active. 
 <p> </dd>
 
 <dt><i>l</i> - edit links </dt>
-<dd>Opens
-the link files mapdata and ~/.elmapviewer.usermapdata in the editor you have
-configured in the resource file.  It is recommended to use the later file
-to configure your own, private links. 
+<dd>Opens the link files mapdata and
+~/.elmapviewer.usermapdata in the editor you have configured in the resource
+file.  It is recommended to use the later file to configure your own, private
+links. 
 <p> </dd>
 
 <dt><i>m</i> - toggle marks </dt>
-<dd>Toggles/cycles the
-display of game mark text through three colours (chosen to have varying
-contrast for varying maps) and not displayed.  Note: marks will be display
-while searching even if turned off using this option. 
+<dd>Toggles/cycles the display of game mark text through
+three colours (chosen to have varying contrast for varying maps) and not
+displayed.  Note: marks will be display while searching even if turned off
+using this option. 
 <p> </dd>
 
 <dt><i>e</i> - edit marks </dt>
-<dd>Opens
-the in-game mark file for the current map in the editor you have configured
-in the resource file.  WARNING: changes made in these files will affect
-in game marker display. 
+<dd>Opens the in-game mark file for the current
+map in the editor you have configured in the resource file.  WARNING: changes
+made in these files will affect in game marker display. 
 <p> </dd>
 
 <dt><i>n</i> - map notes </dt>
-<dd>Creates or opens a non-game file for
-you to make notes associated with the current map.  The editor you have
-configured in the resource file will be used.  The files are stored in the
-same directory as your in-game mark files. 
+<dd>Creates
+or opens a non-game file for you to make notes associated with the current
+map.  The editor you have configured in the resource file will be used. 
+The files are stored in the same directory as your in-game mark files. 
 <p> </dd>
 
-<dt><i>c</i> - edit config </dt>
-<dd>Opens the configuration
-file for elmapviewer in the editor you have configured in the resource
-file. 
+<dt><i>c</i>
+- edit config </dt>
+<dd>Opens the configuration file for elmapviewer in the editor
+you have configured in the resource file. 
 <p> </dd>
 
 <dt><i>r</i> - reload data </dt>
-<dd>Reloads map link information and mark data. 
+<dd>Reloads map link
+information and mark data. 
 <p> </dd>
 
-<dt><i>bs</i> - back
-map </dt>
-<dd>Moves back to the previous map.  Many previous maps are remembered so
-you can retrace your steps. 
+<dt><i>bs</i> - back map </dt>
+<dd>Moves back to the previous map.
+ Many previous maps are remembered so you can retrace your steps. 
 <p> </dd>
 
-<dt><i>home/end</i> - islands </dt>
-<dd>Home takes you straight to
-the Seridia map, End to Irilion. 
+<dt><i>home/end</i>
+- islands </dt>
+<dd>Home takes you straight to the Seridia map, End to Irilion. 
 <p> </dd>
 
-<dt><i>l-click</i> draw boxes </dt>
-<dd>Allows you to draw link
-boxes that can be added to either mapdata or  ~/.elmapviewer.usermapdata
-(later recommended).  The coordinates required to go into the file are written
-in the status line.  If you have enabled a copy program, the same information
-will be copied into your window managers copy buffer (clip board). 
+<dt><i>l-click</i>
+draw boxes </dt>
+<dd>Allows you to draw link boxes that can be added to either mapdata
+or  ~/.elmapviewer.usermapdata (later recommended).  The coordinates required
+to go into the file are written in the status line.  If you have enabled
+a copy program, the same information will be copied into your window managers
+copy buffer (clip board). 
 <p> </dd>
 
-<dt><i>r-click</i>
-select </dt>
-<dd>Allows you to select a function with the mouse pointer.  That is
-links or some menu options.  Normally the mouse cursor will change when
-you hover over a link. 
+<dt><i>r-click</i> select </dt>
+<dd>Allows you to select a function
+with the mouse pointer.  That is links or some menu options.  Normally the
+mouse cursor will change when you hover over a link. 
 <p> </dd>
 
 <dt><i>middle-click</i> </dt>
-<dd>Shows link information, the destination
-of the link. 
+<dd>Shows
+link information, the destination of the link. 
 <p> 
 <p> </dd>
 
 <dt><i>w</i> - walk time </dt>
-<dd>Enters the walk time calculation sub menu.  This
-function allows you to measure the approximate time it will take, in-game,
-to walk between to locations.  A mouse right click will draw a point, a
-second click will  draw another point and a joining link.  The walk time
-total will then be display in the status line.  If you right click on the
-map again, another point will be display and another connecting line added
-- the walk time  updated.  You can move between maps and keep adding to the
-walk time total. To start a new line without resetting the total walk time
-or changing maps, hold down control and right click the mouse.  A new point
-will be display but no connecting line drawn and no addition to the total
-walk time made.  This is useful if you intend to use teleports etc.  To exit
-the walk time function press ESC, to reset the time to zero and clear the
-lines press w. 
+<dd>Enters the
+walk time calculation sub menu.  This function allows you to measure the
+approximate time it will take, in-game, to walk between to locations.  A
+mouse right click will draw a point, a second click will  draw another
+point and a joining link.  The walk time total will then be display in the
+status line.  If you right click on the map again, another point will be
+display and another connecting line added - the walk time  updated.  You
+can move between maps and keep adding to the walk time total. To start a
+new line without resetting the total walk time or changing maps, hold down
+control and right click the mouse.  A new point will be display but no connecting
+line drawn and no addition to the total walk time made.  This is useful
+if you intend to use teleports etc.  To exit the walk time function press
+ESC, to reset the time to zero and clear the lines press w. 
 <p> </dd>
 
-<dt><i>\</i> - search </dt>
-<dd>\ will enter the map name search function.  As you
-type, your text will be displayed in the status bar and map names or titles
-matching the text will be found.  The number of maps matching the name is
-displayed with the index of the current map - i.e. (map 3 of 6).  You can cycle
-through and display the matching maps using the up and down arrow keys.
- Starting the search string with the ^ character will anchor the search
-string to the start of the map name.  Pressing TAB will cycle though options
+<dt><i></i> \ - search </dt>
+<dd>\
+will enter the map name search function.  As you type, your text will be
+displayed in the status bar and map names or titles matching the text will
+be found.  The number of maps matching the name is displayed with the index
+of the current map - i.e. (map 3 of 6).  You can cycle through and display
+the matching maps using the up and down arrow keys.  Starting the search
+string with the ^ character will anchor the search string to the start of
+the map name.  Pressing TAB will cycle though options to limit the search
+to maps in Seridia, Irillion or all maps.  Press Backspace to delete the
+last search string character, ESC  to exit the search function. 
+<p> </dd>
+
+<dt><i>/</i> - search
+</dt>
+<dd>/ will enter the map mark search function.  As you type, your text will
+be displayed in the status bar and maps containing marks matching the text
+will be found.  The displayed marks will also be filtered so that only marks
+matching the search string are displayed.  The number of maps matching the
+mark is displayed with the index of the current map - i.e. (map 3 of 6).  You
+can cycle through and display the matching maps using the up and down arrow
+keys.  Starting the search string with the ^ character will anchor the search
+string to the start of the mark text.  Pressing TAB will cycle though options
 to limit the search to maps in Seridia, Irillion or all maps.  Press Backspace
 to delete the last search string character, ESC  to exit the search function.
 
 <p> </dd>
 
-<dt><i>/</i> - search </dt>
-<dd>/ will enter the map mark search function.  As you type, your
-text will be displayed in the status bar and maps containing marks matching
-the text will be found.  The displayed marks will also be filtered so that
-only marks matching the search string are displayed.  The number of maps
-matching the mark is displayed with the index of the current map - i.e. (map
-3 of 6).  You can cycle through and display the matching maps using the
-up and down arrow keys.  Starting the search string with the ^ character
-will anchor the search string to the start of the mark text.  Pressing TAB
-will cycle though options to limit the search to maps in Seridia, Irillion
-or all maps.  Press Backspace to delete the last search string character,
-ESC  to exit the search function. 
+<dt><i>Ctrl+TAB</i> - mark source selection </dt>
+<dd>Press to cycle though the options for
+mapmark source - local, web and both.  Controls the source of marks displayed
+and available for mark search. 
 <p> </dd>
 
-<dt><i>q</i> -quit </dt>
+<dt><i>q</i> or x - quit </dt>
 <dd>Exits the elmapviewer program.
  This option can be disabled using the noesc option in the resource file.
 
 <p> </dd>
 </dl>
 
-<h2><a name='sect8' href='#toc8'>Copyright</a></h2>
-Copyright 2006 Paul Broadhead. This is free software; see the
-source for copying conditions.  There is NO  warranty;  not even for MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE. 
+<h2><a name='sect9' href='#toc9'>Copyright</a></h2>
+Copyright 2006, 2007 Paul Broadhead. This is free software; see
+the source for copying conditions.  There is NO  warranty;  not even for
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
 <p> 
-<h2><a name='sect9' href='#toc9'>Author</a></h2>
-Paul Broadhead (a.k.a. bluap) elmapviewer@twinmoons.clara.co.uk
-<p>
+<h2><a name='sect10' href='#toc10'>Author</a></h2>
+Paul Broadhead
+(a.k.a. bluap) elmapviewer@twinmoons.clara.co.uk <p>
 
 <hr><p>
 <a name='toc'><b>Table of Contents</b></a><p>
@@ -254,10 +276,11 @@ Paul Broadhead (a.k.a. bluap) elmapviewer@twinmoons.clara.co.uk
 <li><a name='toc3' href='#sect3'>Map link information</a></li>
 <li><a name='toc4' href='#sect4'>User Map link information</a></li>
 <li><a name='toc5' href='#sect5'>Function Keys</a></li>
-<li><a name='toc6' href='#sect6'>Options</a></li>
-<li><a name='toc7' href='#sect7'>Command Summary</a></li>
-<li><a name='toc8' href='#sect8'>Copyright</a></li>
-<li><a name='toc9' href='#sect9'>Author</a></li>
+<li><a name='toc6' href='#sect6'>Using map marks located on a website</a></li>
+<li><a name='toc7' href='#sect7'>Options</a></li>
+<li><a name='toc8' href='#sect8'>Command Summary</a></li>
+<li><a name='toc9' href='#sect9'>Copyright</a></li>
+<li><a name='toc10' href='#sect10'>Author</a></li>
 </ul>
 </body>
 </html>
