@@ -39,7 +39,7 @@
 
 import sys, pygame, string, os, shutil, platform, struct, urllib, math, gzip
 
-version = 'v0.6.0 March 2007'
+version = 'v0.6.1 April 2007'
 
 # define some basic colours
 blackcolour = 0, 0, 0
@@ -1150,7 +1150,7 @@ while 1:
             lastmap = ''
 
         # f - toggle window/full screen
-        elif event.key == pygame.K_f:
+        elif event.key == pygame.K_f and not modkeys == pygame.KMOD_LCTRL:
           fullscreen = not fullscreen
           screensize = (0.0)  # force display mode reset
           lastmap = ''
@@ -1250,7 +1250,7 @@ while 1:
           mainmapname = nextmap(mapinfo, mainmapname, -1)
 
         # / is search for marks
-        elif event.key == pygame.K_SLASH:
+        elif event.key == pygame.K_SLASH or (modkeys == pygame.KMOD_LCTRL and event.key == pygame.K_f):
           searchmode = True
           marksearch = True
           lastmap = ''
