@@ -39,7 +39,7 @@
 
 import sys, pygame, string, os, shutil, platform, struct, urllib, math, gzip
 
-version = 'v0.6.1 April 2007'
+version = 'v0.6.2 May 2007'
 
 # define some basic colours
 blackcolour = 0, 0, 0
@@ -1085,7 +1085,7 @@ while 1:
         elif mouseonmainmap and mousebuttons[2]:
           # store and draw first 2 click positions 
           if len(markbox) < 2:
-            if modkeys == pygame.KMOD_LCTRL or modkeys == pygame.KMOD_RCTRL:
+            if modkeys & (pygame.KMOD_LCTRL | pygame.KMOD_RCTRL):
               if walktimemeasure and len(markbox) == 1:
                 markbox = []
             markbox.append(mousecoord)
@@ -1126,10 +1126,10 @@ while 1:
                 os.popen(copyexec, 'wb').write(statustext)
             pygame.display.update()
 
-			# call help mapping routine to get keypress from mouse position
-			# need to highlight option box until MOUSEUP
+      # call help mapping routine to get keypress from mouse position
+      # need to highlight option box until MOUSEUP
       elif mousebuttons[0] and helprect.collidepoint(mousecoord):
-				event = pygame.event.Event(pygame.KEYDOWN, key=getmenukey(menuoptions, mousecoord, sidemapsize))
+        event = pygame.event.Event(pygame.KEYDOWN, key=getmenukey(menuoptions, mousecoord, sidemapsize))
             
     # process keyboard events - could have been inserted due to a mouse event
     if event.type == pygame.KEYDOWN:
@@ -1150,7 +1150,7 @@ while 1:
             lastmap = ''
 
         # f - toggle window/full screen
-        elif event.key == pygame.K_f and not modkeys == pygame.KMOD_LCTRL:
+        elif event.key == pygame.K_f and modkeys == pygame.KMOD_NONE:
           fullscreen = not fullscreen
           screensize = (0.0)  # force display mode reset
           lastmap = ''
@@ -1250,7 +1250,7 @@ while 1:
           mainmapname = nextmap(mapinfo, mainmapname, -1)
 
         # / is search for marks
-        elif event.key == pygame.K_SLASH or (modkeys == pygame.KMOD_LCTRL and event.key == pygame.K_f):
+        elif event.key == pygame.K_SLASH or (modkeys & (pygame.KMOD_LCTRL | pygame.KMOD_RCTRL) and event.key == pygame.K_f):
           searchmode = True
           marksearch = True
           lastmap = ''
@@ -1262,7 +1262,7 @@ while 1:
           lastmap = ''
 
         # if web marks in use, rotate the filter for web/local marks 
-        elif usewebmarkers and (modkeys & pygame.KMOD_LCTRL) and event.key == pygame.K_TAB:
+        elif usewebmarkers and (modkeys & (pygame.KMOD_LCTRL | pygame.KMOD_RCTRL)) and event.key == pygame.K_TAB:
           limitsource = rotatesearchsource(limitsource)
           lastmap = ''
            
@@ -1325,14 +1325,14 @@ while 1:
             lastmap = ''
             
           # if web marks in use, rotate the filter for web/local marks 
-          if usewebmarkers and (modkeys & pygame.KMOD_LCTRL) and event.key == pygame.K_TAB:
+          if usewebmarkers and (modkeys & (pygame.KMOD_LCTRL | pygame.KMOD_RCTRL)) and event.key == pygame.K_TAB:
             limitsource = rotatesearchsource(limitsource)
             lastmap = ''
             
           # add single letter keypresses to search
           elif len(pygame.key.name(event.key)) == 1 or event.key == pygame.K_SPACE:
             # convert shift+keys to text
-            if (modkeys & pygame.KMOD_RSHIFT) or (modkeys & pygame.KMOD_LSHIFT):
+            if modkeys & (pygame.KMOD_RSHIFT | pygame.KMOD_LSHIFT):
               if convertKey.has_key(event.key):
                 searchtext += convertKey[event.key]
             # translate space so that it works as a space
