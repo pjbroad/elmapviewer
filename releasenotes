@@ -1,3 +1,8 @@
+2007-06-04 version 0.6.1
+  Updated mapdata for EL client 1.4.0 release
+  Added ctrl+f option to start mark search - like the client.
+  Fixed a few issues with ctrl+key/mouse conbinations.
+
 2007-03-03 version 0.6.0
   Added display of map banners, click banner to zoom.
   Added facility to access web based map markers - Moraf's idea.
