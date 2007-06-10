@@ -313,7 +313,7 @@ cont2map23.bmp: - - - irilion.bmp 5 4
 425 355 70 40 cont2map18.bmp
 248 162 30 30 cont2map12.bmp
 
-cont2map24.bmp: - - - irilion.bmp 5 2
+cont2map24.bmp: - - HL irilion.bmp 5 2
 310 40 20 25 cont2map13.bmp
 330 40 20 25 cont2map21.bmp
 350 40 20 25 cont2map22.bmp
