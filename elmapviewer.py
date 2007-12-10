@@ -455,7 +455,7 @@ def drawhelp(scale):
     menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " bs - back a map", pygame.K_BACKSPACE)
     #menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " up/down - cycle")
     #menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " Fn jump to map")
-    menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " home/end islands")
+    menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " home/end islands", pygame.K_KP5)
     menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " l-click select")
     menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " r-click draw box")
     menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " w - walk time", pygame.K_w)
@@ -1130,7 +1130,13 @@ while 1:
       # need to highlight option box until MOUSEUP
       elif mousebuttons[0] and helprect.collidepoint(mousecoord):
         event = pygame.event.Event(pygame.KEYDOWN, key=getmenukey(menuoptions, mousecoord, sidemapsize))
+        
+      if event.type == pygame.MOUSEBUTTONDOWN and event.button == 4:
+        event = pygame.event.Event(pygame.KEYDOWN, key=pygame.K_UP)
             
+      elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 5:
+        event = pygame.event.Event(pygame.KEYDOWN, key=pygame.K_DOWN)
+        
     # process keyboard events - could have been inserted due to a mouse event
     if event.type == pygame.KEYDOWN:
     
@@ -1229,13 +1235,21 @@ while 1:
             totalwalktime = 0
             walktimemeasure = False
 
-        # home key, go to games start map
+        # home key, go to game start map, C1
         elif event.key == pygame.K_HOME:
           mainmapname = homemap
 
-        # home key, go to games start map
+        # go to C2 map
         elif event.key == pygame.K_END:
           mainmapname = "irilion.bmp"
+		  
+        # toggle continent
+        elif event.key == pygame.K_KP5:
+          print mainmapname, sidemapname, homemap
+          if mainmapname == homemap or sidemapname == homemap:
+            mainmapname = "irilion.bmp"
+          else:
+            mainmapname = homemap
 
         # backspace go to last visited map
         elif event.key == pygame.K_BACKSPACE and len(backmap) > 0:
