@@ -2,7 +2,8 @@
 
 # anything word = .... treated as program variable, space required next to =
 mapdir = C:\Program Files\Eternal Lands\maps\
-userdir = C:\Program Files\Eternal Lands\
+userdir = C:\windows\profiles\<username>\My Documents\Eternal Lands\main\maps
+
 scale = 1.0
 fullscreen = 0
 boxesOn = 1
