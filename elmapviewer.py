@@ -39,7 +39,7 @@
 
 import sys, pygame, string, os, shutil, platform, struct, urllib, math, gzip
 
-version = 'v0.6.1 June 2007'
+version = 'v0.6.2 December 2007'
 
 # define some basic colours
 blackcolour = 0, 0, 0
