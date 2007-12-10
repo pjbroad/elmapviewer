@@ -70,6 +70,7 @@ map6nf.bmp: - - - seridia.bmp 2 1
 180 400 20 20 map3.bmp
 180 423 20 20 map9f.bmp
 485 300 20 20 map6nf_cave.bmp
+259 418 15 20 map11.bmp
 
 map6nf_cave.bmp: - - - map6nf.bmp
 39 78 25 25 map6nf.bmp
@@ -92,6 +93,7 @@ map9f.bmp: - - HL seridia.bmp 3 1
 map11.bmp: - - - seridia.bmp 4 2
 25 133 77 33 map5nf.bmp
 387 458 62 45 map2.bmp
+179 94 15 20 map6nf.bmp
 
 map12.bmp: - - - seridia.bmp 3 2
 170 462 108 43 map2.bmp
@@ -250,6 +252,8 @@ cont2map10.bmp: - - HL irilion.bmp 9 1
 10 360 80 40 cont2map9.bmp
 152 470 80 40 cont2map13.bmp
 321 19 82 46 cont2map6.bmp
+410 395 20 30 cont2map12.bmp
+
 
 cont2map11.bmp: - - HL irilion.bmp 10 1
 275 1 83 41 cont2map8.bmp
@@ -259,8 +263,9 @@ cont2map11.bmp: - - HL irilion.bmp 10 1
 cont2map12.bmp: - - PK irilion.bmp 9 4
 35 5 105 40 cont2map9.bmp
 415 155 85 35 cont2map13.bmp
-447 325 30 30 cont2map23.bmp
+447 325 20 30 cont2map23.bmp
 9 52 87 39 cont2map11.bmp
+420 310 20 30 cont2map10.bmp
 
 cont2map13.bmp: - - HL irilion.bmp 6 3
 155 380 40 25 cont2map24.bmp
