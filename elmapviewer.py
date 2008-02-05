@@ -531,7 +531,7 @@ def readwebmarkers(currmap, webmarkerbaseurl, authentication):
 # read the users map marks, coords and text
 def readmapmarkers(userdir, currmap):
   markers = []
-  markersfile = os.path.join(userdir, string.replace(currmap,'.bmp','.elm.txt',1))
+  markersfile = os.path.join(userdir, 'maps', string.replace(currmap,'.bmp','.elm.txt',1))
   fid = fileopen(markersfile, 'r')
   if fid != 0:
     for line in fid:
