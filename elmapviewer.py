@@ -1326,7 +1326,7 @@ while 1:
                 currentsearchmapindex = len(searchmatchingmaps) -1
                 
           # TAB will cycle through no limit, Seridia only and Irilion only maps
-          if modkeys == pygame.KMOD_NONE and event.key == pygame.K_TAB:
+          if not (modkeys & (pygame.KMOD_LCTRL | pygame.KMOD_RCTRL)) and event.key == pygame.K_TAB:
             if limitsearch == 'none.bmp':
               limitsearch = 'seridia.bmp'
             elif limitsearch == 'seridia.bmp':
