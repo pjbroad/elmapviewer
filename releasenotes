@@ -1,3 +1,10 @@
+2007-06-04 version 0.6.3
+  Updated map information for 1.7.0 release.
+  Added additional map bmp file directory.
+
+2007-06-04 version 0.6.1
+  Fixed bug with tab key for mark filtering on continent.
+
 2007-06-04 version 0.6.1
   Updated map data for EL client 1.4.0 release
   Added ctrl+f option to start mark search - like the client.
