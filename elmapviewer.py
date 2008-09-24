@@ -2,7 +2,7 @@
 
 # Eternal Lands Map Viewer
 #
-# Copyright 2006,2007 Paul Broadhead (a.k.a. bluap)
+# Copyright 2006,2007,2008 Paul Broadhead (a.k.a. bluap)
 # Contact: elmapviewer@twinmoons.clara.co.uk
 #
 # This program is free software; you can redistribute it and/or modify
@@ -39,7 +39,7 @@
 
 import sys, pygame, string, os, shutil, platform, struct, urllib, math, gzip
 
-version = 'v0.6.2 December 2007'
+version = 'v0.6.3 September 2008'
 
 # define some basic colours
 blackcolour = 0, 0, 0
@@ -155,7 +155,7 @@ def readinfo(mapdir, fname, userfname):
   allmaps = {}
   maptitle = {}
   mapbanner = {}
-  # create the initial map list form the elm files
+  # create the initial map list from the elm files
   for elmfile in os.listdir(mapdir):
     if elmfile[len(elmfile)-4:] == '.elm':
       mapname = os.path.basename(string.replace(elmfile,'.elm','.bmp',1))
@@ -215,8 +215,8 @@ def readinfo(mapdir, fname, userfname):
           continent[mapfilename] = 'seridia.bmp'
         else:
           continent[mapfilename] = 'irilion.bmp'          
-      	if len(w) > 7:
-        	maptitle[mapfilename] = string.join(w[7:],' ')
+        if len(w) > 7:
+          maptitle[mapfilename] = string.join(w[7:],' ')
   for mapname in allmaps:
     if not continent.has_key(mapname):
       continent[mapname] = getcontinent(parentmap,mapname)
@@ -226,6 +226,7 @@ def readinfo(mapdir, fname, userfname):
 # read program variables from the resource file
 def readvars(fname):
   mapdir = ''
+  moremapdir = ''
   userdir = ''
   scale = 1.0
   fullscreen = False
@@ -264,6 +265,8 @@ def readvars(fname):
         # location of user map information
         elif w[0] == 'userdir':
           userdir = expandfilename(w[2])
+        elif w[0] == 'moremapdir':
+          moremapdir = expandfilename(w[2])
         elif w[0] == 'scale':
           scale = float(w[2])
         elif w[0] == 'fullscreen':
@@ -300,7 +303,7 @@ def readvars(fname):
         elif functionkeys.has_key(w[0]):
           keycode = functionkeys[w[0]][0]
           functionkeys[w[0]] = (keycode,w[2])
-  return mapdir, userdir, scale, fullscreen, boxesOn, marksOn, editor, \
+  return mapdir, moremapdir, userdir, scale, fullscreen, boxesOn, marksOn, editor, \
     markfontsize, statusfontsize, mainborder, noesc, copyexec, \
     showgametime, walkfactor, usewebmarkers, webmarkerbaseurl, authentication
 
@@ -682,6 +685,15 @@ def getbannersurface(bannerimages, bannerinfo):
   retsurface = bannerimages[bannerinfo[0]].subsurface(xoffset,yoffset,size[0]/2,size[1]/2)
   return bannerimages, retsurface
 
+# commonn open function for map bmps, looks in mor than one location
+def openmapbmp(filename):
+  fullpath = os.path.join(mapdir, filename)
+  fid = fileopen(fullpath, 'rb')
+  if fid == 0:
+    fullpath = os.path.join(moremapdir, filename)
+    fid = fileopen(fullpath, 'rb')
+  return fid
+
 # check font usage and initialise pygame
 if not pygame.font:
   print 'Error, fonts not available'
@@ -703,7 +715,7 @@ rcfile = expandfilename(rcfile)
 mapdatafile = os.path.dirname(sys.argv[0]) + os.sep + 'mapdata'
 usermapdatafile = expandfilename('~/.elmapviewer.usermapdata')
 
-mapdir, userdir, scale, fullscreen, boxesOn, marksOn, editor, \
+mapdir, moremapdir, userdir, scale, fullscreen, boxesOn, marksOn, editor, \
   markfontsize, statusfontsize, mainborder, noesc, copyexec, \
   showgametime, walkfactor, usewebmarkers, webmarkerbaseurl, authentication = readvars(rcfile)
 mapinfo, mapscale, maptype, parentmap, maptitle, continent, mapbanner = readinfo(mapdir, mapdatafile, usermapdatafile)
@@ -792,9 +804,8 @@ while 1:
       else:
         forcesidemap = False
           
-      # get and scale the current size map surface
-      fullpath = os.path.join(mapdir, sidemapname)
-      fid = fileopen(fullpath, 'rb')
+      # get and scale the current side map surface
+      fid = openmapbmp(sidemapname)
       if fid == 0:
         sidemap = pygame.Surface((512, 512))
         statustext += 'Cant load sidemap file. '
@@ -810,8 +821,7 @@ while 1:
       helprect = helpsurface.get_rect()
       
       # get and scale the legend surface
-      fullpath = os.path.join(mapdir, "legend.bmp")
-      fid = fileopen(fullpath, 'rb')
+      fid = openmapbmp("legend.bmp")
       if fid == 0:
         legend = pygame.Surface((128, 256))
         statustext += 'Cannot load legend file. '
@@ -823,12 +833,10 @@ while 1:
       legendrect = legend.get_rect()
       
       # get and scale the main map surface
-      fullpath = os.path.join(mapdir, mainmapname)
-      fid = fileopen(fullpath, 'rb')
+      fid = openmapbmp(mainmapname)
       if fid == 0:
         statustext += 'Cannot load main map file, using default. '
-        defmap = os.path.join(mapdir, '../textures/openscreen.bmp')
-      	fid = fileopen(defmap, 'rb')
+        fid = openmapbmp('../textures/openscreen.bmp')
         if fid == 0:
           mainmap = pygame.Surface((512, 512))
         else:
@@ -1242,7 +1250,7 @@ while 1:
         # go to C2 map
         elif event.key == pygame.K_END:
           mainmapname = "irilion.bmp"
-		  
+  
         # toggle continent
         elif event.key == pygame.K_KP5:
           print mainmapname, sidemapname, homemap

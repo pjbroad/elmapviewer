@@ -2,6 +2,7 @@
 
 # anything word = .... treated as program variable, space required next to =
 mapdir = /usr/local/games/EternalLands/maps/
+moremapdir = $HOME/.elc/updates/1_7_0/maps
 userdir = ~/.elc/main/maps
 scale = 1.0
 fullscreen = 0
