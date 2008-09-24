@@ -221,7 +221,7 @@ cont2map5.bmp: - - - irilion.bmp 7 1
 346 456 88 40 cont2map10.bmp
 434 131 71 40 cont2map6.bmp
 194 15 71 44 cont2map2.bmp
-8 211 69 30 cont2map1.bmp
+8 162 70 30 cont2map1.bmp
 
 cont2map6.bmp: - - PK irilion.bmp 10 3
 5 117 83 45 cont2map5.bmp
@@ -240,7 +240,7 @@ cont2map8.bmp: - - - irilion.bmp 7 2
 411 465 35 25 cont2map11.bmp
 
 cont2map9.bmp: - - HL irilion.bmp 8 1
-8 280 75 50 cont2map8.bmp
+15 230 80 45 cont2map8.bmp
 239 8 81 41 cont2map1.bmp
 411 7 89 50 cont2map5.bmp
 410 345 90 40 cont2map10.bmp
@@ -254,9 +254,8 @@ cont2map10.bmp: - - HL irilion.bmp 9 1
 321 19 82 46 cont2map6.bmp
 410 395 20 30 cont2map12.bmp
 
-
 cont2map11.bmp: - - HL irilion.bmp 10 1
-275 1 83 41 cont2map8.bmp
+215 0 85 50 cont2map8.bmp
 454 109 52 45 cont2map12.bmp
 39 37 20 30 cont2map14.bmp
 
