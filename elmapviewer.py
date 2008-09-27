@@ -39,7 +39,7 @@
 
 import sys, pygame, string, os, shutil, platform, struct, urllib, math, gzip
 
-version = 'v0.6.3 September 2008'
+version = 'v0.6.4 September 2008'
 
 # define some basic colours
 blackcolour = 0, 0, 0
@@ -687,10 +687,10 @@ def getbannersurface(bannerimages, bannerinfo):
 
 # commonn open function for map bmps, looks in mor than one location
 def openmapbmp(filename):
-  fullpath = os.path.join(mapdir, filename)
+  fullpath = os.path.join(moremapdir, filename)
   fid = fileopen(fullpath, 'rb')
   if fid == 0:
-    fullpath = os.path.join(moremapdir, filename)
+    fullpath = os.path.join(mapdir, filename)
     fid = fileopen(fullpath, 'rb')
   return fid
 
@@ -812,7 +812,8 @@ while 1:
       else:
         sidemap = pygame.image.load(fid)
       sidemapsize = sidemap.get_size()
-      sidemap = pygame.transform.scale(sidemap, (int(sidemapsize[0]*scale/2), int(sidemapsize[1]*scale/2)))
+      adjust = (scale/(2*sidemapsize[0]/512), scale/(2*sidemapsize[1]/512))
+      sidemap = pygame.transform.scale(sidemap, (int(sidemapsize[0]*adjust[0]), int(sidemapsize[1]*adjust[1])))
       sidemapsize = sidemap.get_size()
       sidemaprect = sidemap.get_rect()
       
@@ -828,7 +829,8 @@ while 1:
       else:
         legend = pygame.image.load(fid)
       legendsize = legend.get_size()
-      legend = pygame.transform.scale(legend, (int(legendsize[0]*scale), int(legendsize[1]*scale)))
+      adjust = (scale/(legendsize[0]/128), scale/(legendsize[1]/256))
+      legend = pygame.transform.scale(legend, (int(legendsize[0]*adjust[0]), int(legendsize[1]*adjust[0])))
       legendsize = legend.get_size()
       legendrect = legend.get_rect()
       
@@ -846,7 +848,8 @@ while 1:
       else:
         mainmap = pygame.image.load(fid)
       mainmapsize = mainmap.get_size()
-      mainmap = pygame.transform.scale(mainmap, (int(mainmapsize[0]*scale), int(mainmapsize[1]*scale)))
+      adjust = (scale/(mainmapsize[0]/512), scale/(mainmapsize[1]/512))
+      mainmap = pygame.transform.scale(mainmap, (int(mainmapsize[0]*adjust[0]), int(mainmapsize[1]*adjust[1])))
       mainmapsize = mainmap.get_size()
       mainmaprect = mainmap.get_rect()
       
