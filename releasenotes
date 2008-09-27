@@ -1,8 +1,8 @@
 2008-09-27 version 0.6.4
   Fixed issues with images larger than expected, like the bloodsucker maps. 
 	Thanks Derath for reporting this.
-  Load the alternative map files (moremaps) in prefernece to the game supplied
-  	maps; like the cleint does.
+  Load the alternative map files (moremaps) in preference to the game supplied
+  	maps; like the client does.
 
 2008-09-24 version 0.6.3
   Updated map information for 1.7.0 release.
