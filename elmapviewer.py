@@ -2,7 +2,7 @@
 
 # Eternal Lands Map Viewer
 #
-# Copyright 2006,2007,2008 Paul Broadhead (a.k.a. bluap)
+# Copyright 2006-2009 Paul Broadhead (a.k.a. bluap)
 # Contact: elmapviewer@twinmoons.clara.co.uk
 #
 # This program is free software; you can redistribute it and/or modify
@@ -37,9 +37,9 @@
 # Debian GNU/Linux: http://www.debian.org/
 # Ubuntu: http://www.ubuntu.com/
 
-import sys, pygame, string, os, shutil, platform, struct, urllib, math, gzip
+import sys, pygame, string, os, shutil, platform, struct, urllib, math, gzip, signal
 
-version = 'v0.6.4 September 2008'
+version = 'v0.6.5 September 2009'
 
 # define some basic colours
 blackcolour = 0, 0, 0
@@ -565,6 +565,10 @@ def displaymarkers(markers, thismapscale, screen, mapxoffset, mapsize, \
     screen.blit(text,textrec)
   return statustext
 
+# signal alarm handler, used for urlopen()
+def alarmHandler(*args):
+	None
+
 # use the specified url (usually main el site) to get the current game time
 def getgametime():
   # game time information
@@ -576,11 +580,14 @@ def getgametime():
   # (re)start the game minute timer
   pygame.time.set_timer(gameminuteevent, 0)
   pygame.time.set_timer(gameminuteevent, millisecpergamemillisec)
+  signal.signal(signal.SIGALRM, alarmHandler)
   # read the webpage
   try:
+    signal.alarm(3)
     wpage=urllib.urlopen(elweburl)
     pagetext = wpage.read()
     wpage.close()
+    signal.alarm(0)
     # process the page to retrieve the start time
     start = string.find(pagetext, starttimestring)
     end = string.find(pagetext, endtimestring, start)
