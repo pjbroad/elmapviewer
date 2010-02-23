@@ -2,7 +2,7 @@
 
 # Eternal Lands Map Viewer
 #
-# Copyright 2006-2009 Paul Broadhead (a.k.a. bluap)
+# Copyright 2006-2010 Paul Broadhead (a.k.a. bluap)
 # Contact: elmapviewer@twinmoons.clara.co.uk
 #
 # This program is free software; you can redistribute it and/or modify
@@ -39,7 +39,7 @@
 
 import sys, pygame, string, os, shutil, platform, struct, urllib, math, gzip, signal
 
-version = 'v0.6.5 September 2009'
+version = 'v0.6.6 February 2010'
 
 # define some basic colours
 blackcolour = 0, 0, 0
@@ -540,6 +540,8 @@ def readmapmarkers(userdir, currmap):
     for line in fid:
       w = line.split()
       if len(w) > 2:
+        if w[1].find("|") != -1:
+          w[1] = w[1][0:w[1].find("|")]
         markers.append(((int(w[0]),int(w[1])),string.join(w[2:])))
   return markers
 
