@@ -1,0 +1,42 @@
+This work was packaged for Debian by:
+
+    Paul Broadhead <pjbroad@twinmoons.clara.co.uk> on Sun, 12 Sep 2010 16:52:48 +0100
+
+It was downloaded from <http://sourceforge.net/projects/elmapviewer/>
+
+Upstream Author(s):
+
+    Paul Broadhead <pjbroad@twinmoons.clara.co.uk>
+
+Copyright:
+
+    <Copyright (C) 2010 Paul Broadhead>
+
+License:
+
+    This package is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    This package is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this package; if not, write to the Free Software
+    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
+
+    Icon is copy of map_magify.png from <http://www.freeiconsweb.com>
+    licensed under "Creative Commons Attribution 3.0 United States" see
+    <http://creativecommons.org/licenses/by/3.0/us/>
+
+On Debian systems, the complete text of the GNU General
+Public License can be found in `/usr/share/common-licenses/GPL'.
+
+The Debian packaging is:
+
+    Copyright (C) 2010 Paul Broadhead <pjbroad@twinmoons.clara.co.uk>
+    and is licensed under the GPL version 3,
+    see `/usr/share/common-licenses/GPL-3'.

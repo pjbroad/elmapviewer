@@ -1,0 +1,5 @@
+elmapviewer.py usr/bin
+mapdata usr/share/elmapviewer
+example.elmapviewer.rc usr/share/elmapviewer
+elmapviewer.desktop usr/share/applications/
+elmapviewer.png usr/share/pixmaps/
