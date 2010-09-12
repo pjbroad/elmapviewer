@@ -37,9 +37,9 @@
 # Debian GNU/Linux: http://www.debian.org/
 # Ubuntu: http://www.ubuntu.com/
 
-import sys, pygame, string, os, shutil, platform, struct, urllib, math, gzip, signal
+import sys, pygame, string, os, platform, struct, urllib, math, gzip, signal
 
-version = 'v0.6.7 April 2010'
+version = 'v0.6.8 September 2010'
 
 # define some basic colours
 blackcolour = 0, 0, 0
@@ -245,10 +245,16 @@ def readvars(fname):
   authentication = ('', '')
   # create a default rc file if none exists
   if not os.access(fname, os.R_OK):
-    srcfile = os.path.dirname(sys.argv[0]) + '/example.elmapviewer.rc'
-    dstfile = expandfilename('~/.elmapviewer.rc')
-    shutil.copyfile(srcfile,dstfile)
-    print 'Default ~/.elmapviewer.rc file created, you may need to change some options.'
+    srcfile = '/usr/share/elmapviewer/example.elmapviewer.rc'    
+    if not os.access(srcfile, os.R_OK):
+      srcfile = os.path.dirname(sys.argv[0]) + '/example.elmapviewer.rc'
+    # copy file, using users default permissions
+    sf = open(srcfile,'r')
+    df = open(fname, 'w')
+    df.write(sf.read())
+    df.close()
+    sf.close()
+    print 'Default ' + fname + ' file created, you may need to change some options.'
   for line in open(fname, 'r'):
     if line != '\n' and line[0] != '#':
       w = line.split(None,2)
@@ -677,7 +683,7 @@ def getbannersurface(bannerimages, bannerinfo):
     fullpath = os.path.join(mapdir, '../3dobjects/structures/banners'+bannerinfo[0]+'.bmp')
     fid = fileopen(fullpath, 'rb')
     if fid == 0:
-      print 'Missing banner image file: ' + fullpath + ' - so disabling'
+      #print 'Missing banner image file: ' + fullpath + ' - so disabling'
       return bannerimages, 0
     bannerimages[bannerinfo[0]] = pygame.image.load(fid)
   size = bannerimages[bannerinfo[0]].get_size()
@@ -721,7 +727,9 @@ else:
   rcfile = '~/.elmapviewer.rc'
 rcfile = expandfilename(rcfile)
 
-mapdatafile = os.path.dirname(sys.argv[0]) + os.sep + 'mapdata'
+mapdatafile = '/usr/share/elmapviewer/mapdata'
+if not os.access(mapdatafile, os.R_OK):
+  mapdatafile = os.path.dirname(sys.argv[0]) + os.sep + 'mapdata'
 usermapdatafile = expandfilename('~/.elmapviewer.usermapdata')
 
 mapdir, moremapdir, userdir, scale, fullscreen, boxesOn, marksOn, editor, \

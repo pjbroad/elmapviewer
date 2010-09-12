@@ -1,14 +1,14 @@
 # anything starting with # is treated as a comment and ignored
 
 # anything word = .... treated as program variable, space required next to =
-mapdir = /usr/local/games/EternalLands/maps/
-moremapdir = $HOME/.elc/updates/1_7_0/maps
+mapdir = /usr/share/games/EternalLands/maps/
+moremapdir = ~/.elc/updates/1_9_0/maps
 userdir = ~/.elc/main/maps
 scale = 1.0
 fullscreen = 0
 boxesOn = 1
 marksOn = 1
-editor = $EDITOR
+editor = /etc/alternatives/gnome-text-editor
 markfontsize = 20
 statusfontsize = 25
 mainborderx = 21

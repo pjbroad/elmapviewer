@@ -1,12 +1,16 @@
+2010-09-12 version 0.6.8
+  Added debian package files
+  Use package file locations by default
+
 2010-04-02 version 0.6.7
   Fix for new coloured markers
   Timeout time update if server down
 
 2008-09-27 version 0.6.4
   Fixed issues with images larger than expected, like the bloodsucker maps. 
-	Thanks Derath for reporting this.
-  Load the alternative map files (moremaps) in preference to the game supplied
-  	maps; like the client does.
+  Thanks Derath for reporting this.
+  Load the alternative map files (moremaps) in preference to the game
+    supplied maps; like the client does.
 
 2008-09-24 version 0.6.3
   Updated map information for 1.7.0 release.
