@@ -2,7 +2,7 @@
 Encoding=UTF-8
 Name=Eternal Lands Map Viewer
 Comment=Navigate Eternal Lands (tab) maps and view/search your map marks
-Exec=elmapviewer.py
+Exec=elmapviewer
 Icon=elmapviewer.png
 StartupNotify=false
 Terminal=false

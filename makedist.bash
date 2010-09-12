@@ -1,7 +1,7 @@
 #! /usr/bin/env bash
 
 # get the version number
-version="$(grep "^version = " elmapviewer.py | awk '{print $3}' | cut -c3-)"
+version="$(grep "^version = " elmapviewer | awk '{print $3}' | cut -c3-)"
 
 # generate HTML from man page
 rman -f HTML elmapviewer.6 > elmapviewer.html

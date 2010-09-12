@@ -1,4 +1,4 @@
-elmapviewer.py usr/bin
+elmapviewer usr/bin
 mapdata usr/share/elmapviewer
 example.elmapviewer.rc usr/share/elmapviewer
 elmapviewer.desktop usr/share/applications/

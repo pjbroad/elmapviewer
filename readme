@@ -12,7 +12,7 @@ Requires python http://www.python.org/ and pygame http://www.pygame.org/
 Read the man page using man -l elmapviewer.6 or look at the generated html
 version using your favorite web browser.
 
-Run using ./elmapviewer.py
+Run using ./elmapviewer
 
 In your configuration file, make sure you check the "mapdir", "userdir" and
 "editor" options as these are bound to be different on your system.

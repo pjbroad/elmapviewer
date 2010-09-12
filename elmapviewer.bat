@@ -1,2 +1,2 @@
 @echo off
-c:\python24\python .\elmapviewer.py .\windows.elmapviewer.rc
+c:\python24\python .\elmapviewer .\windows.elmapviewer.rc
