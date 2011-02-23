@@ -1,12 +1,12 @@
 This work was packaged for Debian by:
 
-    Paul Broadhead <pjbroad@twinmoons.clara.co.uk> on Sun, 12 Sep 2010 16:52:48 +0100
+    Paul Broadhead <pjbroad@twinmoons.org.uk> on Sun, 12 Sep 2010 16:52:48 +0100
 
 It was downloaded from <http://sourceforge.net/projects/elmapviewer/>
 
 Upstream Author(s):
 
-    Paul Broadhead <pjbroad@twinmoons.clara.co.uk>
+    Paul Broadhead <pjbroad@twinmoons.org.uk>
 
 Copyright:
 
@@ -37,6 +37,6 @@ Public License can be found in `/usr/share/common-licenses/GPL'.
 
 The Debian packaging is:
 
-    Copyright (C) 2010 Paul Broadhead <pjbroad@twinmoons.clara.co.uk>
+    Copyright (C) 2010 Paul Broadhead <pjbroad@twinmoons.org.uk>
     and is licensed under the GPL version 3,
     see `/usr/share/common-licenses/GPL-3'.

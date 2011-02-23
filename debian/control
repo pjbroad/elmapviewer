@@ -1,9 +1,9 @@
 Source: elmapviewer
 Section: utils
 Priority: optional
-Maintainer: Paul Broadhead <pjbroad@twinmoons.clara.co.uk>
-Build-Depends: debhelper (>= 7)
-Standards-Version: 3.8.4
+Maintainer: Paul Broadhead <pjbroad@twinmoons.org.uk>
+Build-Depends: debhelper (>= 5)
+Standards-Version: 3.8.3
 Homepage: http://sourceforge.net/projects/elmapviewer/
 
 Package: elmapviewer

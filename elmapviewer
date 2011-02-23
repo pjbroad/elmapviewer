@@ -3,7 +3,7 @@
 # Eternal Lands Map Viewer
 #
 # Copyright 2006-2010 Paul Broadhead (a.k.a. bluap)
-# Contact: elmapviewer@twinmoons.clara.co.uk
+# Contact: elmapviewer@twinmoons.org.uk
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -39,7 +39,7 @@
 
 import sys, pygame, string, os, platform, struct, urllib, math, gzip, signal
 
-version = 'v0.6.8 September 2010'
+version = 'v0.6.8.1 February 2011'
 
 # define some basic colours
 blackcolour = 0, 0, 0
