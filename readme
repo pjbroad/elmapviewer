@@ -1,20 +1,11 @@
-Eternal Lands Map Viewer http://www.eternal-lands.com/
-======================================================
+Eternal Lands Map Viewer
+========================
 
-Written by Paul Broadhead (elmapviewer@twinmoons.org.uk) and published
-using the GPL licience (see the gpl.txt file provided). Download the latest
-version from source forge http://elmapviewer.sourceforge.net/ or use CVS to
-get the cutting edge version.  The code is written and tested on GNU/Linux
-but may work on other systems that can run python and pygame.
-
-Requires python http://www.python.org/ and pygame http://www.pygame.org/
-
-Read the man page using man -l elmapviewer.6 or look at the generated html
-version using your favorite web browser.
+Eternal Lands is a FREE MMORPG (massively multi-player online role playing game). This program
+displays Eternal Lands maps and allows the user to navigate the maps using map links. In-game map
+marks are also displayed and can be filtered using a search function. elmapviewer was written in
+2007 as an experiment in the use of both the Python language and the Pygame modules.
 
 Run using ./elmapviewer
 
-In your configuration file, make sure you check the "mapdir", "userdir" and
-"editor" options as these are bound to be different on your system.
 
-Read the code and make it better... Let me know what you think...
