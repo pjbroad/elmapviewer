@@ -4,7 +4,7 @@ Eternal Lands Map Viewer
 Eternal Lands is a FREE MMORPG (massively multi-player online role playing game). This program
 displays Eternal Lands maps and allows the user to navigate the maps using map links. In-game map
 marks are also displayed and can be filtered using a search function. elmapviewer was written in
-2007 as an experiment in the use of both the Python language and the Pygame modules.
+2006 as an exercise for the author in the use of both the Python language and the Pygame modules.
 
 Run using ./elmapviewer
 
