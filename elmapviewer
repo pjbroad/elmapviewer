@@ -39,7 +39,7 @@
 
 import sys, pygame, os, platform, struct, urllib.request, math, gzip, signal
 
-version = 'v0.7.0 October 2020'
+version = 'v0.7.1 October 2020'
 
 # define some basic colours
 blackcolour = 0, 0, 0
@@ -79,6 +79,7 @@ convertKey = { pygame.K_1:"!", pygame.K_2:"\"", pygame.K_4:"$", \
   pygame.K_BACKSLASH:"|", pygame.K_COMMA:"<", pygame.K_PERIOD:">", pygame.K_SLASH:"?" }
 gameminuteevent = pygame.USEREVENT
 clockresyncevent = pygame.USEREVENT+1
+resize_event_timer = pygame.USEREVENT+2
 
 # Thanks to Lenard Lindstrom and Brian Fisher on the pygame mailing list
 # for this solution to the problem of using pygame.image.load() with
@@ -228,8 +229,6 @@ def readvars(fname):
   mapdir = ''
   moremapdir = ''
   userdir = ''
-  scale = 1.0
-  fullscreen = False
   boxesOn = True
   marksOn = True
   editor = '$EDITOR'
@@ -273,10 +272,6 @@ def readvars(fname):
           userdir = expandfilename(w[2])
         elif w[0] == 'moremapdir':
           moremapdir = expandfilename(w[2])
-        elif w[0] == 'scale':
-          scale = float(w[2])
-        elif w[0] == 'fullscreen':
-          fullscreen = bool(int(w[2]))
         elif w[0] == 'boxesOn':
           boxesOn = bool(int(w[2]))
         elif w[0] == 'marksOn':
@@ -309,7 +304,7 @@ def readvars(fname):
         elif w[0] in functionkeys:
           keycode = functionkeys[w[0]][0]
           functionkeys[w[0]] = (keycode,w[2])
-  return mapdir, moremapdir, userdir, scale, fullscreen, boxesOn, marksOn, editor, \
+  return mapdir, moremapdir, userdir, boxesOn, marksOn, editor, \
     markfontsize, statusfontsize, mainborder, noesc, copyexec, \
     showgametime, walkfactor, usewebmarkers, webmarkerbaseurl, authentication
 
@@ -452,8 +447,8 @@ def drawhelp(scale):
     menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, "  w - reset time", pygame.K_w)
     menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, "  ESC - stop", pygame.K_ESCAPE)
   else:
-    menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " i/o/f - zoom")
-    menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, "    in/out/full")
+    menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " i/d - mark text")
+    menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, "    inc/dec")
     menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " b - toggle boxes", pygame.K_b)
     menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " l - edit links", pygame.K_l)
     menuoptions, lineoffset = helptextline(helpsurface, menuoptions, scale, lineoffset, " m - toggle marks", pygame.K_m)
@@ -732,7 +727,7 @@ if not os.access(mapdatafile, os.R_OK):
   mapdatafile = os.path.dirname(sys.argv[0]) + os.sep + 'mapdata'
 usermapdatafile = expandfilename('~/.elmapviewer.usermapdata')
 
-mapdir, moremapdir, userdir, scale, fullscreen, boxesOn, marksOn, editor, \
+mapdir, moremapdir, userdir, boxesOn, marksOn, editor, \
   markfontsize, statusfontsize, mainborder, noesc, copyexec, \
   showgametime, walkfactor, usewebmarkers, webmarkerbaseurl, authentication = readvars(rcfile)
 mapinfo, mapscale, maptype, parentmap, maptitle, continent, mapbanner = readinfo(mapdir, mapdatafile, usermapdatafile)
@@ -752,7 +747,6 @@ backmap = []                  # list of previous maps visited
 markbox = []                  # right click twice to form a box and see coords for links
 
 mapxoffset = 0                # X offset of main map in pixels, calculated later
-screensize = (0,0)            # current screen size, calculates from map sizes and scale
 
 coordwidth = 0;
 coordtext = ''                # in game map coords, show at bottm left of window
@@ -781,6 +775,13 @@ readwebmaplist = True
 walktimemeasure = False
 totalwalktime = 0
 
+initial_window_size = (1024, 680)
+target_window_size = initial_window_size
+mapmarkfontscale = 1.0
+
+pygame.event.post(pygame.event.Event(resize_event_timer))
+pygame.time.set_timer(resize_event_timer, 0)
+
 # get the initial game time and start the event timers to keep it up to date
 gametime = (100,100)
 if showgametime:
@@ -794,6 +795,8 @@ while 1:
     # if the map has changed, update the display
     if mainmapname != lastmap:
     
+      screen = pygame.display.set_mode(target_window_size, pygame.RESIZABLE)
+
       statustext = ''
       laststatustext = '-'
       lastsearchtext = searchtext + "-" # force a redraw
@@ -829,14 +832,6 @@ while 1:
       else:
         sidemap = pygame.image.load(fid)
       sidemapsize = sidemap.get_size()
-      adjust = (scale/(2*sidemapsize[0]/512), scale/(2*sidemapsize[1]/512))
-      sidemap = pygame.transform.scale(sidemap, (int(sidemapsize[0]*adjust[0]), int(sidemapsize[1]*adjust[1])))
-      sidemapsize = sidemap.get_size()
-      sidemaprect = sidemap.get_rect()
-      
-      # get the scaled help text surface
-      menuoptions, helpsurface = drawhelp(scale)
-      helprect = helpsurface.get_rect()
       
       # get and scale the legend surface
       fid = openmapbmp("legend.bmp")
@@ -846,10 +841,6 @@ while 1:
       else:
         legend = pygame.image.load(fid)
       legendsize = legend.get_size()
-      adjust = (scale/(legendsize[0]/128), scale/(legendsize[1]/256))
-      legend = pygame.transform.scale(legend, (int(legendsize[0]*adjust[0]), int(legendsize[1]*adjust[0])))
-      legendsize = legend.get_size()
-      legendrect = legend.get_rect()
       
       # get and scale the main map surface
       fid = openmapbmp(mainmapname)
@@ -865,27 +856,36 @@ while 1:
       else:
         mainmap = pygame.image.load(fid)
       mainmapsize = mainmap.get_size()
-      adjust = (scale/(mainmapsize[0]/512), scale/(mainmapsize[1]/512))
+
+      statusheight = pygame.font.Font(None, int(statusfontsize)).get_height()
+
+      x_scale = target_window_size[0] / (sidemapsize[0] / 2 + mainmapsize[0])
+      y_scale = target_window_size[1] / (mainmapsize[1] + statusheight)
+      scale = 2 * min(x_scale, y_scale)
+
+      adjust = (scale/4, scale/4)
+      sidemap = pygame.transform.scale(sidemap, (int(sidemapsize[0]*adjust[0]), int(sidemapsize[1]*adjust[1])))
+      sidemapsize = sidemap.get_size()
+      sidemaprect = sidemap.get_rect()
+
+      adjust = (scale/2, scale/2)
+      legend = pygame.transform.scale(legend, (int(legendsize[0]*adjust[0]), int(legendsize[1]*adjust[0])))
+      legendsize = legend.get_size()
+      legendrect = legend.get_rect()
+
+      adjust = (scale/2, scale/2)
       mainmap = pygame.transform.scale(mainmap, (int(mainmapsize[0]*adjust[0]), int(mainmapsize[1]*adjust[1])))
       mainmapsize = mainmap.get_size()
       mainmaprect = mainmap.get_rect()
-      
+
+      # get the scaled help text surface
+      menuoptions, helpsurface = drawhelp(scale)
+      helprect = helpsurface.get_rect()
+ 
       # update font related sizes
       coordwidth = pygame.font.Font(None, int(statusfontsize*scale)).size('0000,0000 ')[0]
       statusheight = pygame.font.Font(None, int(statusfontsize*scale)).get_height()
-      
-      # get the screen size
-      lastscreensize = screensize
-      width = int(sidemapsize[0]+mainmapsize[0]+mainborder[0]*scale)
-      height = int(statusheight+mainmapsize[1]+mainborder[1]*scale)
-      screensize = width, height
-      
-      # modify the display mode if it has changed
-      if screensize != lastscreensize:
-        screen =  pygame.display.set_mode(screensize)
-        if fullscreen:
-          pygame.display.toggle_fullscreen()
-      
+
       # get the main map banner logo if there is one - display over the legend image
       # could display full size over the sidemap if hover over this image
       if mainmapname in mapbanner:
@@ -970,12 +970,12 @@ while 1:
         if mainmapname in mapscale:
           if limitsource != 'web':
             statustext = displaymarkers(markersstore[mainmapname], mapscale[mainmapname], screen, \
-              mapxoffset, mainmapsize, scale, statustext, markfontsize, \
+              mapxoffset, mainmapsize, mapmarkfontscale, statustext, markfontsize, \
               searchmode, marksearch, searchtext, markcolour, markcrosscolour)
           if limitsource != 'local':
             if mainmapname in webmaplist:
               displaymarkers(webmaplist[mainmapname], mapscale[mainmapname], screen, \
-                mapxoffset, mainmapsize, scale, statustext, markfontsize, \
+                mapxoffset, mainmapsize, mapmarkfontscale, statustext, markfontsize, \
                 searchmode, marksearch, searchtext, webmarkcolour, markcrosscolour)
           
       settitle(mainmapname, gametime, basetitle)
@@ -1023,6 +1023,15 @@ while 1:
     if event.type == pygame.QUIT:
       sys.exit()
     
+    elif event.type == pygame.VIDEORESIZE:
+      if event.w > 600 and event.h > 270:
+        target_window_size = (event.w, event.h)
+      pygame.time.set_timer(resize_event_timer, 250)
+
+    elif event.type == resize_event_timer:
+      pygame.time.set_timer(resize_event_timer, 0)
+      lastmap = ''
+
     # update the title with the game time each game minute
     elif showgametime and event.type == gameminuteevent:
       gametime = updategametime(gametime)
@@ -1171,23 +1180,17 @@ while 1:
       # non search mode, respond to action keys
       if not searchmode:
        
-        # i - enlarge window, zoom in
+        # i - increase font size
         if event.key == pygame.K_i:
-          if screensize[0]+0.1 < 1152:
-            scale += 0.1
+          if mapmarkfontscale < 3:
+            mapmarkfontscale += 0.1
             lastmap = ''
 
-        # o - srink window, zoom out
-        elif event.key == pygame.K_o:
-          if screensize[0]-0.1 > 600:
-            scale -= 0.1
+        # d - decrease font size
+        elif event.key == pygame.K_d:
+          if mapmarkfontscale > 0.5:
+            mapmarkfontscale -= 0.1
             lastmap = ''
-
-        # f - toggle window/full screen
-        elif event.key == pygame.K_f and modkeys == pygame.KMOD_NONE:
-          fullscreen = not fullscreen
-          screensize = (0.0)  # force display mode reset
-          lastmap = ''
 
         # b - toggle drawing of rectangles round link areas
         elif event.key == pygame.K_b:
@@ -1242,7 +1245,10 @@ while 1:
         elif event.key == pygame.K_r:
           mapinfo, mapscale, maptype, parentmap, maptitle, continent, mapbanner = readinfo(mapdir, mapdatafile, usermapdatafile)
           markersstore = {}
-          scale = 1.0
+          target_window_size = initial_window_size
+          mapmarkfontscale = 1.0
+          pygame.display.quit()
+          pygame.display.init()          
           lastmap = ''
           if usewebmarkers:
             webmaplist = getwebmaplist(webmarkerbaseurl, authentication)
