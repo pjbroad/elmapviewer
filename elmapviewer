@@ -37,7 +37,7 @@
 # Debian GNU/Linux: http://www.debian.org/
 # Ubuntu: http://www.ubuntu.com/
 
-import sys, pygame, os, platform, struct, urllib.request, math, gzip, signal
+import sys, pygame, os, platform, struct, urllib.request, math, gzip, signal, PythonMagick
 
 version = 'v0.7.1 October 2020'
 
@@ -235,16 +235,17 @@ def get_data_file_path(filename):
 
 # read program variables from the resource file
 def readvars(fname):
-  mapdir = ''
-  moremapdir = ''
-  userdir = ''
+  mapdir = '/usr/share/games/EternalLands/maps/'
+  moremapdir = '~/.elc/updates/1_9_5/maps'
+  userdir = '~/.elc/main/maps'
+  cachedir = '~/.cache/elmapviewer/maps'
   boxesOn = True
   marksOn = True
-  editor = '$EDITOR'
+  editor = '/usr/bin/xdg-open'
   markfontsize = 21
   statusfontsize = 21
   mainborder = [10, 10]
-  show_map_banners = False
+  show_map_banners = True
   noesc = False
   copyexec = ''
   showgametime = False
@@ -272,12 +273,14 @@ def readvars(fname):
         if w[0] == 'mapdir':
           mapdir = expandfilename(w[2])
           if not os.access(mapdir, os.R_OK):
-            print('Please set the mapdir option in your rc file: ' + rcfile)
+            print('Please set the mapdir option in your rc file: ' + fname)
             print('Current value [' + mapdir + ']')
             sys.exit(-1)
         # location of user map information
         elif w[0] == 'userdir':
           userdir = expandfilename(w[2])
+        elif w[0] == 'cachedir':
+          cachedir = expandfilename(w[2])
         elif w[0] == 'moremapdir':
           moremapdir = expandfilename(w[2])
         elif w[0] == 'boxesOn':
@@ -314,7 +317,7 @@ def readvars(fname):
         elif w[0] in functionkeys:
           keycode = functionkeys[w[0]][0]
           functionkeys[w[0]] = (keycode,w[2])
-  return mapdir, moremapdir, userdir, boxesOn, marksOn, editor, show_map_banners, \
+  return mapdir, moremapdir, userdir, cachedir, boxesOn, marksOn, editor, show_map_banners, \
     markfontsize, statusfontsize, mainborder, noesc, copyexec, \
     showgametime, walkfactor, usewebmarkers, webmarkerbaseurl, authentication
 
@@ -683,9 +686,9 @@ def drawmaplink(boxesOn, maptype, hp, screen, cursorbox):
     pygame.draw.rect(screen, colour, cursorbox, 2)
 
 # get the map banner logo
-def getbannersurface(bannerimages, bannerinfo, mapdir, moremapdir):
+def getbannersurface(bannerimages, bannerinfo, mapdir, moremapdir, cachedir):
   if not bannerinfo[0] in bannerimages:
-    fid = openmapbmp('../3dobjects/banners'+bannerinfo[0]+'.bmp', mapdir, moremapdir)
+    fid = openbmpfile('../3dobjects/banners'+bannerinfo[0]+'.bmp', mapdir, moremapdir, cachedir)
     if fid == 0:
       #print('Missing banner image file: ' + fullpath + ' - so disabling')
       return bannerimages, 0
@@ -704,14 +707,31 @@ def getbannersurface(bannerimages, bannerinfo, mapdir, moremapdir):
   retsurface = bannerimages[bannerinfo[0]].subsurface(int(xoffset), int(yoffset), int(size[0]/2), int(size[1]/2))
   return bannerimages, retsurface
 
-# commonn open function for map bmps, looks in mor than one location
-def openmapbmp(filename, mapdir, moremapdir):
-  fullpath = os.path.join(moremapdir, filename)
-  fid = fileopen(fullpath, 'rb')
-  if fid == 0:
-    fullpath = os.path.join(mapdir, filename)
+# commonn open function for map bmps, looks in more than one location
+# creates a cached bmp version if only dds file sexist
+def openbmpfile(filename, mapdir, moremapdir, cachedir):
+  # try to load
+  for dirpath in [moremapdir, mapdir, cachedir]:
+    fullpath = os.path.join(dirpath, filename)
     fid = fileopen(fullpath, 'rb')
-  return fid
+    if fid != 0:
+      return fid
+  # try to create from dds and load
+  for dirpath in [moremapdir, mapdir]:
+    origpath = os.path.join(dirpath, filename.replace(".bmp", ".dds"))
+    if os.path.isfile(origpath):
+      fullpath = os.path.join(cachedir, filename)
+      newdirpath = os.path.dirname(fullpath)
+      if not os.path.exists(newdirpath):
+        if not os.path.exists(newdirpath):
+          os.makedirs(newdirpath)
+      img = PythonMagick.Image(origpath)
+      img.magick('BMP')
+      img.write(fullpath)
+      fid = fileopen(fullpath, 'rb')
+      return fid
+  # no file to open
+  return 0
 
 def main():
   # check font usage and initialise pygame
@@ -735,7 +755,7 @@ def main():
   mapdatafile = get_data_file_path('mapdata')
   usermapdatafile = expandfilename('~/.elmapviewer.usermapdata')
 
-  mapdir, moremapdir, userdir, boxesOn, marksOn, editor, show_map_banners, \
+  mapdir, moremapdir, userdir, cachedir, boxesOn, marksOn, editor, show_map_banners, \
     markfontsize, statusfontsize, mainborder, noesc, copyexec, \
     showgametime, walkfactor, usewebmarkers, webmarkerbaseurl, authentication = readvars(rcfile)
   mapinfo, mapscale, maptype, parentmap, maptitle, continent, mapbanner = readinfo(mapdir, mapdatafile, usermapdatafile, show_map_banners)
@@ -833,7 +853,7 @@ def main():
           forcesidemap = False
 
         # get and scale the current side map surface
-        fid = openmapbmp(sidemapname, mapdir, moremapdir)
+        fid = openbmpfile(sidemapname, mapdir, moremapdir, cachedir)
         if fid == 0:
           sidemap = pygame.Surface((512, 512))
           statustext += 'Cant load sidemap file. '
@@ -842,7 +862,7 @@ def main():
         sidemapsize = sidemap.get_size()
 
         # get and scale the legend surface
-        fid = openmapbmp("legend.bmp", mapdir, moremapdir)
+        fid = openbmpfile("legend.bmp", mapdir, moremapdir, cachedir)
         if fid == 0:
           legend = pygame.Surface((128, 256))
           statustext += 'Cannot load legend file. '
@@ -851,10 +871,10 @@ def main():
         legendsize = legend.get_size()
 
         # get and scale the main map surface
-        fid = openmapbmp(mainmapname, mapdir, moremapdir)
+        fid = openbmpfile(mainmapname, mapdir, moremapdir, cachedir)
         if fid == 0:
           statustext += 'Cannot load main map file, using default. '
-          fid = openmapbmp('../textures/paper1.bmp', mapdir, moremapdir)
+          fid = openbmpfile('../textures/paper1.bmp', mapdir, moremapdir, cachedir)
           if fid == 0:
             mainmap = pygame.Surface((512, 512))
           else:
@@ -895,7 +915,7 @@ def main():
         # get the main map banner logo if there is one - display over the legend image
         # could display full size over the sidemap if hover over this image
         if mainmapname in mapbanner:
-          bannerimages, bannerlogo = getbannersurface(bannerimages, mapbanner[mainmapname], mapdir, moremapdir)
+          bannerimages, bannerlogo = getbannersurface(bannerimages, mapbanner[mainmapname], mapdir, moremapdir, cachedir)
           if bannerlogo == 0:
             del mapbanner[mainmapname]
           else:

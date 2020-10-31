@@ -2,7 +2,7 @@
 # anything word = .... treated as program variable, space required next to =
 
 mapdir = /usr/share/games/EternalLands/maps/
-moremapdir = ~/.elc/updates/1_9_5/maps
+moremapdir = ~/.elc/maps
 userdir = ~/.elc/main/maps
 boxesOn = 1
 marksOn = 1
@@ -11,6 +11,9 @@ markfontsize = 20
 statusfontsize = 25
 mainborderx = 21
 mainbordery = 5
+
+# if no bmp files are found but dds exist, bmp are created from the dds file and saved in the cachedir
+cachedir = ~/.cache/elmapviewer/maps
 
 #enable/disbale map banners on legend
 showmapbanners = 1
