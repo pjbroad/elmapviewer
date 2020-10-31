@@ -56,8 +56,6 @@ hlmapcolour = orangecolour
 othermapcolour = greencolour
 markcolours = ((179, 238,  58), (33, 164, 0), (51, 254, 0))
 webmarkcolours = ((50, 50,  250), (50, 0, 150), (50, 0, 250))
-markcolour = markcolours[0]
-webmarkcolour = webmarkcolours[0]
 markcrosscolour = whitecolour
 boxcolour = 58, 95, 205
 pkboxcolour = redcolour
@@ -80,6 +78,10 @@ convertKey = { pygame.K_1:"!", pygame.K_2:"\"", pygame.K_4:"$", \
 gameminuteevent = pygame.USEREVENT
 clockresyncevent = pygame.USEREVENT+1
 resize_event_timer = pygame.USEREVENT+2
+
+# window title and icon base
+basetitle = 'Eternal Lands Map Viewer: ' + version
+baseicon = 'elmapviewer'
 
 # Thanks to Lenard Lindstrom and Brian Fisher on the pygame mailing list
 # for this solution to the problem of using pygame.image.load() with
@@ -363,7 +365,7 @@ def genstatusline(screen, scale, coordwidth, fulltext, colour, statusfontsize):
   return
 
 # draw the status line including the current map name
-def updatestatusline(screen, scale, coordwidth, mapname, statustext, statusfontsize):
+def updatestatusline(screen, scale, coordwidth, mapname, maptype, statustext, statusfontsize):
   # colour code PK maps
   extrastat = ''
   if mapname in maptype and maptype[mapname] == 'PK':
@@ -380,7 +382,7 @@ def updatestatusline(screen, scale, coordwidth, mapname, statustext, statusfonts
   return
 
 # draw the search status line
-def updatesearchline(screen, scale, coordwidth, mapname, marksearch, searchtext, statusfontsize):
+def updatesearchline(screen, scale, coordwidth, mapname, marksearch, searchtext, searchmatchingmaps, currentsearchmapindex, statusfontsize):
   fulltext = mapname + ": "
   if marksearch:
     fulltext += "mark"
@@ -422,7 +424,7 @@ def helptextline(helpsurface, menuoptions, scale, lineoffset, thestring, key=0):
   return menuoptions, lineoffset
 
 # generate the help information surface
-def drawhelp(scale):
+def drawhelp(scale, searchmode, marksearch, limitsearch, usewebmarkers, walktimemeasure, noesc):
   helpsurface = pygame.Surface((int(128*scale),int(256*scale)))
   lineoffset = 0
   menuoptions = []
@@ -626,7 +628,7 @@ def timestring(gametime):
   return (str(gametime[0]).rjust(2) + ':' + str(gametime[1]).rjust(2)).replace(' ','0')
 
 # update the window title
-def settitle(mainmapname, gametime, basetitle):
+def settitle(mainmapname, maptitle, basetitle, gametime, showgametime):
   if showgametime:
     if gametime == (99,99):
       currtitle = ' [Game Time: error]'
@@ -644,7 +646,7 @@ def settitle(mainmapname, gametime, basetitle):
 # convert display coords to game map coords
 def togamecood(point, mapxoffset, thismainmapsize, thismapscale):
   x = int((float(point[0]-mapxoffset) / thismainmapsize[0] * thismapscale[0]))
-  y = int(thismapscale[1] - (float(point[1]) / mainmapsize[1] * thismapscale[1]))
+  y = int(thismapscale[1] - (float(point[1]) / thismainmapsize[1] * thismapscale[1]))
   return (x,y)
 
 # calculate the distance between the two points and return as walking time
@@ -667,7 +669,7 @@ def calcdistance(point1, point2, mapxoffset, thismapsize, thismapscale, totalwal
 
 
 # if links enabled, draw a coloured link box
-def drawmaplink(boxesOn, maptype, hp, screen ):
+def drawmaplink(boxesOn, maptype, hp, screen, cursorbox):
   if boxesOn:
     if hp[1] in maptype and maptype[hp[1]] == 'PK':
       colour = pkboxcolour
@@ -678,7 +680,7 @@ def drawmaplink(boxesOn, maptype, hp, screen ):
     pygame.draw.rect(screen, colour, cursorbox, 2)
 
 # get the map banner logo
-def getbannersurface(bannerimages, bannerinfo):
+def getbannersurface(bannerimages, bannerinfo, mapdir):
   if not bannerinfo[0] in bannerimages:
     fullpath = os.path.join(mapdir, '../3dobjects/structures/banners'+bannerinfo[0]+'.bmp')
     fid = fileopen(fullpath, 'rb')
@@ -701,7 +703,7 @@ def getbannersurface(bannerimages, bannerinfo):
   return bannerimages, retsurface
 
 # commonn open function for map bmps, looks in mor than one location
-def openmapbmp(filename):
+def openmapbmp(filename, mapdir, moremapdir):
   fullpath = os.path.join(moremapdir, filename)
   fid = fileopen(fullpath, 'rb')
   if fid == 0:
@@ -709,750 +711,755 @@ def openmapbmp(filename):
     fid = fileopen(fullpath, 'rb')
   return fid
 
-# check font usage and initialise pygame
-if not pygame.font:
-  print('Error, fonts not available')
-  sys.exit()
-pygame.display.init()
-pygame.font.init()
-pygame.key.set_repeat(500, 100)
+def main():
+  # check font usage and initialise pygame
+  if not pygame.font:
+    print('Error, fonts not available')
+    sys.exit()
+  pygame.display.init()
+  pygame.font.init()
+  pygame.key.set_repeat(500, 100)
 
-# set default window title and cursor type
-pygame.mouse.set_cursor(*pygame.cursors.arrow)
+  # set default window title and cursor type
+  pygame.mouse.set_cursor(*pygame.cursors.arrow)
 
-# get the resource file name and read the data
-if len(sys.argv) > 1:
-  rcfile = sys.argv[1]
-else:
-  rcfile = '~/.elmapviewer.rc'
-rcfile = expandfilename(rcfile)
+  # get the resource file name and read the data
+  if len(sys.argv) > 1:
+    rcfile = sys.argv[1]
+  else:
+    rcfile = '~/.elmapviewer.rc'
+  rcfile = expandfilename(rcfile)
 
-mapdatafile = get_data_file_path('mapdata')
-usermapdatafile = expandfilename('~/.elmapviewer.usermapdata')
+  mapdatafile = get_data_file_path('mapdata')
+  usermapdatafile = expandfilename('~/.elmapviewer.usermapdata')
 
-mapdir, moremapdir, userdir, boxesOn, marksOn, editor, \
-  markfontsize, statusfontsize, mainborder, noesc, copyexec, \
-  showgametime, walkfactor, usewebmarkers, webmarkerbaseurl, authentication = readvars(rcfile)
-mapinfo, mapscale, maptype, parentmap, maptitle, continent, mapbanner = readinfo(mapdir, mapdatafile, usermapdatafile)
+  mapdir, moremapdir, userdir, boxesOn, marksOn, editor, \
+    markfontsize, statusfontsize, mainborder, noesc, copyexec, \
+    showgametime, walkfactor, usewebmarkers, webmarkerbaseurl, authentication = readvars(rcfile)
+  mapinfo, mapscale, maptype, parentmap, maptitle, continent, mapbanner = readinfo(mapdir, mapdatafile, usermapdatafile)
 
-normalcursor = True           # holds current cursor state, set to alternative when over links
-mainmapname = 'seridia.bmp'   # the map about to be displayed
-homemap = mainmapname         # the start map
-lastmap = ''                  # the last map displayed, cleared to force redraw
-# window title and icon base
-basetitle = 'Eternal Lands Map Viewer: ' + version
-baseicon = 'elmapviewer'
+  normalcursor = True           # holds current cursor state, set to alternative when over links
+  mainmapname = 'seridia.bmp'   # the map about to be displayed
+  homemap = mainmapname         # the start map
+  lastmap = ''                  # the last map displayed, cleared to force redraw
 
-sidemapname = parentmap[mainmapname]  # the current side map
+  sidemapname = parentmap[mainmapname]  # the current side map
 
-hotspot = []                  # list of links for current map
-backmap = []                  # list of previous maps visited
-markbox = []                  # right click twice to form a box and see coords for links
+  hotspot = []                  # list of links for current map
+  backmap = []                  # list of previous maps visited
+  markbox = []                  # right click twice to form a box and see coords for links
 
-mapxoffset = 0                # X offset of main map in pixels, calculated later
+  mapxoffset = 0                # X offset of main map in pixels, calculated later
 
-coordwidth = 0;
-coordtext = ''                # in game map coords, show at bottm left of window
-lastcoordtext = '-'
+  coordwidth = 0;
+  coordtext = ''                # in game map coords, show at bottm left of window
+  lastcoordtext = '-'
 
-statustext = ''               # status text shown at bottom of window with map name
-laststatustext = '-'
+  statustext = ''               # status text shown at bottom of window with map name
+  laststatustext = '-'
 
-searchmode = False
-marksearch = False
-searchtext = ''
-lastsearchtext = '-'
-searchmatchingmaps = []
-currentsearchmapindex = 0
-limitsearch = 'none.bmp'
-limitsource = 'all'
-forcesidemap = False
+  searchmode = False
+  marksearch = False
+  searchtext = ''
+  lastsearchtext = '-'
+  searchmatchingmaps = []
+  currentsearchmapindex = 0
+  limitsearch = 'none.bmp'
+  limitsource = 'all'
+  forcesidemap = False
 
-markersstore = {}
-bannerimages = {}
-bannerzoom = False
+  markersstore = {}
+  bannerimages = {}
+  bannerzoom = False
 
-webmaplist = {}
-readwebmaplist = True
+  webmaplist = {}
+  readwebmaplist = True
 
-walktimemeasure = False
-totalwalktime = 0
+  walktimemeasure = False
+  totalwalktime = 0
 
-initial_window_size = (1024, 680)
-target_window_size = initial_window_size
-mapmarkfontscale = 1.0
+  initial_window_size = (1024, 680)
+  target_window_size = initial_window_size
+  mapmarkfontscale = 1.0
 
-pygame.event.post(pygame.event.Event(resize_event_timer))
-pygame.time.set_timer(resize_event_timer, 0)
+  markcolour = markcolours[0]
+  webmarkcolour = webmarkcolours[0]
 
-# get the initial game time and start the event timers to keep it up to date
-gametime = (100,100)
-if showgametime:
-  pygame.event.post(pygame.event.Event(clockresyncevent))
-  # resync the clock every hour - one day the tracking will be accurate enough to drop this
-  pygame.time.set_timer(clockresyncevent, 1000 * 60 * 60)
+  pygame.event.post(pygame.event.Event(resize_event_timer))
+  pygame.time.set_timer(resize_event_timer, 0)
 
-# loop forever....
-while 1:
+  # get the initial game time and start the event timers to keep it up to date
+  gametime = (100,100)
+  if showgametime:
+    pygame.event.post(pygame.event.Event(clockresyncevent))
+    # resync the clock every hour - one day the tracking will be accurate enough to drop this
+    pygame.time.set_timer(clockresyncevent, 1000 * 60 * 60)
 
-    # if the map has changed, update the display
-    if mainmapname != lastmap:
+  # loop forever....
+  while 1:
 
-      screen = pygame.display.set_mode(target_window_size, pygame.RESIZABLE)
+      # if the map has changed, update the display
+      if mainmapname != lastmap:
 
-      statustext = ''
-      laststatustext = '-'
-      lastsearchtext = searchtext + "-" # force a redraw
+        screen = pygame.display.set_mode(target_window_size, pygame.RESIZABLE)
 
-      # handle the back key useage, poping the new map name
-      if mainmapname == 'pop':
-        mainmapname = backmap.pop()
-      else:
-        if lastmap != '':
-          if len(backmap) > 20:
-            backmap.pop(0)
-          backmap.append(lastmap)
+        statustext = ''
+        laststatustext = '-'
+        lastsearchtext = searchtext + "-" # force a redraw
 
-      # clear any marked box
-      markbox = []
-
-      # always restore the big map to the side map if nolonger the main map
-      if not forcesidemap:
-        if mainmapname in parentmap:
-          if sidemapname != parentmap[mainmapname]:
-            sidemapname = parentmap[mainmapname]
+        # handle the back key useage, poping the new map name
+        if mainmapname == 'pop':
+          mainmapname = backmap.pop()
         else:
-          if sidemapname != continent[mainmapname]:
-            sidemapname = continent[mainmapname]
-      else:
-        forcesidemap = False
+          if lastmap != '':
+            if len(backmap) > 20:
+              backmap.pop(0)
+            backmap.append(lastmap)
 
-      # get and scale the current side map surface
-      fid = openmapbmp(sidemapname)
-      if fid == 0:
-        sidemap = pygame.Surface((512, 512))
-        statustext += 'Cant load sidemap file. '
-      else:
-        sidemap = pygame.image.load(fid)
-      sidemapsize = sidemap.get_size()
+        # clear any marked box
+        markbox = []
 
-      # get and scale the legend surface
-      fid = openmapbmp("legend.bmp")
-      if fid == 0:
-        legend = pygame.Surface((128, 256))
-        statustext += 'Cannot load legend file. '
-      else:
-        legend = pygame.image.load(fid)
-      legendsize = legend.get_size()
+        # always restore the big map to the side map if nolonger the main map
+        if not forcesidemap:
+          if mainmapname in parentmap:
+            if sidemapname != parentmap[mainmapname]:
+              sidemapname = parentmap[mainmapname]
+          else:
+            if sidemapname != continent[mainmapname]:
+              sidemapname = continent[mainmapname]
+        else:
+          forcesidemap = False
 
-      # get and scale the main map surface
-      fid = openmapbmp(mainmapname)
-      if fid == 0:
-        statustext += 'Cannot load main map file, using default. '
-        fid = openmapbmp('../textures/openscreen.bmp')
+        # get and scale the current side map surface
+        fid = openmapbmp(sidemapname, mapdir, moremapdir)
         if fid == 0:
-          mainmap = pygame.Surface((512, 512))
+          sidemap = pygame.Surface((512, 512))
+          statustext += 'Cant load sidemap file. '
+        else:
+          sidemap = pygame.image.load(fid)
+        sidemapsize = sidemap.get_size()
+
+        # get and scale the legend surface
+        fid = openmapbmp("legend.bmp", mapdir, moremapdir)
+        if fid == 0:
+          legend = pygame.Surface((128, 256))
+          statustext += 'Cannot load legend file. '
+        else:
+          legend = pygame.image.load(fid)
+        legendsize = legend.get_size()
+
+        # get and scale the main map surface
+        fid = openmapbmp(mainmapname, mapdir, moremapdir)
+        if fid == 0:
+          statustext += 'Cannot load main map file, using default. '
+          fid = openmapbmp('../textures/openscreen.bmp', mapdir, moremapdir)
+          if fid == 0:
+            mainmap = pygame.Surface((512, 512))
+          else:
+            mainmap = pygame.image.load(fid)
+            mainmapsize = mainmap.get_size()
+            mainmap = pygame.transform.scale(mainmap, (int(512), int(512)))
         else:
           mainmap = pygame.image.load(fid)
-          mainmapsize = mainmap.get_size()
-          mainmap = pygame.transform.scale(mainmap, (int(512), int(512)))
-      else:
-        mainmap = pygame.image.load(fid)
-      mainmapsize = mainmap.get_size()
+        mainmapsize = mainmap.get_size()
 
-      statusheight = pygame.font.Font(None, int(statusfontsize)).get_height()
+        statusheight = pygame.font.Font(None, int(statusfontsize)).get_height()
 
-      x_scale = target_window_size[0] / (1.5 * mainmapsize[0])
-      y_scale = (target_window_size[1] - statusheight) / mainmapsize[1]
-      map_scale = min(x_scale, y_scale)
-      scale = min(mainmapsize[0] / 512 * x_scale, mainmapsize[1] / 512 * y_scale)
+        x_scale = target_window_size[0] / (1.5 * mainmapsize[0])
+        y_scale = (target_window_size[1] - statusheight) / mainmapsize[1]
+        map_scale = min(x_scale, y_scale)
+        scale = min(mainmapsize[0] / 512 * x_scale, mainmapsize[1] / 512 * y_scale)
 
-      sidemap = pygame.transform.scale(sidemap, (int(map_scale * mainmapsize[0] / 2), int(map_scale * mainmapsize[1] / 2)))
-      sidemapsize = sidemap.get_size()
-      sidemaprect = sidemap.get_rect()
+        sidemap = pygame.transform.scale(sidemap, (int(map_scale * mainmapsize[0] / 2), int(map_scale * mainmapsize[1] / 2)))
+        sidemapsize = sidemap.get_size()
+        sidemaprect = sidemap.get_rect()
 
-      legend = pygame.transform.scale(legend, (int(map_scale * mainmapsize[0] / 4), int(map_scale * mainmapsize[1] / 2)))
-      legendsize = legend.get_size()
-      legendrect = legend.get_rect()
+        legend = pygame.transform.scale(legend, (int(map_scale * mainmapsize[0] / 4), int(map_scale * mainmapsize[1] / 2)))
+        legendsize = legend.get_size()
+        legendrect = legend.get_rect()
 
-      mainmap = pygame.transform.scale(mainmap, (int(map_scale * mainmapsize[0]), int(map_scale * mainmapsize[1])))
-      mainmapsize = mainmap.get_size()
-      mainmaprect = mainmap.get_rect()
+        mainmap = pygame.transform.scale(mainmap, (int(map_scale * mainmapsize[0]), int(map_scale * mainmapsize[1])))
+        mainmapsize = mainmap.get_size()
+        mainmaprect = mainmap.get_rect()
 
-      # get the scaled help text surface
-      menuoptions, helpsurface = drawhelp(scale)
-      helprect = helpsurface.get_rect()
+        # get the scaled help text surface
+        menuoptions, helpsurface = drawhelp(scale, searchmode, marksearch, limitsearch, usewebmarkers, walktimemeasure, noesc)
+        helprect = helpsurface.get_rect()
 
-      # update font related sizes
-      coordwidth = pygame.font.Font(None, int(statusfontsize*scale)).size('0000,0000 ')[0]
-      statusheight = pygame.font.Font(None, int(statusfontsize*scale)).get_height()
+        # update font related sizes
+        coordwidth = pygame.font.Font(None, int(statusfontsize*scale)).size('0000,0000 ')[0]
+        statusheight = pygame.font.Font(None, int(statusfontsize*scale)).get_height()
 
-      # get the main map banner logo if there is one - display over the legend image
-      # could display full size over the sidemap if hover over this image
-      if mainmapname in mapbanner:
-        bannerimages, bannerlogo = getbannersurface(bannerimages, mapbanner[mainmapname])
-        if bannerlogo == 0:
-          del mapbanner[mainmapname]
-        else:
-          bannerlogosize = bannerlogo.get_size()
-          if bannerzoom:
-            bannerlogo = pygame.transform.scale(bannerlogo, (int(bannerlogosize[0]*scale), int(bannerlogosize[1]*scale)))
-            # adjust the legend size to fit the zoomed banner
-            legend = pygame.transform.scale(legend, (int(legendsize[0]*0.5), int(legendsize[1]*0.5)))
-            legendsize = legend.get_size()
-            legendrect = legend.get_rect()
-          else:
-            bannerlogo = pygame.transform.scale(bannerlogo, (int(bannerlogosize[0]*0.35*scale), int(bannerlogosize[1]*0.35*scale)))
-          bannerlogosize = bannerlogo.get_size()
-          bannerlogorect = bannerlogo.get_rect()
-
-      # now we have the screen size, move surfaces into place
-
-      # position the legend and banner
-      if mainmapname in mapbanner and bannerzoom:
-        legendxymove = [int(sidemapsize[0]/2+legendsize[1]/4), sidemapsize[1]]
-        bannerxymove = [sidemapsize[0]/2, sidemapsize[1]+legendsize[1]]
-      else:
-        legendxymove = [int(sidemapsize[0]/2), sidemapsize[1]]
+        # get the main map banner logo if there is one - display over the legend image
+        # could display full size over the sidemap if hover over this image
         if mainmapname in mapbanner:
-          bannerxymove = [sidemapsize[0]/2+(legendsize[0]-bannerlogosize[0])/2, sidemapsize[1]+legendsize[1]-bannerlogosize[1]*1.2]
-      legendrect = legendrect.move(legendxymove)
-      if mainmapname in mapbanner:
-        bannerlogorect = bannerlogorect.move(bannerxymove)
+          bannerimages, bannerlogo = getbannersurface(bannerimages, mapbanner[mainmapname], mapdir)
+          if bannerlogo == 0:
+            del mapbanner[mainmapname]
+          else:
+            bannerlogosize = bannerlogo.get_size()
+            if bannerzoom:
+              bannerlogo = pygame.transform.scale(bannerlogo, (int(bannerlogosize[0]*scale), int(bannerlogosize[1]*scale)))
+              # adjust the legend size to fit the zoomed banner
+              legend = pygame.transform.scale(legend, (int(legendsize[0]*0.5), int(legendsize[1]*0.5)))
+              legendsize = legend.get_size()
+              legendrect = legend.get_rect()
+            else:
+              bannerlogo = pygame.transform.scale(bannerlogo, (int(bannerlogosize[0]*0.35*scale), int(bannerlogosize[1]*0.35*scale)))
+            bannerlogosize = bannerlogo.get_size()
+            bannerlogorect = bannerlogo.get_rect()
 
-      # position the help
-      xymove = [0, sidemapsize[1]]
-      helprect = helprect.move(xymove)
+        # now we have the screen size, move surfaces into place
 
-      # get the main map x offset (used later for curser detection) and move it
-      mapxoffset = sidemapsize[0]
-      mainmapmove = [mapxoffset, 0]
-      mainmaprect = mainmaprect.move(mainmapmove)
-
-
-      # clear the display and redraw the components
-      screen.fill(blackcolour)
-      screen.blit(sidemap, sidemaprect)
-      screen.blit(mainmap, mainmaprect)
-      screen.blit(legend, legendrect)
-      screen.blit(helpsurface, helprect)
-      if mainmapname in mapbanner:
-        screen.blit(bannerlogo, bannerlogorect)
-
-      # get the list of main map links, and optionally draw rectangles for them
-      hotspot = []
-      for hp in mapinfo[mainmapname]:
-        if hp[0] == (0,0,0,0): # dummy entry
-          continue
-        rectcoord =  (int(hp[0][0]*scale), int(hp[0][1]*scale), int(hp[0][2]*scale), int(hp[0][3]*scale))
-        cursorbox = pygame.Rect(rectcoord)
-        cursorbox = cursorbox.move(mainmapmove)
-        drawmaplink(boxesOn, maptype, hp, screen )
-        hotspot.append((cursorbox, hp[1]))
-
-      # show the links on the side map
-      for hp in mapinfo[sidemapname]:
-        rectcoord =  (int(hp[0][0]*scale/2), int(hp[0][1]*scale/2), int(hp[0][2]*scale/2), int(hp[0][3]*scale/2))
-        cursorbox = pygame.Rect(rectcoord)
-        if hp[1] == mainmapname:
-          pygame.draw.rect(screen, whitecolour, cursorbox, 2)
+        # position the legend and banner
+        if mainmapname in mapbanner and bannerzoom:
+          legendxymove = [int(sidemapsize[0]/2+legendsize[1]/4), sidemapsize[1]]
+          bannerxymove = [sidemapsize[0]/2, sidemapsize[1]+legendsize[1]]
         else:
-          drawmaplink(boxesOn, maptype, hp, screen )
-        hotspot.append((cursorbox, hp[1]))
+          legendxymove = [int(sidemapsize[0]/2), sidemapsize[1]]
+          if mainmapname in mapbanner:
+            bannerxymove = [sidemapsize[0]/2+(legendsize[0]-bannerlogosize[0])/2, sidemapsize[1]+legendsize[1]-bannerlogosize[1]*1.2]
+        legendrect = legendrect.move(legendxymove)
+        if mainmapname in mapbanner:
+          bannerlogorect = bannerlogorect.move(bannerxymove)
 
-      # if user marks are enables, draw them on the main map
-      if marksOn or (searchmode and marksearch):
-        # read the marks if we have not already done so
-        if not mainmapname in markersstore:
-          markersstore[mainmapname] = readmapmarkers(userdir, mainmapname)
-        if usewebmarkers and mainmapname in webmaplist and webmaplist[mainmapname] == []:
-          webmaplist[mainmapname] = readwebmarkers(mainmapname, webmarkerbaseurl, authentication)
-        # display the mark using any active filter
-        if mainmapname in mapscale:
-          if limitsource != 'web':
-            statustext = displaymarkers(markersstore[mainmapname], mapscale[mainmapname], screen, \
-              mapxoffset, mainmapsize, mapmarkfontscale, statustext, markfontsize, \
-              searchmode, marksearch, searchtext, markcolour, markcrosscolour)
-          if limitsource != 'local':
-            if mainmapname in webmaplist:
-              displaymarkers(webmaplist[mainmapname], mapscale[mainmapname], screen, \
+        # position the help
+        xymove = [0, sidemapsize[1]]
+        helprect = helprect.move(xymove)
+
+        # get the main map x offset (used later for curser detection) and move it
+        mapxoffset = sidemapsize[0]
+        mainmapmove = [mapxoffset, 0]
+        mainmaprect = mainmaprect.move(mainmapmove)
+
+
+        # clear the display and redraw the components
+        screen.fill(blackcolour)
+        screen.blit(sidemap, sidemaprect)
+        screen.blit(mainmap, mainmaprect)
+        screen.blit(legend, legendrect)
+        screen.blit(helpsurface, helprect)
+        if mainmapname in mapbanner:
+          screen.blit(bannerlogo, bannerlogorect)
+
+        # get the list of main map links, and optionally draw rectangles for them
+        hotspot = []
+        for hp in mapinfo[mainmapname]:
+          if hp[0] == (0,0,0,0): # dummy entry
+            continue
+          rectcoord =  (int(hp[0][0]*scale), int(hp[0][1]*scale), int(hp[0][2]*scale), int(hp[0][3]*scale))
+          cursorbox = pygame.Rect(rectcoord)
+          cursorbox = cursorbox.move(mainmapmove)
+          drawmaplink(boxesOn, maptype, hp, screen, cursorbox)
+          hotspot.append((cursorbox, hp[1]))
+
+        # show the links on the side map
+        for hp in mapinfo[sidemapname]:
+          rectcoord =  (int(hp[0][0]*scale/2), int(hp[0][1]*scale/2), int(hp[0][2]*scale/2), int(hp[0][3]*scale/2))
+          cursorbox = pygame.Rect(rectcoord)
+          if hp[1] == mainmapname:
+            pygame.draw.rect(screen, whitecolour, cursorbox, 2)
+          else:
+            drawmaplink(boxesOn, maptype, hp, screen, cursorbox)
+          hotspot.append((cursorbox, hp[1]))
+
+        # if user marks are enables, draw them on the main map
+        if marksOn or (searchmode and marksearch):
+          # read the marks if we have not already done so
+          if not mainmapname in markersstore:
+            markersstore[mainmapname] = readmapmarkers(userdir, mainmapname)
+          if usewebmarkers and mainmapname in webmaplist and webmaplist[mainmapname] == []:
+            webmaplist[mainmapname] = readwebmarkers(mainmapname, webmarkerbaseurl, authentication)
+          # display the mark using any active filter
+          if mainmapname in mapscale:
+            if limitsource != 'web':
+              statustext = displaymarkers(markersstore[mainmapname], mapscale[mainmapname], screen, \
                 mapxoffset, mainmapsize, mapmarkfontscale, statustext, markfontsize, \
-                searchmode, marksearch, searchtext, webmarkcolour, markcrosscolour)
+                searchmode, marksearch, searchtext, markcolour, markcrosscolour)
+            if limitsource != 'local':
+              if mainmapname in webmaplist:
+                displaymarkers(webmaplist[mainmapname], mapscale[mainmapname], screen, \
+                  mapxoffset, mainmapsize, mapmarkfontscale, statustext, markfontsize, \
+                  searchmode, marksearch, searchtext, webmarkcolour, markcrosscolour)
 
-      settitle(mainmapname, gametime, basetitle)
+        settitle(mainmapname, maptitle, basetitle, gametime, showgametime)
 
-      # draw the new display
-      pygame.display.flip()
+        # draw the new display
+        pygame.display.flip()
 
-      # remember the current map
-      lastmap = mainmapname
+        # remember the current map
+        lastmap = mainmapname
 
-    # end if map changed
+      # end if map changed
 
-    # if searching, update the search string if it changes
-    if searchmode:
-      if searchtext != lastsearchtext:
-        updatesearchline(screen, scale, coordwidth, mainmapname, marksearch, searchtext, statusfontsize)
-        lastsearchtext = searchtext
+      # if searching, update the search string if it changes
+      if searchmode:
+        if searchtext != lastsearchtext:
+          updatesearchline(screen, scale, coordwidth, mainmapname, marksearch, searchtext, searchmatchingmaps, currentsearchmapindex, statusfontsize)
+          lastsearchtext = searchtext
 
-    # update the status line if it changes
-    elif laststatustext != statustext:
-      updatestatusline(screen, scale, coordwidth, mainmapname, statustext, statusfontsize)
-      laststatustext = statustext
+      # update the status line if it changes
+      elif laststatustext != statustext:
+        updatestatusline(screen, scale, coordwidth, mainmapname, maptype, statustext, statusfontsize)
+        laststatustext = statustext
 
-    # update the coordinate line if it changes
-    if lastcoordtext != coordtext:
-      updatecoord(screen, scale, coordwidth, coordtext, statusfontsize)
-      lastcoordtext = coordtext
+      # update the coordinate line if it changes
+      if lastcoordtext != coordtext:
+        updatecoord(screen, scale, coordwidth, coordtext, statusfontsize)
+        lastcoordtext = coordtext
 
-# process events
+  # process events
 
-    # if require, read the web markers list
-    if usewebmarkers and readwebmaplist:
-      webmaplist = getwebmaplist(webmarkerbaseurl, authentication)
-      readwebmaplist = False
+      # if require, read the web markers list
+      if usewebmarkers and readwebmaplist:
+        webmaplist = getwebmaplist(webmarkerbaseurl, authentication)
+        readwebmaplist = False
 
-    # get an event from the window
-    event = pygame.event.wait()
-    mousecoord = pygame.mouse.get_pos()
-    mousebuttons = pygame.mouse.get_pressed()
-    modkeys = pygame.key.get_mods()
-    mouseonmainmap = mainmaprect.collidepoint(mousecoord)
-    mouseonsidemap = sidemaprect.collidepoint(mousecoord)
+      # get an event from the window
+      event = pygame.event.wait()
+      mousecoord = pygame.mouse.get_pos()
+      mousebuttons = pygame.mouse.get_pressed()
+      modkeys = pygame.key.get_mods()
+      mouseonmainmap = mainmaprect.collidepoint(mousecoord)
+      mouseonsidemap = sidemaprect.collidepoint(mousecoord)
 
-    # if exit, then make it so
-    if event.type == pygame.QUIT:
-      sys.exit()
+      # if exit, then make it so
+      if event.type == pygame.QUIT:
+        sys.exit()
 
-    elif event.type == pygame.VIDEORESIZE:
-      if event.w > 600 and event.h > 270:
-        target_window_size = (event.w, event.h)
-      pygame.time.set_timer(resize_event_timer, 250)
+      elif event.type == pygame.VIDEORESIZE:
+        if event.w > 600 and event.h > 270:
+          target_window_size = (event.w, event.h)
+        pygame.time.set_timer(resize_event_timer, 250)
 
-    elif event.type == resize_event_timer:
-      pygame.time.set_timer(resize_event_timer, 0)
-      lastmap = ''
+      elif event.type == resize_event_timer:
+        pygame.time.set_timer(resize_event_timer, 0)
+        lastmap = ''
 
-    # update the title with the game time each game minute
-    elif showgametime and event.type == gameminuteevent:
-      gametime = updategametime(gametime)
-      settitle(mainmapname, gametime, basetitle)
+      # update the title with the game time each game minute
+      elif showgametime and event.type == gameminuteevent:
+        gametime = updategametime(gametime)
+        settitle(mainmapname, maptitle, basetitle, gametime, showgametime)
 
-    # resync the clock with the web now and then
-    elif showgametime and event.type == clockresyncevent:
-      settitle(mainmapname, (100,100), basetitle)
-      gametime = getgametime()
-      settitle(mainmapname, gametime, basetitle)
+      # resync the clock with the web now and then
+      elif showgametime and event.type == clockresyncevent:
+        settitle(mainmapname, maptitle, basetitle, (100,100), showgametime)
+        gametime = getgametime()
+        settitle(mainmapname, maptitle, basetitle, gametime, showgametime)
 
-    # if the mouse moves
-    elif event.type == pygame.MOUSEMOTION:
-      # check for cursor changes in link boxes
-      inhotspot = False
-      for hp in hotspot:
-        if hp[0].collidepoint(mousecoord):
-          if normalcursor:
-            pygame.mouse.set_cursor(*pygame.cursors.diamond)
-            normalcursor = False
-          inhotspot = True
-          break
-      # if not in a map hot spot, check for menu option
-      if not inhotspot:
-        if helprect.collidepoint(mousecoord):
-          if getmenukey(menuoptions, mousecoord, sidemapsize) != 0:
+      # if the mouse moves
+      elif event.type == pygame.MOUSEMOTION:
+        # check for cursor changes in link boxes
+        inhotspot = False
+        for hp in hotspot:
+          if hp[0].collidepoint(mousecoord):
             if normalcursor:
               pygame.mouse.set_cursor(*pygame.cursors.diamond)
               normalcursor = False
             inhotspot = True
-      # if still no in hotspot, check for banner
-      if mainmapname in mapbanner and not inhotspot:
-        if bannerlogorect.collidepoint(mousecoord):
-          if normalcursor:
-            pygame.mouse.set_cursor(*pygame.cursors.diamond)
-            normalcursor = False
-          inhotspot = True
-      # if still no in hotspot, make sure the cursor is normal
-      if not inhotspot:
-        if not normalcursor:
-          pygame.mouse.set_cursor(*pygame.cursors.arrow)
-          normalcursor = True
-      # update the coordinate display
-      if mainmapname in mapscale and mouseonmainmap \
-       and mapscale[mainmapname][0] != 1000 and mapscale[mainmapname][1] != 1000:
-        coords = togamecood(mousecoord, mapxoffset, mainmapsize, mapscale[mainmapname] )
-        coordtext = str(coords[0]) + ',' + str(coords[1])
-      else:
-        coordtext = ''
-
-    # if a mouse button is pressed....
-    elif event.type == pygame.MOUSEBUTTONDOWN:
-
-      if mainmapname in mapbanner and mousebuttons[0] and bannerlogorect.collidepoint(mousecoord):
-        bannerzoom = not bannerzoom
-        lastmap = ''
-
-      elif mouseonmainmap or mouseonsidemap:
-
-        # if left-click, check for map link
-        if mousebuttons[0]:
-          inhotspot = False
-          for hp in hotspot:
-            if hp[0].collidepoint(mousecoord):
+            break
+        # if not in a map hot spot, check for menu option
+        if not inhotspot:
+          if helprect.collidepoint(mousecoord):
+            if getmenukey(menuoptions, mousecoord, sidemapsize) != 0:
+              if normalcursor:
+                pygame.mouse.set_cursor(*pygame.cursors.diamond)
+                normalcursor = False
               inhotspot = True
-              mainmapname = hp[1]
-              break
-          # if not a hotspot, switch side and main maps
-          if (not inhotspot) and mouseonsidemap:
-            temp = sidemapname
-            sidemapname = mainmapname
-            mainmapname = temp
-            forcesidemap = True
+        # if still no in hotspot, check for banner
+        if mainmapname in mapbanner and not inhotspot:
+          if bannerlogorect.collidepoint(mousecoord):
+            if normalcursor:
+              pygame.mouse.set_cursor(*pygame.cursors.diamond)
+              normalcursor = False
+            inhotspot = True
+        # if still no in hotspot, make sure the cursor is normal
+        if not inhotspot:
+          if not normalcursor:
+            pygame.mouse.set_cursor(*pygame.cursors.arrow)
+            normalcursor = True
+        # update the coordinate display
+        if mainmapname in mapscale and mouseonmainmap \
+         and mapscale[mainmapname][0] != 1000 and mapscale[mainmapname][1] != 1000:
+          coords = togamecood(mousecoord, mapxoffset, mainmapsize, mapscale[mainmapname] )
+          coordtext = str(coords[0]) + ',' + str(coords[1])
+        else:
+          coordtext = ''
 
-        # if middle-click in link area, show information about the link
-        elif mousebuttons[1]:
-          for hp in hotspot:
-            if hp[0].collidepoint(mousecoord):
-              statustext = 'to '
-              if hp[1] in maptitle:
-                statustext += maptitle[hp[1]] + ' (' + hp[1] + ')'
-              else:
-                statustext += hp[1]
-              break
+      # if a mouse button is pressed....
+      elif event.type == pygame.MOUSEBUTTONDOWN:
 
-        # link box drawing or walktime measure
-        # walktime measure: normally joins lines, ctrl starts new line, ESC exists and clears
-        elif mouseonmainmap and mousebuttons[2]:
-          # store and draw first 2 click positions
-          if len(markbox) < 2:
-            if modkeys & (pygame.KMOD_LCTRL | pygame.KMOD_RCTRL):
-              if walktimemeasure and len(markbox) == 1:
-                markbox = []
-            markbox.append(mousecoord)
-            pygame.draw.line(screen, testboxcolour, (mousecoord[0]-5, mousecoord[1]), (mousecoord[0]+5, mousecoord[1]), 1)
-            pygame.draw.line(screen, testboxcolour, (mousecoord[0], mousecoord[1]-5), (mousecoord[0], mousecoord[1]+5), 1)
-            pygame.display.update()
-          # if we've already had both and drawn the box, clear it this time
-          else:
-            lastmap = ''
-            markbox = []
-          # can now draw box or line
-          if len(markbox) == 2:
-            # draw a line
-            if walktimemeasure:
-              if mainmapname in mapscale:
-                pygame.draw.line(screen, testboxcolour, markbox[0], markbox[1], 2)
-                totalwalktime, statustext = calcdistance(markbox[0], markbox[1], mapxoffset, mainmapsize, mapscale[mainmapname], totalwalktime, walkfactor )
-                temp = markbox[1]
-                markbox = []
-                markbox.append(temp)
-            # if now we have the two corners, draw the box and display coords suitable for map link
+        if mainmapname in mapbanner and mousebuttons[0] and bannerlogorect.collidepoint(mousecoord):
+          bannerzoom = not bannerzoom
+          lastmap = ''
+
+        elif mouseonmainmap or mouseonsidemap:
+
+          # if left-click, check for map link
+          if mousebuttons[0]:
+            inhotspot = False
+            for hp in hotspot:
+              if hp[0].collidepoint(mousecoord):
+                inhotspot = True
+                mainmapname = hp[1]
+                break
+            # if not a hotspot, switch side and main maps
+            if (not inhotspot) and mouseonsidemap:
+              temp = sidemapname
+              sidemapname = mainmapname
+              mainmapname = temp
+              forcesidemap = True
+
+          # if middle-click in link area, show information about the link
+          elif mousebuttons[1]:
+            for hp in hotspot:
+              if hp[0].collidepoint(mousecoord):
+                statustext = 'to '
+                if hp[1] in maptitle:
+                  statustext += maptitle[hp[1]] + ' (' + hp[1] + ')'
+                else:
+                  statustext += hp[1]
+                break
+
+          # link box drawing or walktime measure
+          # walktime measure: normally joins lines, ctrl starts new line, ESC exists and clears
+          elif mouseonmainmap and mousebuttons[2]:
+            # store and draw first 2 click positions
+            if len(markbox) < 2:
+              if modkeys & (pygame.KMOD_LCTRL | pygame.KMOD_RCTRL):
+                if walktimemeasure and len(markbox) == 1:
+                  markbox = []
+              markbox.append(mousecoord)
+              pygame.draw.line(screen, testboxcolour, (mousecoord[0]-5, mousecoord[1]), (mousecoord[0]+5, mousecoord[1]), 1)
+              pygame.draw.line(screen, testboxcolour, (mousecoord[0], mousecoord[1]-5), (mousecoord[0], mousecoord[1]+5), 1)
+              pygame.display.update()
+            # if we've already had both and drawn the box, clear it this time
             else:
-              cursorbox = pygame.Rect(markbox[0][0],markbox[0][1],markbox[1][0]-markbox[0][0], markbox[1][1]-markbox[0][1])
-              # fix coords if rect not draw top left to bottom right
-              if cursorbox[2] < 0:
-                cursorbox[0] += cursorbox[2]
-                cursorbox[2] *= -1
-              if cursorbox[3] < 0:
-                cursorbox[1] += cursorbox[3]
-                cursorbox[3] *= -1
-              pygame.draw.rect(screen, testboxcolour, cursorbox, 2)
-              statustext = \
-                str(int((cursorbox[0]-mapxoffset)/scale)) + ' ' + \
-                str(int(cursorbox[1]/scale)) + ' ' +  \
-                str(int((cursorbox[2])/scale))  + ' ' +  \
-                str(int((cursorbox[3])/scale))  + ' '
-              if copyexec != '':
-                os.popen(copyexec, 'w').write(statustext)
-            pygame.display.update()
+              lastmap = ''
+              markbox = []
+            # can now draw box or line
+            if len(markbox) == 2:
+              # draw a line
+              if walktimemeasure:
+                if mainmapname in mapscale:
+                  pygame.draw.line(screen, testboxcolour, markbox[0], markbox[1], 2)
+                  totalwalktime, statustext = calcdistance(markbox[0], markbox[1], mapxoffset, mainmapsize, mapscale[mainmapname], totalwalktime, walkfactor )
+                  temp = markbox[1]
+                  markbox = []
+                  markbox.append(temp)
+              # if now we have the two corners, draw the box and display coords suitable for map link
+              else:
+                cursorbox = pygame.Rect(markbox[0][0],markbox[0][1],markbox[1][0]-markbox[0][0], markbox[1][1]-markbox[0][1])
+                # fix coords if rect not draw top left to bottom right
+                if cursorbox[2] < 0:
+                  cursorbox[0] += cursorbox[2]
+                  cursorbox[2] *= -1
+                if cursorbox[3] < 0:
+                  cursorbox[1] += cursorbox[3]
+                  cursorbox[3] *= -1
+                pygame.draw.rect(screen, testboxcolour, cursorbox, 2)
+                statustext = \
+                  str(int((cursorbox[0]-mapxoffset)/scale)) + ' ' + \
+                  str(int(cursorbox[1]/scale)) + ' ' +  \
+                  str(int((cursorbox[2])/scale))  + ' ' +  \
+                  str(int((cursorbox[3])/scale))  + ' '
+                if copyexec != '':
+                  os.popen(copyexec, 'w').write(statustext)
+              pygame.display.update()
 
-      # call help mapping routine to get keypress from mouse position
-      # need to highlight option box until MOUSEUP
-      elif mousebuttons[0] and helprect.collidepoint(mousecoord):
-        event = pygame.event.Event(pygame.KEYDOWN, key=getmenukey(menuoptions, mousecoord, sidemapsize))
+        # call help mapping routine to get keypress from mouse position
+        # need to highlight option box until MOUSEUP
+        elif mousebuttons[0] and helprect.collidepoint(mousecoord):
+          event = pygame.event.Event(pygame.KEYDOWN, key=getmenukey(menuoptions, mousecoord, sidemapsize))
 
-      if event.type == pygame.MOUSEBUTTONDOWN and event.button == 4:
-        event = pygame.event.Event(pygame.KEYDOWN, key=pygame.K_UP)
+        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 4:
+          event = pygame.event.Event(pygame.KEYDOWN, key=pygame.K_UP)
 
-      elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 5:
-        event = pygame.event.Event(pygame.KEYDOWN, key=pygame.K_DOWN)
+        elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 5:
+          event = pygame.event.Event(pygame.KEYDOWN, key=pygame.K_DOWN)
 
-    # process keyboard events - could have been inserted due to a mouse event
-    if event.type == pygame.KEYDOWN:
+      # process keyboard events - could have been inserted due to a mouse event
+      if event.type == pygame.KEYDOWN:
 
-      # non search mode, respond to action keys
-      if not searchmode:
+        # non search mode, respond to action keys
+        if not searchmode:
 
-        # i - increase font size
-        if event.key == pygame.K_i:
-          if mapmarkfontscale < 3:
-            mapmarkfontscale += 0.1
+          # i - increase font size
+          if event.key == pygame.K_i:
+            if mapmarkfontscale < 3:
+              mapmarkfontscale += 0.1
+              lastmap = ''
+
+          # d - decrease font size
+          elif event.key == pygame.K_d:
+            if mapmarkfontscale > 0.5:
+              mapmarkfontscale -= 0.1
+              lastmap = ''
+
+          # b - toggle drawing of rectangles round link areas
+          elif event.key == pygame.K_b:
+            boxesOn = not boxesOn
             lastmap = ''
 
-        # d - decrease font size
-        elif event.key == pygame.K_d:
-          if mapmarkfontscale > 0.5:
-            mapmarkfontscale -= 0.1
+          # l - edit map links
+          elif event.key == pygame.K_l:
+            os.spawnv(os.P_NOWAIT, editor, (editor, mapdatafile, usermapdatafile))
+
+          # m - toggle colour/display of user marks
+          elif event.key == pygame.K_m:
+            if not marksOn:
+              markcolour = markcolours[0]
+              webmarkcolour = webmarkcolours[0]
+              marksOn = not marksOn
+            elif markcolour == markcolours[0]:
+              markcolour = markcolours[1]
+              webmarkcolour = webmarkcolours[1]
+            elif markcolour == markcolours[1]:
+              markcolour = markcolours[2]
+              webmarkcolour = webmarkcolours[2]
+            elif markcolour == markcolours[2]:
+              marksOn = not marksOn
             lastmap = ''
 
-        # b - toggle drawing of rectangles round link areas
-        elif event.key == pygame.K_b:
-          boxesOn = not boxesOn
-          lastmap = ''
+          # e - edit user marks in external editor
+          elif event.key == pygame.K_e:
+            markersfile = os.path.join(userdir, mainmapname.replace('.bmp','.elm.txt',1))
+            if platform.system() == 'Windows':
+              markersfile = '"' + markersfile + '"'
+            os.spawnv(os.P_NOWAIT, editor, (editor, markersfile))
 
-        # l - edit map links
-        elif event.key == pygame.K_l:
-          os.spawnv(os.P_NOWAIT, editor, (editor, mapdatafile, usermapdatafile))
+          # n - edit map notes in external editor
+          elif event.key == pygame.K_n:
+            nametag = ''
+            if mainmapname in maptitle:
+              nametag = '.' + maptitle[mainmapname].replace(' ', '.' ,1)
+            notesfile = os.path.join(userdir, mainmapname.replace('.bmp',nametag+'.notes.txt',1))
+            if not os.access(notesfile, os.R_OK):
+              fid = open(notesfile,'w')
+              fid.close()
+            if platform.system() == 'Windows':
+              notesfile = '"' + notesfile + '"'
+            os.spawnv(os.P_NOWAIT, editor, (editor, notesfile))
 
-        # m - toggle colour/display of user marks
-        elif event.key == pygame.K_m:
-          if not marksOn:
-            markcolour = markcolours[0]
-            webmarkcolour = webmarkcolours[0]
-            marksOn = not marksOn
-          elif markcolour == markcolours[0]:
-            markcolour = markcolours[1]
-            webmarkcolour = webmarkcolours[1]
-          elif markcolour == markcolours[1]:
-            markcolour = markcolours[2]
-            webmarkcolour = webmarkcolours[2]
-          elif markcolour == markcolours[2]:
-            marksOn = not marksOn
-          lastmap = ''
+          # c - edit user config
+          elif event.key == pygame.K_c:
+            os.spawnv(os.P_NOWAIT, editor, (editor, rcfile))
 
-        # e - edit user marks in external editor
-        elif event.key == pygame.K_e:
-          markersfile = os.path.join(userdir, mainmapname.replace('.bmp','.elm.txt',1))
-          if platform.system() == 'Windows':
-            markersfile = '"' + markersfile + '"'
-          os.spawnv(os.P_NOWAIT, editor, (editor, markersfile))
-
-        # n - edit map notes in external editor
-        elif event.key == pygame.K_n:
-          nametag = ''
-          if mainmapname in maptitle:
-            nametag = '.' + maptitle[mainmapname].replace(' ', '.' ,1)
-          notesfile = os.path.join(userdir, mainmapname.replace('.bmp',nametag+'.notes.txt',1))
-          if not os.access(notesfile, os.R_OK):
-            fid = open(notesfile,'w')
-            fid.close()
-          if platform.system() == 'Windows':
-            notesfile = '"' + notesfile + '"'
-          os.spawnv(os.P_NOWAIT, editor, (editor, notesfile))
-
-        # c - edit user config
-        elif event.key == pygame.K_c:
-          os.spawnv(os.P_NOWAIT, editor, (editor, rcfile))
-
-        # r - redisplay map, rereading all user data
-        elif event.key == pygame.K_r:
-          mapinfo, mapscale, maptype, parentmap, maptitle, continent, mapbanner = readinfo(mapdir, mapdatafile, usermapdatafile)
-          markersstore = {}
-          target_window_size = initial_window_size
-          mapmarkfontscale = 1.0
-          pygame.display.quit()
-          pygame.display.init()
-          lastmap = ''
-          if usewebmarkers:
-            webmaplist = getwebmaplist(webmarkerbaseurl, authentication)
-            readwebmaplist = False
-
-        # w - enter walk time measuring mode or reset current total time
-        elif event.key == pygame.K_w:
-          if not walktimemeasure:
-            walktimemeasure = True
-          totalwalktime = 0
-          markbox = []
-          lastmap = ''
-
-        # exit any special mode \/ done in search mode
-        elif event.key == pygame.K_ESCAPE:
+          # r - redisplay map, rereading all user data
+          elif event.key == pygame.K_r:
+            mapinfo, mapscale, maptype, parentmap, maptitle, continent, mapbanner = readinfo(mapdir, mapdatafile, usermapdatafile)
+            markersstore = {}
+            target_window_size = initial_window_size
+            mapmarkfontscale = 1.0
+            pygame.display.quit()
+            pygame.display.init()
             lastmap = ''
-            markbox = []
+            if usewebmarkers:
+              webmaplist = getwebmaplist(webmarkerbaseurl, authentication)
+              readwebmaplist = False
+
+          # w - enter walk time measuring mode or reset current total time
+          elif event.key == pygame.K_w:
+            if not walktimemeasure:
+              walktimemeasure = True
             totalwalktime = 0
-            walktimemeasure = False
+            markbox = []
+            lastmap = ''
 
-        # home key, go to game start map, C1
-        elif event.key == pygame.K_HOME:
-          mainmapname = homemap
+          # exit any special mode \/ done in search mode
+          elif event.key == pygame.K_ESCAPE:
+              lastmap = ''
+              markbox = []
+              totalwalktime = 0
+              walktimemeasure = False
 
-        # go to C2 map
-        elif event.key == pygame.K_END:
-          mainmapname = "irilion.bmp"
-
-        # toggle continent
-        elif event.key == pygame.K_KP5:
-          print(mainmapname, sidemapname, homemap)
-          if mainmapname == homemap or sidemapname == homemap:
-            mainmapname = "irilion.bmp"
-          else:
+          # home key, go to game start map, C1
+          elif event.key == pygame.K_HOME:
             mainmapname = homemap
 
-        # backspace go to last visited map
-        elif event.key == pygame.K_BACKSPACE and len(backmap) > 0:
-          mainmapname = 'pop'
+          # go to C2 map
+          elif event.key == pygame.K_END:
+            mainmapname = "irilion.bmp"
 
-        # up cursor is next map in sequence
-        elif event.key == pygame.K_UP:
-          mainmapname = nextmap(mapinfo, mainmapname, 1)
-
-        # down cursor is previous map in sequence
-        elif event.key == pygame.K_DOWN:
-          mainmapname = nextmap(mapinfo, mainmapname, -1)
-
-        # / is search for marks
-        elif event.key == pygame.K_SLASH or (modkeys & (pygame.KMOD_LCTRL | pygame.KMOD_RCTRL) and event.key == pygame.K_f):
-          searchmode = True
-          marksearch = True
-          lastmap = ''
-
-        # \ is search for map name
-        elif event.key == pygame.K_BACKSLASH:
-          searchmode = True
-          marksearch = False
-          lastmap = ''
-
-        # if web marks in use, rotate the filter for web/local marks
-        elif usewebmarkers and (modkeys & (pygame.KMOD_LCTRL | pygame.KMOD_RCTRL)) and event.key == pygame.K_TAB:
-          limitsource = rotatesearchsource(limitsource)
-          lastmap = ''
-
-        # exit if Q pressed, quit
-        elif not noesc and (event.key == pygame.K_q or event.key == pygame.K_x):
-            pygame.QUIT
-            sys.exit()
-
-        # if its one of the function keys with a map defined, use it
-        else:
-          for fkey in functionkeys:
-            if event.key == functionkeys[fkey][0] and functionkeys[fkey][1] != '':
-              mainmapname = functionkeys[fkey][1]
-
-      # search mode, most keys modify search string
-      else:
-
-        # exit from search mode, clearing state
-        if event.key == pygame.K_ESCAPE:
-          searchmode = False
-          marksearch = False
-          lastsearchtext = "-"
-          searchtext = ""
-          laststatustext = "-"
-          statustext = ""
-          searchmatchingmaps = []
-          currentsearchmapindex = 0
-          lastmap = ''
-
-        else:
-
-          # backspace removed last character from search string
-          if event.key == pygame.K_BACKSPACE and len(searchtext) > 0:
-            searchtext = searchtext[0:len(searchtext)-1]
-            searchmatchingmaps = []
-            currentsearchmapindex = 0
-
-          # if have marching maps allow stepping back and forward through
-          elif searchmatchingmaps != [] and event.key == pygame.K_DOWN or event.key == pygame.K_UP:
-            if event.key == pygame.K_DOWN:
-              currentsearchmapindex += 1
-              if currentsearchmapindex >= len(searchmatchingmaps):
-                currentsearchmapindex = 0
+          # toggle continent
+          elif event.key == pygame.K_KP5:
+            print(mainmapname, sidemapname, homemap)
+            if mainmapname == homemap or sidemapname == homemap:
+              mainmapname = "irilion.bmp"
             else:
-              currentsearchmapindex -= 1
-              if currentsearchmapindex < 0:
-                currentsearchmapindex = len(searchmatchingmaps) -1
+              mainmapname = homemap
 
-          # TAB will cycle through no limit, Seridia only and Irilion only maps
-          if not (modkeys & (pygame.KMOD_LCTRL | pygame.KMOD_RCTRL)) and event.key == pygame.K_TAB:
-            if limitsearch == 'none.bmp':
-              limitsearch = 'seridia.bmp'
-            elif limitsearch == 'seridia.bmp':
-              limitsearch = 'irilion.bmp'
-            else:
-              limitsearch = 'none.bmp'
-            searchmatchingmaps = []
-            currentsearchmapindex = 0
-            # make sure the help is updated
+          # backspace go to last visited map
+          elif event.key == pygame.K_BACKSPACE and len(backmap) > 0:
+            mainmapname = 'pop'
+
+          # up cursor is next map in sequence
+          elif event.key == pygame.K_UP:
+            mainmapname = nextmap(mapinfo, mainmapname, 1)
+
+          # down cursor is previous map in sequence
+          elif event.key == pygame.K_DOWN:
+            mainmapname = nextmap(mapinfo, mainmapname, -1)
+
+          # / is search for marks
+          elif event.key == pygame.K_SLASH or (modkeys & (pygame.KMOD_LCTRL | pygame.KMOD_RCTRL) and event.key == pygame.K_f):
+            searchmode = True
+            marksearch = True
+            lastmap = ''
+
+          # \ is search for map name
+          elif event.key == pygame.K_BACKSLASH:
+            searchmode = True
+            marksearch = False
             lastmap = ''
 
           # if web marks in use, rotate the filter for web/local marks
-          if usewebmarkers and (modkeys & (pygame.KMOD_LCTRL | pygame.KMOD_RCTRL)) and event.key == pygame.K_TAB:
+          elif usewebmarkers and (modkeys & (pygame.KMOD_LCTRL | pygame.KMOD_RCTRL)) and event.key == pygame.K_TAB:
             limitsource = rotatesearchsource(limitsource)
             lastmap = ''
 
-          # add single letter keypresses to search
-          elif len(pygame.key.name(event.key)) == 1 or event.key == pygame.K_SPACE:
-            # convert shift+keys to text
-            if modkeys & (pygame.KMOD_RSHIFT | pygame.KMOD_LSHIFT):
-              if event.key in convertKey:
-                searchtext += convertKey[event.key]
-            # translate space so that it works as a space
-            elif event.key == pygame.K_SPACE:
-              searchtext += " "
-            else:
-              searchtext += pygame.key.name(event.key).lower()
+          # exit if Q pressed, quit
+          elif not noesc and (event.key == pygame.K_q or event.key == pygame.K_x):
+              pygame.QUIT
+              sys.exit()
+
+          # if its one of the function keys with a map defined, use it
+          else:
+            for fkey in functionkeys:
+              if event.key == functionkeys[fkey][0] and functionkeys[fkey][1] != '':
+                mainmapname = functionkeys[fkey][1]
+
+        # search mode, most keys modify search string
+        else:
+
+          # exit from search mode, clearing state
+          if event.key == pygame.K_ESCAPE:
+            searchmode = False
+            marksearch = False
+            lastsearchtext = "-"
+            searchtext = ""
+            laststatustext = "-"
+            statustext = ""
             searchmatchingmaps = []
             currentsearchmapindex = 0
+            lastmap = ''
 
-          # if were are searching marks - the search text is used as a filter on the mark display
-          if marksearch:
-            # if we do not have a list of maps containing the current search text, get one
-            if searchmatchingmaps == [] and searchtext != "":
-              mapnames = mapinfo.keys()
-              sorted(mapnames)
-              for testmap in mapnames:
-                mapmatches = False
-                if limitsearch != 'none.bmp':
-                  if continent[testmap] != limitsearch:
-                    continue
-                if limitsource != 'web':
-                  if not testmap in markersstore:
-                    markersstore[testmap] = readmapmarkers(userdir, testmap)
-                  for mark in markersstore[testmap]:
-                    if searchfind(mark[1], searchtext):
-                      searchmatchingmaps.append(testmap)
-                      mapmatches = True
-                      break
-                  if mapmatches:
-                    continue
-                if limitsource != 'local':
-                  if usewebmarkers and testmap in webmaplist:
-                    if webmaplist[testmap] == []:
-                      webmaplist[testmap] = readwebmarkers(testmap, webmarkerbaseurl, authentication)
-                    for mark in webmaplist[testmap]:
+          else:
+
+            # backspace removed last character from search string
+            if event.key == pygame.K_BACKSPACE and len(searchtext) > 0:
+              searchtext = searchtext[0:len(searchtext)-1]
+              searchmatchingmaps = []
+              currentsearchmapindex = 0
+
+            # if have marching maps allow stepping back and forward through
+            elif searchmatchingmaps != [] and event.key == pygame.K_DOWN or event.key == pygame.K_UP:
+              if event.key == pygame.K_DOWN:
+                currentsearchmapindex += 1
+                if currentsearchmapindex >= len(searchmatchingmaps):
+                  currentsearchmapindex = 0
+              else:
+                currentsearchmapindex -= 1
+                if currentsearchmapindex < 0:
+                  currentsearchmapindex = len(searchmatchingmaps) -1
+
+            # TAB will cycle through no limit, Seridia only and Irilion only maps
+            if not (modkeys & (pygame.KMOD_LCTRL | pygame.KMOD_RCTRL)) and event.key == pygame.K_TAB:
+              if limitsearch == 'none.bmp':
+                limitsearch = 'seridia.bmp'
+              elif limitsearch == 'seridia.bmp':
+                limitsearch = 'irilion.bmp'
+              else:
+                limitsearch = 'none.bmp'
+              searchmatchingmaps = []
+              currentsearchmapindex = 0
+              # make sure the help is updated
+              lastmap = ''
+
+            # if web marks in use, rotate the filter for web/local marks
+            if usewebmarkers and (modkeys & (pygame.KMOD_LCTRL | pygame.KMOD_RCTRL)) and event.key == pygame.K_TAB:
+              limitsource = rotatesearchsource(limitsource)
+              lastmap = ''
+
+            # add single letter keypresses to search
+            elif len(pygame.key.name(event.key)) == 1 or event.key == pygame.K_SPACE:
+              # convert shift+keys to text
+              if modkeys & (pygame.KMOD_RSHIFT | pygame.KMOD_LSHIFT):
+                if event.key in convertKey:
+                  searchtext += convertKey[event.key]
+              # translate space so that it works as a space
+              elif event.key == pygame.K_SPACE:
+                searchtext += " "
+              else:
+                searchtext += pygame.key.name(event.key).lower()
+              searchmatchingmaps = []
+              currentsearchmapindex = 0
+
+            # if were are searching marks - the search text is used as a filter on the mark display
+            if marksearch:
+              # if we do not have a list of maps containing the current search text, get one
+              if searchmatchingmaps == [] and searchtext != "":
+                mapnames = mapinfo.keys()
+                sorted(mapnames)
+                for testmap in mapnames:
+                  mapmatches = False
+                  if limitsearch != 'none.bmp':
+                    if continent[testmap] != limitsearch:
+                      continue
+                  if limitsource != 'web':
+                    if not testmap in markersstore:
+                      markersstore[testmap] = readmapmarkers(userdir, testmap)
+                    for mark in markersstore[testmap]:
                       if searchfind(mark[1], searchtext):
                         searchmatchingmaps.append(testmap)
                         mapmatches = True
                         break
-              # make sure we stay on the current map if it matches
-              if mainmapname in searchmatchingmaps:
-                currentsearchmapindex = searchmatchingmaps.index(mainmapname)
-            # redisplay the map thus applying the latest filter
-            lastmap = ''
-
-          # if were searching map names, fill matching map array with matching names
-          else:
-            # if not matchin map list available, get one
-            if searchmatchingmaps == [] and searchtext != "":
-              mapnames = mapinfo.keys()
-              sorted(mapnames)
-              marchlist = []
-              for testmap in mapnames:
-                if limitsearch != 'none.bmp':
-                  if continent[testmap] != limitsearch:
-                    continue
-                if searchfind(testmap, searchtext):
-                  searchmatchingmaps.append(testmap)
-              for mapfilename in maptitle:
-                thismaptitle = maptitle[mapfilename]
-                if searchmatchingmaps.count(mapfilename) == 0:
-                  if limitsearch != 'none.bmp':
-                    if continent[mapfilename] != limitsearch:
+                    if mapmatches:
                       continue
-                  if searchfind(thismaptitle, searchtext):
-                    searchmatchingmaps.append(mapfilename)
-              # make sure we stay on the current map is it matches
-              if mainmapname in searchmatchingmaps:
-                currentsearchmapindex = searchmatchingmaps.index(mainmapname)
+                  if limitsource != 'local':
+                    if usewebmarkers and testmap in webmaplist:
+                      if webmaplist[testmap] == []:
+                        webmaplist[testmap] = readwebmarkers(testmap, webmarkerbaseurl, authentication)
+                      for mark in webmaplist[testmap]:
+                        if searchfind(mark[1], searchtext):
+                          searchmatchingmaps.append(testmap)
+                          mapmatches = True
+                          break
+                # make sure we stay on the current map if it matches
+                if mainmapname in searchmatchingmaps:
+                  currentsearchmapindex = searchmatchingmaps.index(mainmapname)
+              # redisplay the map thus applying the latest filter
+              lastmap = ''
 
-          # change mape if the current index changes
-          if searchmatchingmaps != [] and searchmatchingmaps[currentsearchmapindex] != mainmapname:
-            mainmapname = searchmatchingmaps[currentsearchmapindex]
+            # if were searching map names, fill matching map array with matching names
+            else:
+              # if not matchin map list available, get one
+              if searchmatchingmaps == [] and searchtext != "":
+                mapnames = mapinfo.keys()
+                sorted(mapnames)
+                marchlist = []
+                for testmap in mapnames:
+                  if limitsearch != 'none.bmp':
+                    if continent[testmap] != limitsearch:
+                      continue
+                  if searchfind(testmap, searchtext):
+                    searchmatchingmaps.append(testmap)
+                for mapfilename in maptitle:
+                  thismaptitle = maptitle[mapfilename]
+                  if searchmatchingmaps.count(mapfilename) == 0:
+                    if limitsearch != 'none.bmp':
+                      if continent[mapfilename] != limitsearch:
+                        continue
+                    if searchfind(thismaptitle, searchtext):
+                      searchmatchingmaps.append(mapfilename)
+                # make sure we stay on the current map is it matches
+                if mainmapname in searchmatchingmaps:
+                  currentsearchmapindex = searchmatchingmaps.index(mainmapname)
+
+            # change mape if the current index changes
+            if searchmatchingmaps != [] and searchmatchingmaps[currentsearchmapindex] != mainmapname:
+              mainmapname = searchmatchingmaps[currentsearchmapindex]
+
+
+if __name__ == "__main__":
+  main()
