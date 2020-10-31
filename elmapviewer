@@ -149,7 +149,7 @@ def getcontinent(parentmap,mapname):
 
 # read map information from the map data files
 # links, names, sizes, types
-def readinfo(mapdir, fname, userfname):
+def readinfo(mapdir, fname, userfname, show_map_banners):
   mapinfo = {}
   mapscale = {}
   maptype = {}
@@ -181,7 +181,7 @@ def readinfo(mapdir, fname, userfname):
               maptype[currmapname] = w[3]
             if len(w) > 4 and w[4] != "-":
               parentmap[currmapname] = w[4]
-            if len(w) > 6 and w[5] != "-" and w[6] != "-":
+            if show_map_banners and len(w) > 6 and w[5] != "-" and w[6] != "-":
               mapbanner[currmapname] = (w[5],w[6])
           # link line format "tlX tlR width height <link map name>"
           else:
@@ -244,6 +244,7 @@ def readvars(fname):
   markfontsize = 21
   statusfontsize = 21
   mainborder = [10, 10]
+  show_map_banners = False
   noesc = False
   copyexec = ''
   showgametime = False
@@ -293,6 +294,8 @@ def readvars(fname):
           mainborder[0] = int(w[2])
         elif w[0] == 'mainbordery':
           mainborder[1] = int(w[2])
+        elif w[0] == 'showmapbanners':
+          show_map_banners = bool(int(w[2]))
         elif w[0] == 'noesc':
           noesc = bool(int(w[2]))
         elif w[0] == 'copytoclipboard':
@@ -311,7 +314,7 @@ def readvars(fname):
         elif w[0] in functionkeys:
           keycode = functionkeys[w[0]][0]
           functionkeys[w[0]] = (keycode,w[2])
-  return mapdir, moremapdir, userdir, boxesOn, marksOn, editor, \
+  return mapdir, moremapdir, userdir, boxesOn, marksOn, editor, show_map_banners, \
     markfontsize, statusfontsize, mainborder, noesc, copyexec, \
     showgametime, walkfactor, usewebmarkers, webmarkerbaseurl, authentication
 
@@ -680,10 +683,9 @@ def drawmaplink(boxesOn, maptype, hp, screen, cursorbox):
     pygame.draw.rect(screen, colour, cursorbox, 2)
 
 # get the map banner logo
-def getbannersurface(bannerimages, bannerinfo, mapdir):
+def getbannersurface(bannerimages, bannerinfo, mapdir, moremapdir):
   if not bannerinfo[0] in bannerimages:
-    fullpath = os.path.join(mapdir, '../3dobjects/structures/banners'+bannerinfo[0]+'.bmp')
-    fid = fileopen(fullpath, 'rb')
+    fid = openmapbmp('../3dobjects/banners'+bannerinfo[0]+'.bmp', mapdir, moremapdir)
     if fid == 0:
       #print('Missing banner image file: ' + fullpath + ' - so disabling')
       return bannerimages, 0
@@ -699,7 +701,7 @@ def getbannersurface(bannerimages, bannerinfo, mapdir):
   else:
     yoffset = 0
   #print(bannerinfo, xoffset, yoffset, size)
-  retsurface = bannerimages[bannerinfo[0]].subsurface(xoffset,yoffset,size[0]/2,size[1]/2)
+  retsurface = bannerimages[bannerinfo[0]].subsurface(int(xoffset), int(yoffset), int(size[0]/2), int(size[1]/2))
   return bannerimages, retsurface
 
 # commonn open function for map bmps, looks in mor than one location
@@ -733,10 +735,10 @@ def main():
   mapdatafile = get_data_file_path('mapdata')
   usermapdatafile = expandfilename('~/.elmapviewer.usermapdata')
 
-  mapdir, moremapdir, userdir, boxesOn, marksOn, editor, \
+  mapdir, moremapdir, userdir, boxesOn, marksOn, editor, show_map_banners, \
     markfontsize, statusfontsize, mainborder, noesc, copyexec, \
     showgametime, walkfactor, usewebmarkers, webmarkerbaseurl, authentication = readvars(rcfile)
-  mapinfo, mapscale, maptype, parentmap, maptitle, continent, mapbanner = readinfo(mapdir, mapdatafile, usermapdatafile)
+  mapinfo, mapscale, maptype, parentmap, maptitle, continent, mapbanner = readinfo(mapdir, mapdatafile, usermapdatafile, show_map_banners)
 
   normalcursor = True           # holds current cursor state, set to alternative when over links
   mainmapname = 'seridia.bmp'   # the map about to be displayed
@@ -852,7 +854,7 @@ def main():
         fid = openmapbmp(mainmapname, mapdir, moremapdir)
         if fid == 0:
           statustext += 'Cannot load main map file, using default. '
-          fid = openmapbmp('../textures/openscreen.bmp', mapdir, moremapdir)
+          fid = openmapbmp('../textures/paper1.bmp', mapdir, moremapdir)
           if fid == 0:
             mainmap = pygame.Surface((512, 512))
           else:
@@ -893,7 +895,7 @@ def main():
         # get the main map banner logo if there is one - display over the legend image
         # could display full size over the sidemap if hover over this image
         if mainmapname in mapbanner:
-          bannerimages, bannerlogo = getbannersurface(bannerimages, mapbanner[mainmapname], mapdir)
+          bannerimages, bannerlogo = getbannersurface(bannerimages, mapbanner[mainmapname], mapdir, moremapdir)
           if bannerlogo == 0:
             del mapbanner[mainmapname]
           else:
@@ -914,11 +916,11 @@ def main():
         # position the legend and banner
         if mainmapname in mapbanner and bannerzoom:
           legendxymove = [int(sidemapsize[0]/2+legendsize[1]/4), sidemapsize[1]]
-          bannerxymove = [sidemapsize[0]/2, sidemapsize[1]+legendsize[1]]
+          bannerxymove = [int(sidemapsize[0]/2), sidemapsize[1]+legendsize[1]]
         else:
           legendxymove = [int(sidemapsize[0]/2), sidemapsize[1]]
           if mainmapname in mapbanner:
-            bannerxymove = [sidemapsize[0]/2+(legendsize[0]-bannerlogosize[0])/2, sidemapsize[1]+legendsize[1]-bannerlogosize[1]*1.2]
+            bannerxymove = [int(sidemapsize[0] / 2 + (legendsize[0] - bannerlogosize[0]) / 2), int(sidemapsize[1] + legendsize[1] - bannerlogosize[1] * 1.2)]
         legendrect = legendrect.move(legendxymove)
         if mainmapname in mapbanner:
           bannerlogorect = bannerlogorect.move(bannerxymove)
@@ -1247,7 +1249,7 @@ def main():
 
           # r - redisplay map, rereading all user data
           elif event.key == pygame.K_r:
-            mapinfo, mapscale, maptype, parentmap, maptitle, continent, mapbanner = readinfo(mapdir, mapdatafile, usermapdatafile)
+            mapinfo, mapscale, maptype, parentmap, maptitle, continent, mapbanner = readinfo(mapdir, mapdatafile, usermapdatafile, show_map_banners)
             markersstore = {}
             target_window_size = initial_window_size
             mapmarkfontscale = 1.0

@@ -12,6 +12,9 @@ statusfontsize = 25
 mainborderx = 21
 mainbordery = 5
 
+#enable/disbale map banners on legend
+showmapbanners = 1
+
 # option to disable quit/exit option
 noesc = 0
 
