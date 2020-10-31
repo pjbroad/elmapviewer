@@ -16,10 +16,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-SCRIPTDIR = /usr/bin
-MENUDIR = /usr/share/applications
-ICONDIR = /usr/share/pixmaps/
-DATADIR = /usr/share/elmapviewer
+BASEDIR = /usr/local
+SCRIPTDIR = $(BASEDIR)/bin
+MENUDIR = $(BASEDIR)/share/applications
+ICONDIR = $(BASEDIR)/share/pixmaps/
+DATADIR = $(BASEDIR)/share/elmapviewer
 
 SCRIPTFILE = elmapviewer
 DESKTOPFILE = $(SCRIPTFILE).desktop
@@ -63,5 +64,6 @@ $(DATADIR)/$(RCFILE): $(RCFILE)
 
 $(ICONDIR)/$(ICONFILE): $(ICONFILE)
 	@if [ "`id -u`" != "0" ]; then echo "Need to run as root user or prefixed with sudo"; exit 1; fi
+	@mkdir -pv $(ICONDIR)
 	@cp -v $(ICONFILE) $(ICONDIR)
 	@chmod a+r $(ICONDIR)/$(ICONFILE)

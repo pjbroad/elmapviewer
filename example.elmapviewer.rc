@@ -1,18 +1,17 @@
 # anything starting with # is treated as a comment and ignored
-
 # anything word = .... treated as program variable, space required next to =
+
 mapdir = /usr/share/games/EternalLands/maps/
-moremapdir = ~/.elc/updates/1_9_0/maps
+moremapdir = ~/.elc/updates/1_9_5/maps
 userdir = ~/.elc/main/maps
-scale = 1.0
-fullscreen = 0
 boxesOn = 1
 marksOn = 1
-editor = /etc/alternatives/gnome-text-editor
+editor = /usr/bin/xdg-open
 markfontsize = 20
 statusfontsize = 25
 mainborderx = 21
 mainbordery = 5
+
 # option to disable quit/exit option
 noesc = 0
 
@@ -43,8 +42,10 @@ walkfactor = 3.32
 # marker file format - hope that all makes sense.
 # enable loading map markers from a web URL, set to 1 to enable
 usewebmarkers = 0
+
 # full path to the directory on the web server containing the marker files
 webmarkerbaseurl = http://your.domain/your_directory/
+
 # optional username and password for authentication
 # make sure you protect this file if your password is sensitive
 authentication = username password

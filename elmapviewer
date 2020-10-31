@@ -223,6 +223,13 @@ def readinfo(mapdir, fname, userfname):
       continent[mapname] = getcontinent(parentmap,mapname)
   return mapinfo, mapscale, maptype, parentmap, maptitle, continent, mapbanner
   
+# get the path to data files from installed of local exec path
+def get_data_file_path(filename):
+  data_dir = os.path.dirname(sys.argv[0]).replace('bin', os.path.join('share', 'elmapviewer'))
+  full_path = os.path.join(data_dir, filename)
+  if not os.access(full_path, os.R_OK):
+    full_path = os.path.join(os.path.dirname(sys.argv[0]), filename)
+  return full_path
 
 # read program variables from the resource file
 def readvars(fname):
@@ -244,9 +251,7 @@ def readvars(fname):
   authentication = ('', '')
   # create a default rc file if none exists
   if not os.access(fname, os.R_OK):
-    srcfile = '/usr/share/elmapviewer/example.elmapviewer.rc'    
-    if not os.access(srcfile, os.R_OK):
-      srcfile = os.path.dirname(sys.argv[0]) + '/example.elmapviewer.rc'
+    srcfile = get_data_file_path('example.elmapviewer.rc')
     # copy file, using users default permissions
     sf = open(srcfile,'r')
     df = open(fname, 'w')
@@ -722,9 +727,7 @@ else:
   rcfile = '~/.elmapviewer.rc'
 rcfile = expandfilename(rcfile)
 
-mapdatafile = '/usr/share/elmapviewer/mapdata'
-if not os.access(mapdatafile, os.R_OK):
-  mapdatafile = os.path.dirname(sys.argv[0]) + os.sep + 'mapdata'
+mapdatafile = get_data_file_path('mapdata')
 usermapdatafile = expandfilename('~/.elmapviewer.usermapdata')
 
 mapdir, moremapdir, userdir, boxesOn, marksOn, editor, \
@@ -859,22 +862,20 @@ while 1:
 
       statusheight = pygame.font.Font(None, int(statusfontsize)).get_height()
 
-      x_scale = target_window_size[0] / (sidemapsize[0] / 2 + mainmapsize[0])
-      y_scale = target_window_size[1] / (mainmapsize[1] + statusheight)
-      scale = 2 * min(x_scale, y_scale)
+      x_scale = target_window_size[0] / (1.5 * mainmapsize[0])
+      y_scale = (target_window_size[1] - statusheight) / mainmapsize[1]
+      map_scale = min(x_scale, y_scale)
+      scale = min(mainmapsize[0] / 512 * x_scale, mainmapsize[1] / 512 * y_scale)
 
-      adjust = (scale/4, scale/4)
-      sidemap = pygame.transform.scale(sidemap, (int(sidemapsize[0]*adjust[0]), int(sidemapsize[1]*adjust[1])))
+      sidemap = pygame.transform.scale(sidemap, (int(map_scale * mainmapsize[0] / 2), int(map_scale * mainmapsize[1] / 2)))
       sidemapsize = sidemap.get_size()
       sidemaprect = sidemap.get_rect()
 
-      adjust = (scale/2, scale/2)
-      legend = pygame.transform.scale(legend, (int(legendsize[0]*adjust[0]), int(legendsize[1]*adjust[0])))
+      legend = pygame.transform.scale(legend, (int(map_scale * mainmapsize[0] / 4), int(map_scale * mainmapsize[1] / 2)))
       legendsize = legend.get_size()
       legendrect = legend.get_rect()
 
-      adjust = (scale/2, scale/2)
-      mainmap = pygame.transform.scale(mainmap, (int(mainmapsize[0]*adjust[0]), int(mainmapsize[1]*adjust[1])))
+      mainmap = pygame.transform.scale(mainmap, (int(map_scale * mainmapsize[0]), int(map_scale * mainmapsize[1])))
       mainmapsize = mainmap.get_size()
       mainmaprect = mainmap.get_rect()
 
