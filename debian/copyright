@@ -10,7 +10,7 @@ Upstream Author(s):
 
 Copyright:
 
-    <Copyright (C) 2010 Paul Broadhead>
+    <Copyright (C) 2010-2020 Paul Broadhead>
 
 License:
 
@@ -37,6 +37,6 @@ Public License can be found in `/usr/share/common-licenses/GPL'.
 
 The Debian packaging is:
 
-    Copyright (C) 2010 Paul Broadhead <pjbroad@twinmoons.org.uk>
+    Copyright (C) 2010-2020 Paul Broadhead <pjbroad@twinmoons.org.uk>
     and is licensed under the GPL version 3,
     see `/usr/share/common-licenses/GPL-3'.

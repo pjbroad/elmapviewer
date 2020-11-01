@@ -1,5 +1,7 @@
-elmapviewer (0.6.8-0ubuntu1) hardy; urgency=low
+elmapviewer (0.7.1-0ubuntu1) focal; urgency=low
 
-  * Initial packaged release.
+  * Updated to python3.
+  * Some clean up and fixes.
+  * Auto generate bmp from dss if needed.
 
- -- Paul Broadhead <pjbroad@twinmoons.org.uk>  Wed, 23 Feb 2011 17:17:26 +0000
+ -- Paul Broadhead <pjbroad@twinmoons.org.uk>  Sat, 31 Oct 2020 23:19:38 +0000

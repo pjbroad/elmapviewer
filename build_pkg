@@ -1,0 +1,74 @@
+#! /usr/bin/env bash
+
+release()
+{
+# $1 test | go
+
+	vers="$2"
+
+	debug=""
+	[ "$1" = "test" ] && debug="echo"
+
+	dch --release --force-save-on-release
+	[ ! -z "$debug" ] && head -1 debian/changelog
+	$debug debuild -S -sa
+
+	num=1
+	origrel="$(head -1 debian/changelog | awk '{print $3}' | awk -F\; '{print $1}')"
+	rel=$origrel
+	last="ubuntu${num}) $rel"
+
+	pkversion=$(head -1 debian/changelog | awk -F\( '{print $2}' | awk -F\) '{print $1}')
+	$debug dput my-ppa ../elmapviewer_${pkversion}_source.changes
+
+	for rel in groovy
+	do
+		((num++))
+		next="ubuntu${num}) $rel"
+
+		sed -i "s/$last/$next/g" debian/changelog
+		[ ! -z "$debug" ] && head -1 debian/changelog
+
+		$debug debuild -S -sd
+		pkversion=$(head -1 debian/changelog | awk -F\( '{print $2}' | awk -F\) '{print $1}')
+		$debug dput my-ppa ../elmapviewer_${pkversion}_source.changes
+
+		last=$next
+	done
+
+	num=1
+	rel=$origrel
+	next="ubuntu${num}) $rel"
+	sed -i "s/$last/$next/g" debian/changelog
+	[ ! -z "$debug" ] && head -1 debian/changelog
+}
+
+
+version=$(grep "^version = " elmapviewer | awk -F\' '{print $2}')
+
+read -p "Build and optionally install/publish version [$version]? [y]: " cont
+[ -z "$cont" -o "$cont" = "y" -o "$cont" = "Y" ] || exit 1
+
+rm -rf build
+mkdir -p build/elmapviewer_${version}
+git archive master | gzip > build/elmapviewer_${version}.orig.tar.gz
+cd build/elmapviewer_${version}
+tar xfz ../elmapviewer_${version}.orig.tar.gz
+
+dch --release --force-save-on-release
+
+debuild
+
+pkversion=$(head -1 debian/changelog | awk -F\( '{print $2}' | awk -F\) '{print $1}')
+read -p "Install locally version [$pkversion]? [y]: " cont
+[ -z "$cont" -o "$cont" = "y" -o "$cont" = "Y" ] && sudo dpkg -i ../elmapviewer_${pkversion}_all.deb
+
+read -p "Test publish to all ppa version [$version]? [y]: " cont
+[ -z "$cont" -o "$cont" = "y" -o "$cont" = "Y" ] || exit 0
+
+release test
+
+read -p "Publish to all ppa version [$version]? [y]: " cont
+[ -z "$cont" -o "$cont" = "y" -o "$cont" = "Y" ] || exit 0
+
+release go

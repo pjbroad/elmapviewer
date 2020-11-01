@@ -1,4 +1,4 @@
-.TH ELMAPVIEWER 6 "September 2008" "elmapviewer-0.6.0" "Eternal Lands Map Viewer"
+.TH ELMAPVIEWER 6 "October 2020" "elmapviewer-0.7.1" "Eternal Lands Map Viewer"
 
 .SH NAME
 elmapviewer - A map viewer for the Eternal Lands MMORPG
@@ -87,6 +87,10 @@ Specifies an additional directory to look for map bmp files.
 Specifies the directory for the users EL settings.
 
 .TP 5
+.I cachedir
+Specifies the directory to use for bmp files generated from dds files.
+
+.TP 5
 .I editor
 Specified the full path to your favourite text editor.
 
@@ -97,11 +101,15 @@ Eternal Lands main web page and read the current game time.  This time will then
 be displayed in the title bar of the mapviewer window.  The website time does
 not appear to be that accurate so the game time is re-read once an hour.
 
+.TP 5
+.I showmapbanners
+If true, banner images for maps will be displayed over the legend.
+
 .SH Command Summary
 
 .TP
-.I i/o/f - zoom in/out/full
-Zoom program window in (make bigger), out (make smaller) and full screen.
+.I i/d - mark font scale
+Increase or Decrease the size of the ark mark font.
 
 .TP
 .I b - toggle boxes
